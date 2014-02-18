@@ -16,7 +16,6 @@
 
 
 //Are we in a heathen's democracy?  If so, we need to block more variations.
-//TODO: Dynamically toggle based on stream state?  Or just have "Democracy" and "Anarchy" buttons
 var DEMOCRACY_MODE = true;
 
 //Words to filter; easy for casual users to modify this
