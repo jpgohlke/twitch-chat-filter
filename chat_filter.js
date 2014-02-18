@@ -133,6 +133,8 @@ setInterval(function () {
             }
         });
 
-    if (CurrentChat.currently_scrolling) { CurrentChat.scroll_chat(); }
+    if (CurrentChat.currently_scrolling) { 
+    	CurrentChat.scroll_chat(); 
+    }
 
 }, 100);  // <- run every 100 milliseconds
