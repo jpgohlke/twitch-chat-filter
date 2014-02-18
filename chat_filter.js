@@ -47,8 +47,7 @@ $("<li><a class='CommandsToggle'>Commands</a><a class='ChatToggle'>Talk</a></li>
 CHAT_BUTTON.css("width", CHAT_BUTTON.width() - 71);
 
 // Spam buttons make quick and dirty css rules to turn chat spam on or off. 
-$(".CommandsToggle")
-    .click(function () {
+$(".CommandsToggle").click(function () {
         "use strict";
         $("a.CommandsToggle").toggleClass("selected");
 
@@ -58,11 +57,10 @@ $(".CommandsToggle")
             $("<style type='text/css' class='commandsHideCSS'>#chat_line_list li.cSpam{display:inline;}</style>").appendTo("head");
         }
     }
-        );
+);
 
 // Same for the Twitch Chat
-$(".ChatToggle")
-    .click(function () {
+$(".ChatToggle").click(function () {
         "use strict";
         $("a.ChatToggle").toggleClass("selected");
 
@@ -72,7 +70,7 @@ $(".ChatToggle")
             $("<style type='text/css' class='chatHideCSS'>#chat_line_list li.cSafe{display:inline;}</style>").appendTo("head");
         }
     }
-        );
+);
 
 // Simulate a click on ChatToggle, so it starts in the "on" position.
 $(".ChatToggle").click();
@@ -113,8 +111,7 @@ setInterval(function () {
     // The `#chat_line_list` references the chat box
     // and the `li` references the individual chat items inside it.
     // Thus, run for each chat box item,
-    $('#chat_line_list li:not(.cSpam):not(.cSafe)')
-        .each(function () {
+    $('#chat_line_list li:not(.cSpam):not(.cSafe)').each(function () {
 
             // cLine is a reference a single line in chat.
             // cLine.text gets the chat text
