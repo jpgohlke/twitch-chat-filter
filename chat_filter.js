@@ -10,7 +10,7 @@
 var DEMOCRACY_MODE = true;
 
 //Words to filter; easy for casual users to modify this
-var BLOCKED_WORDS = [
+var BLOCKED_COMMAND_WORDS = [
 	"left",
 	"right",
 	"up",
@@ -18,25 +18,23 @@ var BLOCKED_WORDS = [
 	"start",
 	"select",
 	"a",
-	"b",
+	"b"
+];
+
+var BLOCKED_GOVERNMENT_WORDS = [
 	"democracy",
 	"anarchy"
 ];
-
-//If Democracy Mode is on, we need to match things like `up2left4`
-//and `start9`. Kappa
-//TODO: Just add this straight into the regex somehow when building the string; this is kind of ugly
-if (DEMOCRACY_MODE) {
-    for (var i = 0; i < BLOCKED_WORDS.length; i++) {
-	    BLOCKED_WORDS[i] += ".*";
-	}
-}
 
 //Build the regular expression from the above list.
 //If it's not (!) a message that starts (^),
 //is followed by one of the commands (up|down|...)
 //and immediately ends ($), then we show the message.
-var FILTER_REGEX = new RegExp("^(" + BLOCKED_WORDS.join("|") + "?)$", "i");
+//If Democracy Mode is on, we need to match things like `up2left4`
+//and `start9`. Kappa
+var FILTER_REGEX = DEMOCRACY_MODE ?
+	new RegExp("^(((" + BLOCKED_COMMAND_WORDS.join("|") + ")[1-9]?)+|(" + BLOCKED_GOVERNMENT_WORDS.join("|") + "))$", "i") :
+	new RegExp("^(" + BLOCKED_COMMAND_WORDS.concat(BLOCKED_GOVERNMENT_WORDS).join("|") + "?)$", "i");
 
 // Identify the chat button
 var CHAT_BUTTON = $("ul.segmented_tabs li a").first();
