@@ -118,14 +118,14 @@ setInterval(function () {
             // [1] selects the chat message (rather than the username)
             // In this way cText is cLine's (trimmed) message.
 
-            var cLine = $(this),
-                cText = cLine.find(".chat_line").text();
+            var chatLine = $(this);
+            var chatText = chatLine.find(".chat_line").text();
 			
             // Praise the Helix!
-            if (cText && !cText.trim().match(FILTER_REGEX)) {
-                cLine.addClass("cSafe");
+            if (chatText && !chatText.trim().match(FILTER_REGEX)) {
+                chatLine.addClass("cSafe");
             } else {
-                cLine.addClass("cSpam");
+                chatLine.addClass("cSpam");
             }
         });
 
