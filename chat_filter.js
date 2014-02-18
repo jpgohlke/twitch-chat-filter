@@ -1,9 +1,16 @@
-//Here is the full code for the chat toggle buttons script. Feel free to review/compress it yourself; good internet security is important!
-// Original code by /u/RenaKunisaki with /u/smog_alado's excellent notes 
-// Spam button by /u/SRS-SRSLY. Chat Scroll Improvement by /u/schrobby
-// Dynamic regular expression and "democracy mode" by /u/red_agent
-// Compressed by http://javascriptcompressor.com.
-// Passes http://www.jslint.com on default settings
+//Here is the full code for the chat toggle buttons script.
+//Feel free to review/compress it yourself; good internet security is important!
+//Compressed by http://javascriptcompressor.com.
+//Passes http://www.jslint.com on default settings
+//Contributors:
+//    /u/RenaKunisaki
+//    /u/smog_alado 
+//    /u/SRS-SRSLY
+//    /u/schrobby
+//    /u/red_agent
+//    /u/DeathlyDeep
+//    /u/jeff_gohlke
+
 
 //Are we in a heathen's democracy?  If so, we need to block more variations.
 //TODO: Dynamically toggle based on stream state?  Or just have "Democracy" and "Anarchy" buttons
