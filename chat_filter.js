@@ -1,15 +1,18 @@
-//Here is the full code for the chat toggle buttons script.
-//Feel free to review/compress it yourself; good internet security is important!
-//Compressed by http://javascriptcompressor.com.
-//Passes http://www.jslint.com on default settings
-//Contributors:
-//    /u/RenaKunisaki
-//    /u/smog_alado 
-//    /u/SRS-SRSLY
-//    /u/schrobby
-//    /u/red_agent
-//    /u/DeathlyDeep
-//    /u/jeff_gohlke
+/* 
+ * chat_filter.js
+ *
+ * Feel free to review/compress it yourself; good internet security is important!
+ * Compressed by http://javascriptcompressor.com.
+ * Passes http://www.jslint.com on default settings
+ * Contributors:
+ *     /u/RenaKunisaki
+ *     /u/smog_alado 
+ *     /u/SRS-SRSLY
+ *     /u/schrobby
+ *     /u/red_agent
+ *     /u/DeathlyDeep
+ *     /u/jeff_gohlke
+ */
 
 
 //Are we in a heathen's democracy?  If so, we need to block more variations.
