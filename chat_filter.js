@@ -33,7 +33,6 @@ var BLOCKED_WORDS = [
 //and `start9`. Kappa
 var ANARCHY_REGEX = new RegExp("^(" + BLOCKED_WORDS.join("|") + ")$", "i");
 var DEMOCRACY_REGEX = new RegExp("^((" + command_regex_src + ")\\d?)+$", "i");
-
 var FILTER_REGEX = DEMOCRACY_MODE ? DEMOCRACY_REGEX : ANARCHY_REGEX;
 
 // Identify the chat button
