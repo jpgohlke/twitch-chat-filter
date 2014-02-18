@@ -10,7 +10,7 @@
 var DEMOCRACY_MODE = true;
 
 //Words to filter; easy for casual users to modify this
-var BLOCKED_COMMAND_WORDS = [
+var BLOCKED_WORDS = [
 	"left",
 	"right",
 	"up",
@@ -18,10 +18,7 @@ var BLOCKED_COMMAND_WORDS = [
 	"start",
 	"select",
 	"a",
-	"b"
-];
-
-var BLOCKED_GOVERNMENT_WORDS = [
+	"b",
 	"democracy",
 	"anarchy"
 ];
@@ -32,9 +29,10 @@ var BLOCKED_GOVERNMENT_WORDS = [
 //and immediately ends ($), then we show the message.
 //If Democracy Mode is on, we need to match things like `up2left4`
 //and `start9`. Kappa
-var FILTER_REGEX = DEMOCRACY_MODE ?
-	new RegExp("^(((" + BLOCKED_COMMAND_WORDS.join("|") + ")[1-9]?)+|(" + BLOCKED_GOVERNMENT_WORDS.join("|") + "))$", "i") :
-	new RegExp("^(" + BLOCKED_COMMAND_WORDS.concat(BLOCKED_GOVERNMENT_WORDS).join("|") + "?)$", "i");
+var ANARCHY_REGEX = new RegExp("^(" + BLOCKED_WORDS.join("|") + ")$", "i");
+var DEMOCRACY_REGEX = new RegExp("^((" + command_regex_src + ")\\d?)+$", "i");
+
+var FILTER_REGEX = DEMOCRACY_MODE ? DEMOCRACY_REGEX : ANARCHY_REGEX;
 
 // Identify the chat button
 var CHAT_BUTTON = $("ul.segmented_tabs li a").first();
