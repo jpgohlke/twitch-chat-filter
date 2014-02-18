@@ -10,6 +10,8 @@
 var DEMOCRACY_MODE = true;
 
 //Words to filter; easy for casual users to modify this
+//Now that the democracy/anarchy feature is permanent, we may as well 
+//block these words at all times.
 var BLOCKED_WORDS = [
 	"left",
 	"right",
