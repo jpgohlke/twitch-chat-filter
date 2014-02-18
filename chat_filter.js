@@ -6,6 +6,7 @@
 // Passes http://www.jslint.com on default settings
 
 //Are we in a heathen's democracy?  If so, we need to block more variations.
+//TODO: Dynamically toggle based on stream state?  Or just have "Democracy" and "Anarchy" buttons
 var DEMOCRACY_MODE = true;
 
 //Words to filter; easy for casual users to modify this
@@ -24,6 +25,7 @@ var BLOCKED_WORDS = [
 
 //If Democracy Mode is on, we need to match things like `up2left4`
 //and `start9`. Kappa
+//TODO: Just add this straight into the regex somehow when building the string; this is kind of ugly
 if (DEMOCRACY_MODE) {
     for (var i = 0; i < BLOCKED_WORDS.length; i++) {
 	    BLOCKED_WORDS[i] += ".*";
