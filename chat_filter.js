@@ -3,7 +3,7 @@
  *
  * Feel free to review/compress it yourself; good internet security is important!
  * Compressed by http://javascriptcompressor.com.
- * Passes http://www.jslint.com on default settings
+ * Passes http://www.jshint.com on default settings
  * Contributors:
  *     /u/RenaKunisaki
  *     /u/smog_alado 
@@ -14,6 +14,8 @@
  *     /u/jeff_gohlke
  */
 
+
+/* global $:false, CurrentChat:false */
 
 //Are we in a heathen's democracy?  If so, we need to block more variations.
 var DEMOCRACY_MODE = true;
@@ -139,7 +141,7 @@ setInterval(function () {
         });
 
     if (CurrentChat.currently_scrolling) { 
-    	CurrentChat.scroll_chat(); 
+        CurrentChat.scroll_chat(); 
     }
 
 }, 100);  // <- run every 100 milliseconds
