@@ -20,18 +20,44 @@
 
 // --- Script configuration ---
 
+// Please make sure it doesn't surpass 100 columns for readability <3
+// Made all line-ending commas (',\n')  on the next line.
+// Simpler to add new words without getting errors from forgetting to add a comma at the end
 var BLOCKED_WORDS = [
     //Standard Commands
-    "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy",                                                
-    //Common misspellings
-    "upu", "uo", "pu", "uup", "uip", "ip",
-    "dwon", "donw", "dowm", "dow", "dowqn", "doiwn", "diwn", "ldown", "donwn", "odwn", "downm", "dpwn", "downw", "downd", "dowj",
-    "lef", "lfet", "lefft", "letf", "leftr", "leftrt", "leftl", "lwft",
-    "riight", "rightr", "roght", "righ", "ight", "righr", "rigt",
-    "anrachy", "anrchy", "anarch", "amarchy",
-    "democrazy", "demarchy", "demcracy", "democarcy", "democrasy", "democacy", "demoocracy", "democary",
-    //Other spam.
-    "oligarchy", "bureaucracy", "monarchy", "alt f4"
+    "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy"
+	
+	//    "up" misspellings
+    , "upu", "uo", "pu", "uup", "uip", "ip", "uyp", "upp", "upo", "uupu"
+    
+	//    "down" misspellings
+	, "dwon", "donw", "dowm", "dow", "dowqn", "doiwn", "diwn", "ldown", "donwn", "odwn", "downm"
+		, "dpwn", "downw", "downd", "dowj", "doen", "dpwm", "dopwn", "dwn", "don", "ddown", "sown"
+		, "odnw"
+    
+	//    "left" misspellings
+	, "lef", "lfet", "lefft", "letf", "leftr", "leftrt", "leftl", "lwft", "lefct", "lefet", "laft"
+		, "lrfy", "seft", "kleft", "l3ft", "lfte", "etfl", "lleft"
+    
+	//    "right" misspellings
+	, "riight", "rightr", "roght", "righ", "ight", "righr", "rigt" "dright", "girht", "rihy"
+		, "eifght", "rig", "tight", "rihtg", "rihgt"
+	
+	//    "start" misspellings
+    , "atart", "strt", "strat", "starp"
+    
+	//    "anarchy" misspellings
+	, "anrachy", "anrchy", "anarch", "amarchy", "anarchy'", "anaarchy", "anarhcy", "anarachy"
+		, "anarchyanarchy", "anarchyvanarchy", "anarcy", "anrarchy", "anarchu", "anarcht"
+    
+	//    "democracy" misspellings
+	, "democrazy", "demarchy", "demcracy", "democarcy", "democrasy", "democacy", "demoocracy"
+		, "democary", "democravy", "demoracy", "democrazu", "demacrazy", "democrac", "deomcrazy"
+		, "deomcracy", "democracydemocracy", "democracyvdemocracy", "democracu", "domecracy"
+    
+	//Other spam.
+    , "communism", "oligarchy", "bureaucracy", "monarchy", "alt f4", "alt+f4", "exit", "enter"
+		, "***"
 ];
 
 var MINIMUM_MESSAGE_LENGTH = 3; //For Kappas and other short messages.
