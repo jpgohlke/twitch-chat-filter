@@ -26,7 +26,7 @@
 var BLOCKED_WORDS = [
     //Standard Commands
     "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy"
-	
+    
 	//    "up" misspellings
     , "upu", "uo", "pu", "uup", "uip", "ip", "uyp", "upp", "upo", "uupu"
     
@@ -42,7 +42,7 @@ var BLOCKED_WORDS = [
 	//    "right" misspellings
 	, "riight", "rightr", "roght", "righ", "ight", "righr", "rigt", "dright", "girht", "rihy"
 		, "eifght", "rig", "tight", "rihtg", "rihgt", "rigth"
-	
+
 	//    "start" misspellings
     , "atart", "strt", "strat", "starp"
     
@@ -61,7 +61,10 @@ var BLOCKED_WORDS = [
 ];
 
 var MINIMUM_MESSAGE_LENGTH = 3; //For Kappas and other short messages.
+var MAXIMUM_MESSAGE_LENGTH = 168; //To keep comments to a reasonable size (4 rows per message)
 var MAXIMUM_NON_ASCII_CHARACTERS = 2; //For donger smilies, etc
+var MAXIMUM_REPEATING_CHARACTERS = 3; //For things like "sdfsddd noooooo"
+var MINIMUM_WORD_COUNT = 3; //To filter one word spamming
 var REFRESH_MILLISECONDS = 100;
 
 // --- Filtering ---
@@ -75,11 +78,40 @@ var commands_regex = new RegExp("^((" + BLOCKED_WORDS.join("|") + ")\\d?)+$", "i
 var message_is_spam = function(msg){
     "use strict";
 
+    var repeats = 0;
+    var ret = 0;
+    var words = 1;
+	
+    for(var i = 0; i < msg.length; i++) {
+    //check for repeating characters and compare against MAXIMUM
+        if(msg.charCodeAt(i) == msg.charCodeAt(i+1)) {
+            repeats++;
+            if(repeats > MAXIMUM_REPEATING_CHARACTERS) {
+                return true;
+            }
+        }
+	//reset repeats
+	if(msg.charCodeAt(i) != msg.charCodeAt(i+1)) {
+		repeats = 0;
+	}
+	//checks to see if shift+enter has been pressed
+	if(msg.charCodeAt(i) == 13) {
+		ret += 42;
+	}
+	//find out how many words there are
+	if((msg.charCodeAt(i) == 32) && (msg.charCodeAt(i+1) > 32)) {
+		words += 1;
+	}
+    }
+	
+    if((msg.length + ret) > MAXIMUM_MESSAGE_LENGTH) return true;
+    if(words < MINIMUM_WORD_COUNT) return true;
+	
     //Ignore spaces
     msg = msg.replace(/\s/g, '');
-
+	
     if(msg.length < MINIMUM_MESSAGE_LENGTH) return true;
-
+	
     if(msg.match(commands_regex)) return true;
 
     var nonASCII = 0;
