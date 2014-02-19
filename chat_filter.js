@@ -20,9 +20,9 @@
 // --- Filtering ---
 
 //This regex recognizes messages that contain exactly a chat command,
-//without any spaces or extra words before it. For democracy mode,
+//without any extra words before it. For democracy mode,
 //we also match compound commands like `up2left4` and `start9`.
-var FILTER_REGEX = /^((left|right|up|down|start|select|a|b|democracy|anarchy)\d?)+$/i;
+var FILTER_REGEX = /^\s*((left|right|up|down|start|select|a|b|democracy|anarchy)\d?)+\s*$/i;
 
 // --- UI ---
 
@@ -76,37 +76,33 @@ $(".ChatToggle").click(function () {
 // Simulate a click on ChatToggle, so it starts in the "on" position.
 $(".ChatToggle").click();
 
+
+// --- Main ---
+
+
+//The spam commands still push chat messages out the queue so we 
+//increase the buffer size from the default 150 so chat messages
+//last a bit longer.
 CurrentChat.line_buffer = 800;
 
-
-// setInterval makes this part of the code run periodically
 setInterval(function () {
     "use strict";
 
-    // The `#chat_line_list` references the chat box
-    // and the `li` references the individual chat items inside it.
-    // Thus, run for each chat box item,
-    $('#chat_line_list li:not(.cSpam):not(.cSafe)').each(function () {
-
-            // cLine is a reference a single line in chat.
-            // cLine.text gets the chat text
-            // split(':') breaks the text into the username and the message
-            // [1] selects the chat message (rather than the username)
-            // In this way cText is cLine's (trimmed) message.
-
-            var chatLine = $(this);
-            var chatText = chatLine.find(".chat_line").text();
-			
-            // Praise the Helix!
-            if (chatText && !chatText.trim().match(FILTER_REGEX)) {
-                chatLine.addClass("cSafe");
-            } else {
-                chatLine.addClass("cSpam");
-            }
-        });
+    $('#chat_line_list li:not(.cSpam):not(.cSafe)').each(function(){
+        var chatLine = $(this);
+        var chatText = chatLine.find(".chat_line");
+        if(chatLine.length > 0){ // Ignore twitch warnings
+          // Praise the Helix!
+          if(chatText.text().match(FILTER_REGEX)){
+            chatLine.addClass("cSpam");
+          } else {
+            chatLine.addClass("cSafe");
+          }
+        }
+    });
 
     if (CurrentChat.currently_scrolling) { 
         CurrentChat.scroll_chat(); 
     }
 
-}, 100);  // <- run every 100 milliseconds
+}, 100);  // <- how many milliseconds
