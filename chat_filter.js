@@ -20,14 +20,14 @@
 // --- Filtering ---
 
 var BLOCKED_WORDS = [
-    "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy",												//	Standard Commands
-    "upu", "uo", "pu", "uup", "uip", "ip", 																							//	"up" misspellings
-    "dwon", "donw", "dowm", "dow", "dowqn", "doiwn", "diwn", "ldown", "donwn", "odwn", "downm", "dpwn", "downw", "downd", "dowj",	//	"down" misspellings
-    "lef", "lfet", "lefft", "letf", "leftr", "leftrt", "leftl", "lwft", 															//	"left" misspellings
-    "riight", "rightr", "roght", "righ", "ight", "righr", "rigt", 																	//	"right" misspellings
-    "anrachy", "anrchy", "anarch", "amarchy", 																						//	"anarchy" misspellings
-    "democrazy", "demarchy", "demcracy", "democarcy", "democrasy", "democacy", "demoocracy", 										//	"democracy" misspellings
-    "oligarchy", "bureaucracy"																										//	Other
+    "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy",                                                //    Standard Commands
+    "upu", "uo", "pu", "uup", "uip", "ip",                                                                                             //    "up" misspellings
+    "dwon", "donw", "dowm", "dow", "dowqn", "doiwn", "diwn", "ldown", "donwn", "odwn", "downm", "dpwn", "downw", "downd", "dowj",    //    "down" misspellings
+    "lef", "lfet", "lefft", "letf", "leftr", "leftrt", "leftl", "lwft",                                                             //    "left" misspellings
+    "riight", "rightr", "roght", "righ", "ight", "righr", "rigt",                                                                     //    "right" misspellings
+    "anrachy", "anrchy", "anarch", "amarchy",                                                                                         //    "anarchy" misspellings
+    "democrazy", "demarchy", "demcracy", "democarcy", "democrasy", "democacy", "demoocracy", "democary",                            //    "democracy" misspellings
+    "oligarchy", "bureaucracy", "monarchy", "alt f4", "Alt F4", "alt F4"                                                            //    Other
 ];
 
 //This regex recognizes messages that contain exactly a chat command,
@@ -104,32 +104,32 @@ setInterval(function () {
     "use strict";
 
     $('#chat_line_list li:not(.cSpam):not(.cSafe)').each(function() {
-    	
+        
         var chatLine = $(this);
         var chatText = chatLine.find(".chat_line").text().trim();
         
         // Ignore Twitch warnings
         if(chatLine.length <= 0) {
-        	return;
+            return;
         }
         
         // If the line is too short or matches the filter, mark it as spam
         if(chatText.length < MINIMUM_TEXT_LENGTH || chatText.match(FILTER_REGEX)) {
-        	chatLine.addClass("cSpam");
-        	return;
+            chatLine.addClass("cSpam");
+            return;
         }
         
         // If we've passed all the other tests, check if it contains too
         // many non-ASCII characters (e.g., "donger" smilies)
         var nonASCII = 0;
         for(var i = 0; i < chatText.length; i++) {
-        	if(chatText.charCodeAt(i) > 127) {
-        		nonASCII++;
-        		if(nonASCII > MAXIMUM_SPECIAL_CHARACTERS) {
-        			chatLine.addClass("cSpam");
-        			return;
-        		}
-        	}
+            if(chatText.charCodeAt(i) > 127) {
+                nonASCII++;
+                if(nonASCII > MAXIMUM_SPECIAL_CHARACTERS) {
+                    chatLine.addClass("cSpam");
+                    return;
+                }
+            }
         }
         
         // If we've gotten here, we've passed everything; mark it as safe
@@ -138,7 +138,7 @@ setInterval(function () {
     
     //Scroll chat appropriately
     if (CurrentChat.currently_scrolling) { 
-    	CurrentChat.scroll_chat(); 
+        CurrentChat.scroll_chat(); 
     }
 
 }, REFRESH_MILLISECONDS);  // <- how many milliseconds
