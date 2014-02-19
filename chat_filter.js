@@ -49,7 +49,7 @@ $(
     " #chat_line_list li.fromjtv,                  " + // show twitch error messages
     " #chat_line_list.showSpam li.cSpam,           " + // show commands if they toggled on
     " #chat_line_list.showSafe li.cSafe {          " + // show non-commands if they are enabled
-    "     display:inline;                          " +
+    "     display:inherit;                         " +
     " }                                            " +
     " </style>                                     "
 ).appendTo("head");
