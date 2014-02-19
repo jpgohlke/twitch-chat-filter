@@ -17,79 +17,67 @@
 
 /* global $:false, CurrentChat:false */
 
+// --- Filtering ---
 
 //This regex recognizes messages that contain exactly a chat command,
 //without any spaces or extra words before it. For democracy mode,
 //we also match compound commands like `up2left4` and `start9`.
 var FILTER_REGEX = /^((left|right|up|down|start|select|a|b|democracy|anarchy)\d?)+$/i;
 
-// Identify the chat button
-var CHAT_BUTTON = $("ul.segmented_tabs li a").first();
+// --- UI ---
 
-// Add spam button after the chat button
-$("<li><a class='CommandsToggle'>Commands</a><a class='ChatToggle'>Talk</a></li>").insertAfter(CHAT_BUTTON);
+$(
+    " <style type='text/css' >                     " +
+    " .segmented_tabs li li a.CommandsToggle {     " +
+    "     width: 50px;                             " +
+    "     padding-left: 0px;                       " +
+    "     padding-top: 0;                          " +
+    "     height: 8px;                             " +
+    "     line-height: 115%;                       " +
+    " }                                            " +
+    "                                              " +
+    " .segmented_tabs li li a.ChatToggle {         " +
+    "     width: 35px;                             " +
+    "     padding-left: 15px;                      " +
+    "     padding-top: 0;                          " +
+    "     height: 8px;                             " +
+    "     line-height: 115%;                       " +
+    " }                                            " +
+    "                                              " +
+    " #chat_line_list li { display:none }          " + // hide new, uncategorized messages
+    "                                              " +
+    " #chat_line_list li.fromjtv,                  " + // show twitch error messages
+    " #chat_line_list.showSpam li.cSpam,           " + // show commands if they toggled on
+    " #chat_line_list.showSafe li.cSafe {          " + // show non-commands if they are enabled
+    "     display:inline;                          " +
+    " }                                            " +
+    " </style>                                     "
+).appendTo("head");
+
 
 // Reduce the width of the chat button by 71px.
 // This gives enough space for a spam button width 30px with 15px margins with an extra pixel of wiggle room
+var CHAT_BUTTON = $("ul.segmented_tabs li a").first();
 CHAT_BUTTON.css("width", CHAT_BUTTON.width() - 71);
 
-// Spam buttons make quick and dirty css rules to turn chat spam on or off. 
+// Add a pair of buttons to toggle the spam on and off.
+$("<li><a class='CommandsToggle'>Commands</a><a class='ChatToggle'>Talk</a></li>").insertAfter(CHAT_BUTTON);
+
 $(".CommandsToggle").click(function () {
-        "use strict";
-        $("a.CommandsToggle").toggleClass("selected");
+    $(this).toggleClass("selected");
+    $("#chat_line_list").toggleClass("showSpam");
+});
 
-        if ($(".commandsHideCSS").length !== 0) {
-            $(".commandsHideCSS").remove();
-        } else {
-            $("<style type='text/css' class='commandsHideCSS'>#chat_line_list li.cSpam{display:inline;}</style>").appendTo("head");
-        }
-    }
-);
-
-// Same for the Twitch Chat
 $(".ChatToggle").click(function () {
-        "use strict";
-        $("a.ChatToggle").toggleClass("selected");
-
-        if ($(".chatHideCSS").length !== 0) {
-            $(".chatHideCSS").remove();
-        } else {
-            $("<style type='text/css' class='chatHideCSS'>#chat_line_list li.cSafe{display:inline;}</style>").appendTo("head");
-        }
-    }
-);
+    $(this).toggleClass("selected");
+    $("#chat_line_list").toggleClass("showSafe");
+});
 
 // Simulate a click on ChatToggle, so it starts in the "on" position.
 $(".ChatToggle").click();
 
 CurrentChat.line_buffer = 800;
 
-//This part creates a CSS rule
-//that hides all chat messages by default
-var extraCSS =
-    " <style type='text/css' >                                " +
-    " .segmented_tabs li li a.CommandsToggle {                " +
-    "     width: 50px;                                        " +
-    "     padding-left: 0px;                                  " +
-    "     padding-top: 0;                                     " +
-    "     height: 8px;                                        " +
-    "     line-height: 115%;                                  " +
-    " }                                                       " +
-    "                                                         " +
-    " .segmented_tabs li li a.ChatToggle {                    " +
-    "     width: 35px;                                        " +
-    "     padding-left: 15px;                                 " +
-    "     padding-top: 0;                                     " +
-    "     height: 8px;                                        " +
-    "     line-height: 115%;                                  " +
-    " }                                                       " +
-    "                                                         " +
-    " #chat_line_list li {                                    " +
-    "     display:none;                                       " +
-    " }                                                       " +
-    " </style>                                                ";
-
-$(extraCSS).appendTo("head");  // <- and adds the rule to the page
 
 // setInterval makes this part of the code run periodically
 setInterval(function () {
