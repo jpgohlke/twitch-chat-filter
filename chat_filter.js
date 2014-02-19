@@ -17,28 +17,57 @@
 
 /* global $:false, CurrentChat:false */
 
-// --- Filtering ---
+
+// --- Script configuration ---
 
 var BLOCKED_WORDS = [
-    "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy",                                                //    Standard Commands
-    "upu", "uo", "pu", "uup", "uip", "ip",                                                                                             //    "up" misspellings
-    "dwon", "donw", "dowm", "dow", "dowqn", "doiwn", "diwn", "ldown", "donwn", "odwn", "downm", "dpwn", "downw", "downd", "dowj",    //    "down" misspellings
-    "lef", "lfet", "lefft", "letf", "leftr", "leftrt", "leftl", "lwft",                                                             //    "left" misspellings
-    "riight", "rightr", "roght", "righ", "ight", "righr", "rigt",                                                                     //    "right" misspellings
-    "anrachy", "anrchy", "anarch", "amarchy",                                                                                         //    "anarchy" misspellings
-    "democrazy", "demarchy", "demcracy", "democarcy", "democrasy", "democacy", "demoocracy", "democary",                            //    "democracy" misspellings
-    "oligarchy", "bureaucracy", "monarchy", "alt f4", "Alt F4", "alt F4"                                                            //    Other
+    //Standard Commands
+    "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy",                                                
+    //Common misspellings
+    "upu", "uo", "pu", "uup", "uip", "ip",
+    "dwon", "donw", "dowm", "dow", "dowqn", "doiwn", "diwn", "ldown", "donwn", "odwn", "downm", "dpwn", "downw", "downd", "dowj",
+    "lef", "lfet", "lefft", "letf", "leftr", "leftrt", "leftl", "lwft",
+    "riight", "rightr", "roght", "righ", "ight", "righr", "rigt",
+    "anrachy", "anrchy", "anarch", "amarchy",
+    "democrazy", "demarchy", "demcracy", "democarcy", "democrasy", "democacy", "demoocracy", "democary",
+    //Other spam.
+    "oligarchy", "bureaucracy", "monarchy", "alt f4"
 ];
 
-//This regex recognizes messages that contain exactly a chat command,
-//without any extra words before it. For democracy mode,
-//we also match compound commands like `up2left4` and `start9`.
-// (remember to escape the backslashes if you are building a regex dynamically!)
-var FILTER_REGEX = new RegExp("^\\s*((" + BLOCKED_WORDS.join("|") + ")\\d?)+\\s*$", "i");
-
-var MINIMUM_TEXT_LENGTH = 3;
-var MAXIMUM_SPECIAL_CHARACTERS = 2;
+var MINIMUM_MESSAGE_LENGTH = 3; //For Kappas and other short messages.
+var MAXIMUM_NON_ASCII_CHARACTERS = 2; //For donger smilies, etc
 var REFRESH_MILLISECONDS = 100;
+
+// --- Filtering ---
+
+//This regex recognizes messages that contain exactly a chat command,
+//without any extra words around. This includes compound democracy mode
+//commands like `up2left4` and `start9`.
+// (remember to escape the backslashes when building a regexes from strings!)
+var commands_regex = new RegExp("^((" + BLOCKED_WORDS.join("|") + ")\\d?)+$", "i");
+
+var message_is_spam = function(msg){
+    "use strict";
+
+    //Ignore spaces
+    msg = msg.replace(/\s/g, '');
+
+    if(msg.length < MINIMUM_MESSAGE_LENGTH) return true;
+
+    if(msg.match(commands_regex)) return true;
+
+    var nonASCII = 0;
+    for(var i = 0; i < msg.length; i++) {
+        if(msg.charCodeAt(i) > 127) {
+            nonASCII++;
+            if(nonASCII > MAXIMUM_NON_ASCII_CHARACTERS){
+                return true;
+            }
+        }
+    }
+
+  return false;
+};
 
 // --- UI ---
 
@@ -71,13 +100,12 @@ $(
 ).appendTo("head");
 
 
-// Reduce the width of the chat button by 71px.
-// This gives enough space for a spam button width 30px with 15px margins with an extra pixel of wiggle room
-var CHAT_BUTTON = $("ul.segmented_tabs li a").first();
-CHAT_BUTTON.css("width", CHAT_BUTTON.width() - 71);
+// Reduce the width of the chat button to fit the extra buttons we will add.
+var chat_button = $("ul.segmented_tabs li a").first();
+chat_button.css("width", chat_button.width() - 71);
 
 // Add a pair of buttons to toggle the spam on and off.
-$("<li><a class='CommandsToggle'>Commands</a><a class='ChatToggle'>Talk</a></li>").insertAfter(CHAT_BUTTON);
+$("<li><a class='CommandsToggle'>Commands</a><a class='ChatToggle'>Talk</a></li>").insertAfter(chat_button);
 
 $(".CommandsToggle").click(function () {
     $(this).toggleClass("selected");
@@ -89,12 +117,11 @@ $(".ChatToggle").click(function () {
     $("#chat_line_list").toggleClass("showSafe");
 });
 
-// Simulate a click on ChatToggle, so it starts in the "on" position.
+// Simulate a click on ChatToggle so it starts in the "on" position.
 $(".ChatToggle").click();
 
 
 // --- Main ---
-
 
 //The spam commands still push chat messages out the queue so we 
 //increase the buffer size from the default 150 so chat messages
@@ -105,36 +132,14 @@ setInterval(function () {
     "use strict";
 
     $('#chat_line_list li:not(.cSpam):not(.cSafe)').each(function() {
-        
         var chatLine = $(this);
         var chatText = chatLine.find(".chat_line").text();
         
-        // Ignore Twitch warnings
-        if(chatLine.length <= 0) {
-            return;
+        if(message_is_spam(chatText)){
+          chatLine.addClass("cSpam");
+        }else{
+          chatLine.addClass("cSafe");
         }
-        
-        // If the line is too short or matches the filter, mark it as spam
-        if(chatText.length < MINIMUM_TEXT_LENGTH || chatText.match(FILTER_REGEX)) {
-            chatLine.addClass("cSpam");
-            return;
-        }
-        
-        // If we've passed all the other tests, check if it contains too
-        // many non-ASCII characters (e.g., "donger" smilies)
-        var nonASCII = 0;
-        for(var i = 0; i < chatText.length; i++) {
-            if(chatText.charCodeAt(i) > 127) {
-                nonASCII++;
-                if(nonASCII > MAXIMUM_SPECIAL_CHARACTERS) {
-                    chatLine.addClass("cSpam");
-                    return;
-                }
-            }
-        }
-        
-        // If we've gotten here, we've passed everything; mark it as safe
-        chatLine.addClass("cSafe");
     });
     
     //Scroll chat appropriately
@@ -142,4 +147,4 @@ setInterval(function () {
         CurrentChat.scroll_chat(); 
     }
 
-}, REFRESH_MILLISECONDS);  // <- how many milliseconds
+}, REFRESH_MILLISECONDS);
