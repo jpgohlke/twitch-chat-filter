@@ -100,7 +100,8 @@ setInterval(function () {
             if(HIDE_NON_ASCII_CHARACTERS) {
                 for(var i = 0; i < chatText.length; i++) {
                     if(chatText.charCodeAt(i) > 127) {
-                        return;
+                        chatLine.addClass("cSpam");
+                        return; //No need to check against the regex
                     }
                 }
             }
