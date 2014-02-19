@@ -40,8 +40,8 @@ var BLOCKED_WORDS = [
 		, "lrfy", "seft", "kleft", "l3ft", "lfte", "etfl", "lleft"
     
 	//    "right" misspellings
-	, "riight", "rightr", "roght", "righ", "ight", "righr", "rigt" "dright", "girht", "rihy"
-		, "eifght", "rig", "tight", "rihtg", "rihgt"
+	, "riight", "rightr", "roght", "righ", "ight", "righr", "rigt", "dright", "girht", "rihy"
+		, "eifght", "rig", "tight", "rihtg", "rihgt", "rigth"
 	
 	//    "start" misspellings
     , "atart", "strt", "strat", "starp"
@@ -56,8 +56,8 @@ var BLOCKED_WORDS = [
 		, "deomcracy", "democracydemocracy", "democracyvdemocracy", "democracu", "domecracy"
     
 	//Other spam.
-    , "communism", "oligarchy", "bureaucracy", "monarchy", "alt f4", "alt+f4", "exit", "enter"
-		, "***"
+    , "communism", "oligarchy", "bureaucracy", "monarchy", "alt f4", "alt\\+f4", "exit", "enter"
+		, "\\*\\*\\*"
 ];
 
 var MINIMUM_MESSAGE_LENGTH = 3; //For Kappas and other short messages.
