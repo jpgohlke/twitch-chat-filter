@@ -19,6 +19,8 @@
 
 // --- Filtering ---
 
+var HIDE_NON_ASCII_CHARACTERS = true;
+
 //This regex recognizes messages that contain exactly a chat command,
 //without any extra words before it. For democracy mode,
 //we also match compound commands like `up2left4` and `start9`.
@@ -90,10 +92,21 @@ setInterval(function () {
 
     $('#chat_line_list li:not(.cSpam):not(.cSafe)').each(function(){
         var chatLine = $(this);
-        var chatText = chatLine.find(".chat_line");
+        var chatText = chatLine.find(".chat_line").text();
         if(chatLine.length > 0){ // Ignore twitch warnings
+        
+            //Quick and dirty hack to hide lines containing non-ASCII
+            //characters (e.g., "RIOT" smilies)
+            if(HIDE_NON_ASCII_CHARACTERS) {
+                for(var i = 0; i < chatText.length; i++) {
+                    if(chatText.charCodeAt(i) > 127) {
+                        return;
+                    }
+                }
+            }
+        
           // Praise the Helix!
-          if(chatText.text().match(FILTER_REGEX)){
+          if(chatText.match(FILTER_REGEX)){
             chatLine.addClass("cSpam");
           } else {
             chatLine.addClass("cSafe");
