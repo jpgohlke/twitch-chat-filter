@@ -33,7 +33,8 @@ var BLOCKED_WORDS = [
 //This regex recognizes messages that contain exactly a chat command,
 //without any extra words before it. For democracy mode,
 //we also match compound commands like `up2left4` and `start9`.
-var FILTER_REGEX = new RegExp("^\s*((" + BLOCKED_WORDS.join("|") + ")\d?)+\s*$", "i");
+// (remember to escape the backslashes if you are building a regex dynamically!)
+var FILTER_REGEX = new RegExp("^\\s*((" + BLOCKED_WORDS.join("|") + ")\\d?)+\\s*$", "i");
 
 var MINIMUM_TEXT_LENGTH = 3;
 var MAXIMUM_SPECIAL_CHARACTERS = 2;
@@ -106,7 +107,7 @@ setInterval(function () {
     $('#chat_line_list li:not(.cSpam):not(.cSafe)').each(function() {
         
         var chatLine = $(this);
-        var chatText = chatLine.find(".chat_line").text().trim();
+        var chatText = chatLine.find(".chat_line").text();
         
         // Ignore Twitch warnings
         if(chatLine.length <= 0) {
