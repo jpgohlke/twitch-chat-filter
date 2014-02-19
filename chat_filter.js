@@ -19,10 +19,21 @@
 
 // --- Filtering ---
 
+var BLOCKED_WORDS = [
+    "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy",												//	Standard Commands
+    "upu", "uo", "pu", "uup", "uip", "ip", 																							//	"up" misspellings
+    "dwon", "donw", "dowm", "dow", "dowqn", "doiwn", "diwn", "ldown", "donwn", "odwn", "downm", "dpwn", "downw", "downd", "dowj",	//	"down" misspellings
+    "lef", "lfet", "lefft", "letf", "leftr", "leftrt", "leftl", "lwft", 															//	"left" misspellings
+    "riight", "rightr", "roght", "righ", "ight", "righr", "rigt", 																	//	"right" misspellings
+    "anrachy", "anrchy", "anarch", "amarchy", 																						//	"anarchy" misspellings
+    "democrazy", "demarchy", "demcracy", "democarcy", "democrasy", "democacy", "demoocracy", 										//	"democracy" misspellings
+    "oligarchy", "bureaucracy"																										//	Other
+];
+
 //This regex recognizes messages that contain exactly a chat command,
 //without any extra words before it. For democracy mode,
 //we also match compound commands like `up2left4` and `start9`.
-var FILTER_REGEX = /^\s*((left|right|up|down|start|select|a|b|democracy|anarchy)\d?)+\s*$/i;
+var FILTER_REGEX = new RegExp("^\s*((" + BLOCKED_WORDS.join("|") + ")\d?)+\s*$", "i");
 
 var MINIMUM_TEXT_LENGTH = 3;
 var MAXIMUM_SPECIAL_CHARACTERS = 2;
