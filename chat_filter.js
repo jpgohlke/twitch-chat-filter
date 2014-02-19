@@ -17,34 +17,11 @@
 
 /* global $:false, CurrentChat:false */
 
-//Are we in a heathen's democracy?  If so, we need to block more variations.
-var DEMOCRACY_MODE = true;
 
-//Words to filter; easy for casual users to modify this
-//Now that the democracy/anarchy feature is permanent, we may as well 
-//block these words at all times.
-var BLOCKED_WORDS = [
-	"left",
-	"right",
-	"up",
-	"down",
-	"start",
-	"select",
-	"a",
-	"b",
-	"democracy",
-	"anarchy"
-];
-
-//Build the regular expression from the above list.
-//If it's not (!) a message that starts (^),
-//is followed by one of the commands (up|down|...)
-//and immediately ends ($), then we show the message.
-//If Democracy Mode is on, we need to match things like `up2left4`
-//and `start9`. Kappa
-var ANARCHY_REGEX = new RegExp("^(" + BLOCKED_WORDS.join("|") + ")$", "i");
-var DEMOCRACY_REGEX = new RegExp("^((" + BLOCKED_WORDS.join("|") + ")\\d?)+$", "i");
-var FILTER_REGEX = DEMOCRACY_MODE ? DEMOCRACY_REGEX : ANARCHY_REGEX;
+//This regex recognizes messages that contain exactly a chat command,
+//without any spaces or extra words before it. For democracy mode,
+//we also match compound commands like `up2left4` and `start9`.
+var FILTER_REGEX = /^((left|right|up|down|start|select|a|b|democracy|anarchy)\d?)+$/i;
 
 // Identify the chat button
 var CHAT_BUTTON = $("ul.segmented_tabs li a").first();
