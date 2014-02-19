@@ -19,12 +19,14 @@
 
 // --- Filtering ---
 
-var HIDE_NON_ASCII_CHARACTERS = true;
-
 //This regex recognizes messages that contain exactly a chat command,
 //without any extra words before it. For democracy mode,
 //we also match compound commands like `up2left4` and `start9`.
 var FILTER_REGEX = /^\s*((left|right|up|down|start|select|a|b|democracy|anarchy)\d?)+\s*$/i;
+
+var MINIMUM_TEXT_LENGTH = 3;
+var MAXIMUM_SPECIAL_CHARACTERS = 2;
+var REFRESH_MILLISECONDS = 100;
 
 // --- UI ---
 
@@ -90,33 +92,42 @@ CurrentChat.line_buffer = 800;
 setInterval(function () {
     "use strict";
 
-    $('#chat_line_list li:not(.cSpam):not(.cSafe)').each(function(){
+    $('#chat_line_list li:not(.cSpam):not(.cSafe)').each(function() {
+    	
         var chatLine = $(this);
         var chatText = chatLine.find(".chat_line").text();
-        if(chatLine.length > 0){ // Ignore twitch warnings
         
-            //Quick and dirty hack to hide lines containing non-ASCII
-            //characters (e.g., "RIOT" smilies)
-            if(HIDE_NON_ASCII_CHARACTERS) {
-                for(var i = 0; i < chatText.length; i++) {
-                    if(chatText.charCodeAt(i) > 127) {
-                        chatLine.addClass("cSpam");
-                        return; //No need to check against the regex
-                    }
-                }
-            }
-        
-          // Praise the Helix!
-          if(chatText.match(FILTER_REGEX)){
-            chatLine.addClass("cSpam");
-          } else {
-            chatLine.addClass("cSafe");
-          }
+        // Ignore Twitch warnings
+        if(chatLine.length <= 0) {
+        	return;
         }
+        
+        // If the line is too short or matches the filter, mark it as spam
+        if(chatText.length < MINIMUM_TEXT_LENGTH || chatText.match(FILTER_REGEX)) {
+        	chatLine.addClass("cSpam");
+        	return;
+        }
+        
+        // If we've passed all the other tests, check if it contains too
+        // many non-ASCII characters (e.g., "donger" smilies)
+        var nonASCII = 0;
+        for(var i = 0; i < chatText.length; i++) {
+        	if(chatText.charCodeAt(i) > 127) {
+        		nonASCII++;
+        		if(nonASCII > MAXIMUM_SPECIAL_CHARACTERS) {
+        			chatLine.addClass("cSpam");
+        			return;
+        		}
+        	}
+        }
+        
+        // If we've gotten here, we've passed everything; mark it as safe
+        chatLine.addClass("cSafe");
     });
-
+    
+    //Scroll chat appropriately
     if (CurrentChat.currently_scrolling) { 
-        CurrentChat.scroll_chat(); 
+    	CurrentChat.scroll_chat(); 
     }
 
-}, 100);  // <- how many milliseconds
+}, REFRESH_MILLISECONDS);  // <- how many milliseconds
