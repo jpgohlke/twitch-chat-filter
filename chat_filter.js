@@ -2,7 +2,7 @@
  * chat_filter.js
  *
  * Feel free to review/compress it yourself; good internet security is important!
- * Compressed by http://javascriptcompressor.com.
+ * Compressed by UglifyJS.
  * Passes http://www.jshint.com on default settings
  * Contributors:
  *     /u/RenaKunisaki
@@ -27,31 +27,31 @@ var FILTER_REGEX = /^((left|right|up|down|start|select|a|b|democracy|anarchy)\d?
 // --- UI ---
 
 $(
-    " <style type='text/css' >                     " +
-    " .segmented_tabs li li a.CommandsToggle {     " +
-    "     width: 50px;                             " +
-    "     padding-left: 0px;                       " +
-    "     padding-top: 0;                          " +
-    "     height: 8px;                             " +
-    "     line-height: 115%;                       " +
-    " }                                            " +
-    "                                              " +
-    " .segmented_tabs li li a.ChatToggle {         " +
-    "     width: 35px;                             " +
-    "     padding-left: 15px;                      " +
-    "     padding-top: 0;                          " +
-    "     height: 8px;                             " +
-    "     line-height: 115%;                       " +
-    " }                                            " +
-    "                                              " +
-    " #chat_line_list li { display:none }          " + // hide new, uncategorized messages
-    "                                              " +
-    " #chat_line_list li.fromjtv,                  " + // show twitch error messages
-    " #chat_line_list.showSpam li.cSpam,           " + // show commands if they toggled on
-    " #chat_line_list.showSafe li.cSafe {          " + // show non-commands if they are enabled
-    "     display:inherit;                         " +
-    " }                                            " +
-    " </style>                                     "
+    "<style type='text/css' >" +
+        ".segmented_tabs li li a.CommandsToggle {" +
+            "width: 50px;" +
+            "padding-left: 0px;" +
+            "padding-top: 0;" +
+            "height: 8px;" +
+            "line-height: 115%;" +
+        "}" +
+
+        ".segmented_tabs li li a.ChatToggle {" +
+            "width: 35px;" +
+            "padding-left: 15px;" +
+            "padding-top: 0;" +
+            "height: 8px;" +
+            "line-height: 115%;" +
+        "}" +
+
+        "#chat_line_list li { display:none }" + // hide new, uncategorized messages
+
+        "#chat_line_list li.fromjtv,"         + // show twitch error messages
+        "#chat_line_list.showSpam li.cSpam,"  + // show commands if they toggled on
+        "#chat_line_list.showSafe li.cSafe {" + // show non-commands if they are enabled
+            "display:inherit;" +
+        "}" +
+    " </style>"
 ).appendTo("head");
 
 
