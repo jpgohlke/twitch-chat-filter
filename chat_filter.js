@@ -106,7 +106,7 @@ setInterval(function () {
     $('#chat_line_list li:not(.cSpam):not(.cSafe)').each(function() {
     	
         var chatLine = $(this);
-        var chatText = chatLine.find(".chat_line").text();
+        var chatText = chatLine.find(".chat_line").text().trim();
         
         // Ignore Twitch warnings
         if(chatLine.length <= 0) {
