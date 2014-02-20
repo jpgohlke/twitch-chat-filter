@@ -226,7 +226,16 @@ var initialize_filter = function(){
     //increase the buffer size from the default 150 so chat messages
     //last a bit longer.
     CurrentChat.line_buffer = 800;
-
+    
+    // Add classes to existing chat lines (when loaded from console)
+    $('#chat_line_list li').each(function() {
+        var chatLine = $(this);
+        var chatText = chatLine.find(".chat_line").text();
+        var chatClass = is_message_spam(chatText) ? "cSpam" : "cSafe";
+        chatLine.addClass(chatClass);
+    });
+    
+    // Add classes to new chat lines
     var _insert_chat_line = CurrentChat.insert_chat_line;
     CurrentChat.insert_chat_line = function(e){
         // Call original
@@ -244,9 +253,14 @@ var initialize_filter = function(){
 
 $(function(){
     initialize_ui();
-});
-$(myWindow).on("load", function(){
-    initialize_filter();
+    
+    if(myWindow.CurrentChat) {
+        initialize_filter();
+    } else {
+        $(myWindow).on("load", function(){
+            initialize_filter();
+        });
+    }
 });
     
 }());
