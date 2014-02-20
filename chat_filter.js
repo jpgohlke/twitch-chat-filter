@@ -1,21 +1,21 @@
 /*
-Permission is hereby granted, free of charge, to any person obtaining a copy 
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights 
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
-copies of the Software, and to permit persons to whom the Software is furnished 
-to do so, subject to the following conditions:
- 
-The above copyright notice and this permission notice shall be included in all 
-copies or substantial portions of the Software.
- 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
-HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ * Permission is hereby granted, free of charge, to any person obtaining a copy 
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights 
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
+ * copies of the Software, and to permit persons to whom the Software is furnished 
+ * to do so, subject to the following conditions:
+ *  
+ * The above copyright notice and this permission notice shall be included in all 
+ * copies or substantial portions of the Software.
+ *  
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 
 /* 
  * chat_filter.js
@@ -42,8 +42,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 var BLOCKED_WORDS = [
     //Standard Commands
     "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy",                                                
-
-    //Other spam.
+    //Other spam
     "oligarchy", "bureaucracy", "monarchy", "alt f4"
 ];
 
@@ -54,80 +53,89 @@ var REFRESH_MILLISECONDS = 100;
 
 // --- Filtering ---
 
-// Adapted from https://gist.github.com/andrei-m/982927
-// Compute the edit distance between the two given strings
-function min_edit(a, b) {
-  if(a.length === 0) return b.length; 
-  if(b.length === 0) return a.length; 
- 
-  var matrix = [];
- 
-  // increment along the first column of each row
-  var i;
-  for(i = 0; i <= b.length; i++){
-    matrix[i] = [i];
-  }
- 
-  // increment each column in the first row
-  var j;
-  for(j = 0; j <= a.length; j++){
-    matrix[0][j] = j;
-  }
- 
-  // Fill in the rest of the matrix
-  for(i = 1; i <= b.length; i++){
-    for(j = 1; j <= a.length; j++){
-      if(b.charAt(i-1) == a.charAt(j-1)){
-        matrix[i][j] = matrix[i-1][j-1];
-      } else {
-        matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, // substitution
-                                Math.min(matrix[i][j-1] + 1, // insertion
-                                         matrix[i-1][j] + 1)); // deletion
-      }
-    }
-  }
- 
-  return matrix[b.length][a.length];
-}
-
-function applyMinEdit(msg) {
-  return function(curr_word) {
-    min_edit(curr_word, msg);
-  };
-}
-
 //This regex recognizes messages that contain exactly a chat command,
 //without any extra words around. This includes compound democracy mode
 //commands like `up2left4` and `start9`.
 // (remember to escape the backslashes when building a regexes from strings!)
 var commands_regex = new RegExp("^((" + BLOCKED_WORDS.join("|") + ")\\d?)+$", "i");
 
-var message_is_spam = function(msg){
+// Adapted from https://gist.github.com/andrei-m/982927
+// Compute the edit distance between the two given strings
+function min_edit(a, b) {
+    
+    if(a.length === 0) return b.length; 
+    if(b.length === 0) return a.length; 
+ 
+    var matrix = [];
+ 
+    // increment along the first column of each row
+    for(var i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
+    }
+ 
+    // increment each column in the first row
+    for(var j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+    }
+ 
+    // Fill in the rest of the matrix
+    for(var i = 1; i <= b.length; i++) {
+        for(var j = 1; j <= a.length; j++) {
+            if(b.charAt(i-1) == a.charAt(j-1)){
+                matrix[i][j] = matrix[i-1][j-1];
+            } else {
+                matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, // substitution
+                                        Math.min(matrix[i][j-1] + 1, // insertion
+                                                 matrix[i-1][j] + 1)); // deletion
+            }
+        }
+    }
+ 
+    return matrix[b.length][a.length];
+}
+
+function create_min_edit_function(msg) {
+    return function(curr_word) {
+        min_edit(curr_word, msg);
+    };
+}
+
+var is_message_spam = function(message){
     "use strict";
 
     //Ignore spaces
-    msg = msg.replace(/\s/g, '');
-
-    if(msg.length < MINIMUM_MESSAGE_LENGTH) return true;
-
-    if(msg.match(commands_regex)) return true;
-
-    //Maps distance function across all blocked words, and then takes the minimum integer in the array.
-    var min_distance = BLOCKED_WORDS.map(applyMinEdit).reduce(Math.min);
-
-    if(min_distance <= MINIMUM_DISTANCE_ERROR) return true;
-
+    message = message.replace(/\s/g, '');
+    
+    //Filter needlessly short messages
+    if(message.length < MINIMUM_MESSAGE_LENGTH) {
+        return true;
+    }
+    
+    //Filter messages identified as spam 
+    if(message.match(commands_regex)) {
+        return true;
+    }
+    
+    //Filter messages with too many non-ASCII characters
     var nonASCII = 0;
-    for(var i = 0; i < msg.length; i++) {
-        if(msg.charCodeAt(i) > 127) {
+    for(var i = 0; i < message.length; i++) {
+        if(message.charCodeAt(i) > 127) {
             nonASCII++;
             if(nonASCII > MAXIMUM_NON_ASCII_CHARACTERS){
                 return true;
             }
         }
     }
+    
+    //Find and filter common misspellings
+    //Maps distance function across all blocked words, and then takes the minimum integer in the array
+    var min_distance = BLOCKED_WORDS.map(create_min_edit_function).reduce(Math.min);
+    if(min_distance <= MINIMUM_DISTANCE_ERROR) {
+        return true;
+    }
 
-  return false;
+    //If we've gotten here, then we've passed all of our tests; the message is valid
+    return false;
 };
 
 // --- UI ---
@@ -170,14 +178,14 @@ $("<li><a class='CommandsToggle'>Commands</a><a class='ChatToggle'>Talk</a></li>
 
 $(".CommandsToggle").click(function () {
     $(this).toggleClass("selected");
-    $("#chat_line_list").toggleClass("showSpam");
+    CurrentChat._show_spam = !CurrentChat._show_spam;
 });
 
 $(".ChatToggle").click(function () {
     $(this).toggleClass("selected");
     $("#chat_line_list").toggleClass("showSafe");
-// Simulate a click on ChatToggle so it starts in the "on" position.
-}).click();
+}).click();  // Simulate a click on ChatToggle so it starts in the "on" position.
+
 
 // --- Main ---
 
@@ -193,7 +201,7 @@ setInterval(function () {
         var chatLine = $(this);
         var chatText = chatLine.find(".chat_line").text();
         
-        if(message_is_spam(chatText)){
+        if(is_message_spam(chatText)){
           chatLine.addClass("cSpam");
         }else{
           chatLine.addClass("cSafe");
