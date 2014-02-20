@@ -65,7 +65,6 @@ var BLOCKED_WORDS = [
 var MINIMUM_MESSAGE_LENGTH = 3; // For Kappas and other short messages.
 var MAXIMUM_NON_ASCII_CHARACTERS = 2; // For donger smilies, etc
 var MINIMUM_DISTANCE_ERROR = 2; // Number of insertions / deletions / substitutions away from a blocked word.
-var REFRESH_MILLISECONDS = 100;
 
 // --- Greasemonkey loading ---
 
@@ -211,32 +210,26 @@ var initialize_ui = function(){
 // --- Main ---
 
 var initialize_filter = function(){
-
-    setInterval(function () {
-        
-        $('#chat_line_list li:not(.cSpam):not(.cSafe)').each(function() {
-            var chatLine = $(this);
-            var chatText = chatLine.find(".chat_line").text();
-            
-            if(message_is_spam(chatText)){
-              chatLine.addClass("cSpam");
-            }else{
-              chatLine.addClass("cSafe");
-            }
-        });
-        
-        
-        //The spam commands still push chat messages out the queue so we 
-        //increase the buffer size from the default 150 so chat messages
-        //last a bit longer.
-        myWindow.CurrentChat.line_buffer = 800;
-        
-        //Scroll chat appropriately
-        if (myWindow.CurrentChat.currently_scrolling) { 
-            myWindow.CurrentChat.scroll_chat();
-        }
     
-    }, REFRESH_MILLISECONDS);
+    var CurrentChat = myWindow.CurrentChat;
+    
+    //The spam commands still push chat messages out the queue so we 
+    //increase the buffer size from the default 150 so chat messages
+    //last a bit longer.
+    CurrentChat.line_buffer = 800;
+
+    var _insert_chat_line = CurrentChat.insert_chat_line;
+    CurrentChat.insert_chat_line = function(e){
+        // Call original
+        _insert_chat_line.call(this, e);
+        // The original calls insert_with_lock, which adds
+        // an insert operation to a queue
+        // Retrieve this last operation from the queue
+        var queueOp = this.queue[this.queue.length-1];
+        // Add a class by modifying the operation
+        var chatClass = message_is_spam(e.message) ? "cSpam" : "cSafe";
+        queueOp.line = queueOp.line.replace('class="', 'class="' + chatClass + ' ');
+    }
     
 };
 
