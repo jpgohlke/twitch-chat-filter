@@ -96,7 +96,7 @@ function min_edit(a, b) {
 
 function create_min_edit_function(message) {
     return function(current_word) {
-        min_edit(current_word, message);
+        return min_edit(current_word, message);
     };
 }
 
