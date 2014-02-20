@@ -214,9 +214,6 @@ var initialize_filter = function(){
 
     setInterval(function () {
         
-        //Check if the chat has already loaded
-        if(!myWindow.CurrentChat){ return; }
-        
         $('#chat_line_list li:not(.cSpam):not(.cSafe)').each(function() {
             var chatLine = $(this);
             var chatText = chatLine.find(".chat_line").text();
@@ -245,6 +242,8 @@ var initialize_filter = function(){
 
 $(function(){
     initialize_ui();
+});
+$(myWindow).on("load", function(){
     initialize_filter();
 });
     
