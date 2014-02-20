@@ -1,5 +1,4 @@
 /*
-<<<<<<< Updated upstream
 Permission is hereby granted, free of charge, to any person obtaining a copy 
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights 
@@ -16,13 +15,6 @@ PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIG
 HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-=======
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
->>>>>>> Stashed changes
 */
 
 /* 
@@ -98,15 +90,12 @@ function min_edit(a, b) {
   return matrix[b.length][a.length];
 }
 
-<<<<<<< Updated upstream
-=======
 function applyMinEdit(msg) {
   return function(curr_word) {
     min_edit(curr_word, msg);
   };
 }
 
->>>>>>> Stashed changes
 //This regex recognizes messages that contain exactly a chat command,
 //without any extra words around. This includes compound democracy mode
 //commands like `up2left4` and `start9`.
@@ -124,15 +113,7 @@ var message_is_spam = function(msg){
     if(msg.match(commands_regex)) return true;
 
     //Maps distance function across all blocked words, and then takes the minimum integer in the array.
-<<<<<<< Updated upstream
-    var min_distance = BLOCKED_WORDS.map(function(curr_word) {
-      return min_edit(curr_word, msg);
-    }).reduce(function(val1, val2) {
-      return Math.min(val1, val2);
-    });
-=======
     var min_distance = BLOCKED_WORDS.map(applyMinEdit).reduce(Math.min);
->>>>>>> Stashed changes
 
     if(min_distance <= MINIMUM_DISTANCE_ERROR) return true;
 
