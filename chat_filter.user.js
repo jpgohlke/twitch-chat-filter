@@ -121,14 +121,7 @@ function min_edit(a, b) {
     return matrix[b.length][a.length];
 }
 
-function create_min_edit_function(message) {
-    return function(current_word) {
-        return min_edit(current_word, message);
-    };
-}
-
 var is_message_spam = function(message){
-    "use strict";
 
     //Ignore spaces
     message = message.replace(/\s/g, '');
@@ -156,7 +149,10 @@ var is_message_spam = function(message){
     
     //Find and filter common misspellings
     //Maps distance function across all blocked words, and then takes the minimum integer in the array
-    var min_distance = BLOCKED_WORDS.map(create_min_edit_function(message)).reduce(Math.min);
+    var min_distance =
+      BLOCKED_WORDS
+      .map(function(word){ return min_edit(word, message) })
+      .reduce(function(x,y,i,arr){ return Math.min(x,y) });
     if(min_distance <= MINIMUM_DISTANCE_ERROR) {
         return true;
     }
