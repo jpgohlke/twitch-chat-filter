@@ -123,7 +123,7 @@ $(
     "<style type='text/css' >" +
         ".segmented_tabs li li a.CommandsToggle {" +
             "width: 50px;" +
-            "padding-left: 0px;" +
+            "padding-left: 0;" +
             "padding-top: 0;" +
             "height: 8px;" +
             "line-height: 115%;" +
@@ -163,11 +163,8 @@ $(".CommandsToggle").click(function () {
 $(".ChatToggle").click(function () {
     $(this).toggleClass("selected");
     $("#chat_line_list").toggleClass("showSafe");
-});
-
 // Simulate a click on ChatToggle so it starts in the "on" position.
-$(".ChatToggle").click();
-
+}).click();
 
 // --- Main ---
 
