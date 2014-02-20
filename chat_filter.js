@@ -1,3 +1,11 @@
+/*
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ 
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
 /* 
  * chat_filter.js
  *
@@ -12,59 +20,64 @@
  *     /u/red_agent
  *     /u/DeathlyDeep
  *     /u/jeff_gohlke
+ *     /u/yankjenets
  */
 
 
 /* global $:false, CurrentChat:false */
 
-
 // --- Script configuration ---
 
-// Please make sure it doesn't surpass 100 columns for readability <3
-// Made all line-ending commas (',\n')  on the next line.
-// Simpler to add new words without getting errors from forgetting to add a comma at the end
 var BLOCKED_WORDS = [
     //Standard Commands
-    "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy"
-	
-	//    "up" misspellings
-    , "upu", "uo", "pu", "uup", "uip", "ip", "uyp", "upp", "upo", "uupu"
-    
-	//    "down" misspellings
-	, "dwon", "donw", "dowm", "dow", "dowqn", "doiwn", "diwn", "ldown", "donwn", "odwn", "downm"
-		, "dpwn", "downw", "downd", "dowj", "doen", "dpwm", "dopwn", "dwn", "don", "ddown", "sown"
-		, "odnw"
-    
-	//    "left" misspellings
-	, "lef", "lfet", "lefft", "letf", "leftr", "leftrt", "leftl", "lwft", "lefct", "lefet", "laft"
-		, "lrfy", "seft", "kleft", "l3ft", "lfte", "etfl", "lleft"
-    
-	//    "right" misspellings
-	, "riight", "rightr", "roght", "righ", "ight", "righr", "rigt", "dright", "girht", "rihy"
-		, "eifght", "rig", "tight", "rihtg", "rihgt", "rigth"
-	
-	//    "start" misspellings
-    , "atart", "strt", "strat", "starp"
-    
-	//    "anarchy" misspellings
-	, "anrachy", "anrchy", "anarch", "amarchy", "anarchy'", "anaarchy", "anarhcy", "anarachy"
-		, "anarchyanarchy", "anarchyvanarchy", "anarcy", "anrarchy", "anarchu", "anarcht"
-    
-	//    "democracy" misspellings
-	, "democrazy", "demarchy", "demcracy", "democarcy", "democrasy", "democacy", "demoocracy"
-		, "democary", "democravy", "demoracy", "democrazu", "demacrazy", "democrac", "deomcrazy"
-		, "deomcracy", "democracydemocracy", "democracyvdemocracy", "democracu", "domecracy"
-    
-	//Other spam.
-    , "communism", "oligarchy", "bureaucracy", "monarchy", "alt f4", "alt\\+f4", "exit", "enter"
-		, "\\*\\*\\*"
+    "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy",                                                
+
+    //Other spam.
+    "oligarchy", "bureaucracy", "monarchy", "alt f4"
 ];
 
 var MINIMUM_MESSAGE_LENGTH = 3; //For Kappas and other short messages.
 var MAXIMUM_NON_ASCII_CHARACTERS = 2; //For donger smilies, etc
+var MINIMUM_DISTANCE_ERROR = 2; // Number of insertions / deletions / substitutions away from a blocked word.
 var REFRESH_MILLISECONDS = 100;
 
 // --- Filtering ---
+
+// Adapted from https://gist.github.com/andrei-m/982927
+// Compute the edit distance between the two given strings
+function min_edit(a, b) {
+  if(a.length === 0) return b.length; 
+  if(b.length === 0) return a.length; 
+ 
+  var matrix = [];
+ 
+  // increment along the first column of each row
+  var i;
+  for(i = 0; i <= b.length; i++){
+    matrix[i] = [i];
+  }
+ 
+  // increment each column in the first row
+  var j;
+  for(j = 0; j <= a.length; j++){
+    matrix[0][j] = j;
+  }
+ 
+  // Fill in the rest of the matrix
+  for(i = 1; i <= b.length; i++){
+    for(j = 1; j <= a.length; j++){
+      if(b.charAt(i-1) == a.charAt(j-1)){
+        matrix[i][j] = matrix[i-1][j-1];
+      } else {
+        matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, // substitution
+                                Math.min(matrix[i][j-1] + 1, // insertion
+                                         matrix[i-1][j] + 1)); // deletion
+      }
+    }
+  }
+ 
+  return matrix[b.length][a.length];
+}
 
 //This regex recognizes messages that contain exactly a chat command,
 //without any extra words around. This includes compound democracy mode
@@ -81,6 +94,15 @@ var message_is_spam = function(msg){
     if(msg.length < MINIMUM_MESSAGE_LENGTH) return true;
 
     if(msg.match(commands_regex)) return true;
+
+    //Maps distance function across all blocked words, and then takes the minimum integer in the array.
+    var min_distance = BLOCKED_WORDS.map(function(curr_word) {
+      return min_edit(curr_word, msg);
+    }).reduce(function(val1, val2) {
+      return Math.min(val1, val2);
+    });
+
+    if(min_distance <= MINIMUM_DISTANCE_ERROR) return true;
 
     var nonASCII = 0;
     for(var i = 0; i < msg.length; i++) {
