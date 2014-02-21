@@ -126,27 +126,27 @@ function min_edit(a, b) {
 }
 
 var is_message_command = function(message){
-	
-	//Ignore spaces
+    
+    //Ignore spaces
     message = message.replace(/\s/g, '');
-	
+    
     //Filter messages identified as commands 
-	if(message.match(command_regex)) {
-        return true;
-	}
-	
-	//Find and filter common misspellings
-    //Maps distance function across all blocked words, and then takes the minimum integer in the array
-	var min_cmd_distance = 
-		COMMAND_WORDS
-		.map(function(word){ return min_edit(word, message) })
-		.reduce(function(x,y,i,arr){ return Math.min(x,y) });
-	if(min_cmd_distance <= MINIMUM_DISTANCE_ERROR) {
+    if(message.match(command_regex)) {
         return true;
     }
-	
+    
+    //Find and filter common misspellings
+    //Maps distance function across all blocked words, and then takes the minimum integer in the array
+    var min_cmd_distance = 
+        COMMAND_WORDS
+        .map(function(word){ return min_edit(word, message) })
+        .reduce(function(x,y,i,arr){ return Math.min(x,y) });
+    if(min_cmd_distance <= MINIMUM_DISTANCE_ERROR) {
+        return true;
+    }
+    
     //If we get to here the message isn't a command
-	return false;
+    return false;
 };
 
 var is_message_spam = function(message){
@@ -155,7 +155,7 @@ var is_message_spam = function(message){
     message = message.replace(/\s/g, '');
     
     //Filter needlessly short messages
-    if((message.length < MINIMUM_MESSAGE_LENGTH) && !(message.match(command_regex))) {
+    if((message.length < MINIMUM_MESSAGE_LENGTH)) {
         return true;
     }
     
@@ -177,13 +177,13 @@ var is_message_spam = function(message){
     
     //Find and filter common misspellings
     //Maps distance function across all blocked words, and then takes the minimum integer in the array
-	var min_spam_distance = 
-	    BLOCKED_WORDS
+    var min_spam_distance = 
+        BLOCKED_WORDS
         .map(function(word){ return min_edit(word, message) })
         .reduce(function(x,y,i,arr){ return Math.min(x,y) });
-	if(min_spam_distance < MINIMUM_DISTANCE_ERROR) {
-	    return true;
-	}
+    if(min_spam_distance < MINIMUM_DISTANCE_ERROR) {
+        return true;
+    }
     
     //If we've gotten here, then we've passed all of our tests; the message is valid
     return false;
@@ -194,8 +194,8 @@ var is_message_spam = function(message){
 var initialize_ui = function(){
 
     $(
-		"<style type='text/css' >" +
-    		".segmented_tabs li li a.SpamToggle {" +
+        "<style type='text/css' >" +
+            ".segmented_tabs li li a.SpamToggle {" +
                 "width: 35px;" +
                 "padding-left: 15px;" +
                 "padding-top: 0;" +
@@ -256,16 +256,16 @@ var initialize_filter = function(){
         var chatLine = $(this);
         var chatText = chatLine.find(".chat_line").text();
         var chatClass;
-		if (is_message_spam(chatText) === true) {
-			chatClass = "cSpam";
-		} 
-		else if (is_message_command(chatText) === true) {
-			chatClass = "cCmd";
-		} 
-		else {
-			chatClass = "cSafe";
-		}
-		
+        if (is_message_command(chatText)) {
+            chatClass = "cCmd";
+        }
+        else if (is_message_spam(chatText)) {
+            chatClass = "cSpam";
+        }
+        else {
+            chatClass = "cSafe";
+        }
+        
         chatLine.addClass(chatClass);
     });
     
@@ -280,18 +280,18 @@ var initialize_filter = function(){
         var queueOp = this.queue[this.queue.length-1];
         // Add a class by modifying the operation
         var chatClass;
-		if (is_message_spam(e.message) === true) {
-			chatClass = "cSpam";
-		} 
-		else if (is_message_command(e.message) === true) {
-			chatClass = "cCmd";
-		}
-		else {
-			chatClass = "cSafe";
-		}
+        if (is_message_command(e.message)) {
+            chatClass = "cCmd";
+        }
+        else if (is_message_spam(e.message)) {
+            chatClass = "cSpam";
+        }
+        else {
+            chatClass = "cSafe";
+        }
         queueOp.line = queueOp.line.replace('class="', 'class="' + chatClass + ' ');
     }
-	
+    
 };
 
 $(function(){
