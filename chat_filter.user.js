@@ -54,10 +54,12 @@
 
 
 // --- Script configuration ---
+var COMMAND_WORDS = [
+    //Standard Commands
+    "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy"
+];
 
 var BLOCKED_WORDS = [
-    //Standard Commands
-    "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy",                                                
     //Other spam
     "oligarchy", "bureaucracy", "monarchy", "alt f4"
 ];
@@ -85,7 +87,8 @@ var $ = myWindow.jQuery;
 //without any extra words around. This includes compound democracy mode
 //commands like `up2left4` and `start9`.
 // (remember to escape the backslashes when building a regexes from strings!)
-var commands_regex = new RegExp("^((" + BLOCKED_WORDS.join("|") + ")\\d?)+$", "i");
+var command_regex = new RegExp("^((" + COMMAND_WORDS.join("|") + ")\\d?)+$", "i");
+var spam_regex = new RegExp("^((" + BLOCKED_WORDS.join("|") + ")\\d?)+$", "i");
 
 // Adapted from https://gist.github.com/andrei-m/982927
 // Compute the edit distance between the two given strings
@@ -122,18 +125,42 @@ function min_edit(a, b) {
     return matrix[b.length][a.length];
 }
 
+var is_message_command = function(message){
+	
+	//Ignore spaces
+    message = message.replace(/\s/g, '');
+	
+    //Filter messages identified as commands 
+	if(message.match(command_regex)) {
+        return true;
+	}
+	
+	//Find and filter common misspellings
+    //Maps distance function across all blocked words, and then takes the minimum integer in the array
+	var min_cmd_distance = 
+		COMMAND_WORDS
+		.map(function(word){ return min_edit(word, message) })
+		.reduce(function(x,y,i,arr){ return Math.min(x,y) });
+	if(min_cmd_distance <= MINIMUM_DISTANCE_ERROR) {
+        return true;
+    }
+	
+    //If we get to here the message isn't a command
+	return false;
+};
+
 var is_message_spam = function(message){
 
     //Ignore spaces
     message = message.replace(/\s/g, '');
     
     //Filter needlessly short messages
-    if(message.length < MINIMUM_MESSAGE_LENGTH) {
+    if((message.length < MINIMUM_MESSAGE_LENGTH) && !(message.match(command_regex))) {
         return true;
     }
     
     //Filter messages identified as spam 
-    if(message.match(commands_regex)) {
+    if(message.match(spam_regex)) {
         return true;
     }
     
@@ -150,14 +177,14 @@ var is_message_spam = function(message){
     
     //Find and filter common misspellings
     //Maps distance function across all blocked words, and then takes the minimum integer in the array
-    var min_distance =
-      BLOCKED_WORDS
-      .map(function(word){ return min_edit(word, message) })
-      .reduce(function(x,y,i,arr){ return Math.min(x,y) });
-    if(min_distance <= MINIMUM_DISTANCE_ERROR) {
-        return true;
-    }
-
+	var min_spam_distance = 
+	    BLOCKED_WORDS
+        .map(function(word){ return min_edit(word, message) })
+        .reduce(function(x,y,i,arr){ return Math.min(x,y) });
+	if(min_spam_distance < MINIMUM_DISTANCE_ERROR) {
+	    return true;
+	}
+    
     //If we've gotten here, then we've passed all of our tests; the message is valid
     return false;
 };
@@ -167,15 +194,15 @@ var is_message_spam = function(message){
 var initialize_ui = function(){
 
     $(
-        "<style type='text/css' >" +
-            ".segmented_tabs li li a.CommandsToggle {" +
-                "width: 50px;" +
-                "padding-left: 0;" +
+		"<style type='text/css' >" +
+    		".segmented_tabs li li a.SpamToggle {" +
+                "width: 35px;" +
+                "padding-left: 15px;" +
                 "padding-top: 0;" +
                 "height: 8px;" +
                 "line-height: 115%;" +
             "}" +
-    
+
             ".segmented_tabs li li a.ChatToggle {" +
                 "width: 35px;" +
                 "padding-left: 15px;" +
@@ -187,22 +214,22 @@ var initialize_ui = function(){
             "#chat_line_list li { display:none }" + // hide new, uncategorized messages
     
             "#chat_line_list li.fromjtv,"         + // show twitch error messages
-            "#chat_line_list.showSpam li.cSpam,"  + // show commands if they toggled on
-            "#chat_line_list.showSafe li.cSafe {" + // show non-commands if they are enabled
+            "#chat_line_list.showSpam li.cSpam,"  + // show spam if it is toggled on
+            "#chat_line_list.showSafe li.cSafe {" + // show text if it is enabled
                 "display:inherit;" +
             "}" +
         " </style>"
     ).appendTo("head");
-    
-    
+
+
     // Reduce the width of the chat button to fit the extra buttons we will add.
     var chat_button = $("ul.segmented_tabs li a").first();
     chat_button.css("width", chat_button.width() - 71);
     
     // Add a pair of buttons to toggle the spam on and off.
-    $("<li><a class='CommandsToggle'>Commands</a><a class='ChatToggle'>Talk</a></li>").insertAfter(chat_button);
-    
-    $(".CommandsToggle").click(function () {
+    $("<li><a class='SpamToggle'>Spam</a><a class='ChatToggle'>Talk</a></li>").insertAfter(chat_button);
+
+    $(".SpamToggle").click(function () {
         $(this).toggleClass("selected");
         $("#chat_line_list").toggleClass("showSpam");
     });
@@ -210,7 +237,7 @@ var initialize_ui = function(){
     $(".ChatToggle").click(function () {
         $(this).toggleClass("selected");
         $("#chat_line_list").toggleClass("showSafe");
-    }).click();  // Simulate a click on ChatToggle so it starts in the "on" position.
+    }).click(); // Simulate a click on ChatToggle so it starts in the "on" position.
 };
 
 // --- Main ---
@@ -228,7 +255,17 @@ var initialize_filter = function(){
     $('#chat_line_list li').each(function() {
         var chatLine = $(this);
         var chatText = chatLine.find(".chat_line").text();
-        var chatClass = is_message_spam(chatText) ? "cSpam" : "cSafe";
+        var chatClass;
+		if (is_message_spam(chatText) === true) {
+			chatClass = "cSpam";
+		} 
+		else if (is_message_command(chatText) === true) {
+			chatClass = "cCmd";
+		} 
+		else {
+			chatClass = "cSafe";
+		}
+		
         chatLine.addClass(chatClass);
     });
     
@@ -242,10 +279,19 @@ var initialize_filter = function(){
         // Retrieve this last operation from the queue
         var queueOp = this.queue[this.queue.length-1];
         // Add a class by modifying the operation
-        var chatClass = is_message_spam(e.message) ? "cSpam" : "cSafe";
+        var chatClass;
+		if (is_message_spam(e.message) === true) {
+			chatClass = "cSpam";
+		} 
+		else if (is_message_command(e.message) === true) {
+			chatClass = "cCmd";
+		}
+		else {
+			chatClass = "cSafe";
+		}
         queueOp.line = queueOp.line.replace('class="', 'class="' + chatClass + ' ');
     }
-    
+	
 };
 
 $(function(){
