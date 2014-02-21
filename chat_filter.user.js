@@ -44,6 +44,7 @@
  *     /u/yankjenets
  *     /u/hugomg
  *     /u/MKody
+ *	   /u/anonveggy
  */
 
 /* global unsafeWindow:false */
@@ -66,6 +67,7 @@ var MINIMUM_MESSAGE_LENGTH = 3; // For Kappas and other short messages.
 var MAXIMUM_NON_ASCII_CHARACTERS = 2; // For donger smilies, etc
 var MINIMUM_DISTANCE_ERROR = 2; // Number of insertions / deletions / substitutions away from a blocked word.
 
+var COMMANDS_RAW = new Array(); // Storage for Command-Panel
 // --- Greasemonkey loading ---
 
 //Greasemonkey userscripts run in a separate environment and cannot use
@@ -134,6 +136,7 @@ var is_message_spam = function(message){
     
     //Filter messages identified as spam 
     if(message.match(commands_regex)) {
+        command_panel_update(message);
         return true;
     }
     
@@ -211,6 +214,15 @@ var initialize_ui = function(){
         $(this).toggleClass("selected");
         $("#chat_line_list").toggleClass("showSafe");
     }).click();  // Simulate a click on ChatToggle so it starts in the "on" position.
+	
+	//Creates Command Panel DOM-Object
+	var command_panel = document.createElement("div");
+    command_panel.setAttribute("id","command_panel");
+    command_panel.setAttribute("style","background: grey;display: block; overflow: hidden;"); //webdesigners of the world - let the magic happen
+    command_panel.innerText = COMMANDS_RAW;
+	
+	//Appends DOM-Object via JQuery -insertBefore --#player
+    $(command_panel).insertBefore("#player");
 };
 
 // --- Main ---
@@ -250,14 +262,33 @@ var initialize_filter = function(){
 
 $(function(){
     initialize_ui();
-    
     if(myWindow.CurrentChat) {
         initialize_filter();
+        
     } else {
         $(myWindow).on("load", function(){
             initialize_filter();
+            
         });
     }
 });
     
+// updates the command panel DOM-Object 
+function command_panel_update(cmd){
+	if(COMMANDS_RAW.length != 0){
+		COMMANDS_RAW.unshift(cmd);
+	} else {
+		COMMANDS_RAW[0] = cmd;
+	}
+
+    if(COMMANDS_RAW.length >= 20){
+        COMMANDS_RAW.pop();
+    }
+    $("#command_panel").text(COMMANDS_RAW.toString());
+};
+
+
+
+
+
 }());
