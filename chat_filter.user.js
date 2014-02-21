@@ -4,7 +4,7 @@
 // @description Hide input commands from the chat.
 // @include     http://www.twitch.tv/twitchplayspokemon
 // @include     http://www.twitch.tv/twitchplayspokemon/
-// @version     1.3
+// @version     1.4
 // @updateURL   https://raw.github.com/jpgohlke/twitch-chat-filter/master/chat_filter.user.js
 // @grant       unsafeWindow
 // ==/UserScript==
