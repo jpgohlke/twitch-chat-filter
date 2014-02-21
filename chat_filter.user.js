@@ -317,13 +317,14 @@ var initialize_filter = function(){
 $(function(){
     initialize_ui();
     
-    if(myWindow.CurrentChat) {
-        initialize_filter();
-    } else {
-        $(myWindow).on("load", function(){
-            initialize_filter();
-        });
-    }
+	//Instead of testing for the existence of CurrentChat, check if the spinner is gone.
+	var chatLoadedCheck = myWindow.setInterval(function () {
+		if($("#chat_loading_spinner").css('display') == 'none'){
+			myWindow.clearInterval(chatLoadedCheck);
+			initialize_filter();
+		}
+	}, 100);
+	
 });
     
 }());
