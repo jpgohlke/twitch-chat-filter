@@ -59,7 +59,11 @@ var BLOCKED_WORDS = [
     //Standard Commands
     "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy",                                                
     //Other spam
-    "oligarchy", "bureaucracy", "monarchy", "alt f4", "nakedjenna", "bit.ly", "tinyurl", "teespring"
+    "oligarchy", "bureaucracy", "monarchy", "alt f4"
+];
+
+var BLOCKED_URLS = [
+    "nakedjenna", "bit.ly", "bitly", "tinyurl", "teespring"
 ];
 
 var MINIMUM_MESSAGE_LENGTH = 3; // For Kappas and other short messages.
@@ -135,6 +139,13 @@ var is_message_spam = function(message){
     //Filter messages identified as spam 
     if(message.match(commands_regex)) {
         return true;
+    }
+    
+    //Filter messages which have blocked links
+    for(var i = 0; i < BLOCKED_URLS.length; i++) {
+    	if(message.indexOf(BLOCKED_URLS[i]) !== -1) {
+    		return true;
+    	}
     }
     
     //Filter messages with too many non-ASCII characters
