@@ -59,11 +59,11 @@ var BLOCKED_WORDS = [
     //Standard Commands
     "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy",                                                
     //Other spam
-    "oligarchy", "bureaucracy", "monarchy", "alt f4"
+    "oligarchy", "bureaucracy", "monarchy", "alt f4", "helix"
 ];
 
 var BLOCKED_URLS = [
-    "nakedjenna", "bit.ly", "bitly", "tinyurl", "teespring"
+    "nakedjenna", "bit.ly", "bitly", "tinyurl", "teespring", "youtube.com/user", "naked-riley"
 ];
 
 var MINIMUM_MESSAGE_LENGTH = 3; // For Kappas and other short messages.
