@@ -127,10 +127,55 @@ function min_edit(a, b) {
     return matrix[b.length][a.length];
 }
 
-var is_message_spam = function(message){
+// Sure, only some links are spam, and it's good that the blocked url catches them.
+// However, if an url is spammed in the message, its always spam, even if otherwise valid
+// so test if same message has an url repeated several times.
+var message_has_duplicate_url = function(message){
+	
+	// Define an url as a string ending with "." + 1-3 non-space characters
+	// Befort the ending, a strign of any non-space character is acceptable
+	// if there is a '/' after then end, another non-space string can follow
+	var urls = message.match(/\S*\.[^\.\s]{1,3}\/[^\s\.]*[\.jpg|\.jpeg|\.png|\.mp3]?/g);
+	
+	if (urls != null) {
+		// Would have prefered finding a standard lib functino for this...
+		// But credits to http://stackoverflow.com/a/7376645 for this code snippet
+		// Straight forward and kinda obvious, except for the note about
+		// Object.prototype.hasOwnProperty.call(urlsSoFar, url)
+		var urlsSoFar = {};
+		for (var i = 0; i < urls.length; ++i) {
+			var url = urls[i];
+			if (Object.prototype.hasOwnProperty.call(urlsSoFar, url)) {
+				return true;
+			}
+			urlsSoFar[url] = true;
+		}
+	}
+	
+    //If we've gotten here, then we've passed all of our tests; the message is valid
+    return false;
+	
+};
 
+var is_message_spam = function(message){
+	
+	var original_message = message;
+	
     //Ignore spaces
     message = message.replace(/\s/g, '');
+    
+	
+	// Ignore one-word messages
+	// not rly spam or such, but there is enough messages as is,
+	// filtering out messages with low signal_per_line ratio makes sense then
+	if (message === original_message) {
+		return true;
+	}
+	
+	// This is really what the definition of spamming is
+	if (message_has_duplicate_url(original_message)) {
+		return true;
+	}
     
     //Filter needlessly short messages
     if(message.length < MINIMUM_MESSAGE_LENGTH) {
@@ -177,6 +222,8 @@ var is_message_spam = function(message){
 // --- UI ---
 var showSpam = false;
 var showSafe = false;
+var colorDirected = false;
+var allCaps = false;
 var initialize_ui = function(){
 
     $(
@@ -197,6 +244,22 @@ var initialize_ui = function(){
                 "line-height: 115%;" +
             "}" +
     
+            ".segmented_tabs li li a.AllCapsToggle {" +
+                "width: 45px;" +
+                "padding-left: 5px;" +
+                "padding-top: 0;" +
+                "height: 8px;" +
+                "line-height: 115%;" +
+            "}" +
+    
+            ".segmented_tabs li li a.DirectedToggle {" +
+                "width: 35px;" +
+                "padding-left: 15px;" +
+                "padding-top: 0;" +
+                "height: 8px;" +
+                "line-height: 115%;" +
+            "}" +
+    
             "#chat_line_list li { display:none }" + // hide new, uncategorized messages
     
             "#chat_line_list li.fromjtv,"         + // show twitch error messages
@@ -206,14 +269,34 @@ var initialize_ui = function(){
             "}" +
         " </style>"
     ).appendTo("head");
+	
+	$(
+        "<style type='text/css' >" +
+			".chat_line_directed {" +
+				"color: #0000FF;" +
+				"font-weight: bold;" +
+            "}" +
+                       
+            ".chat_line_directed_username {" +
+                "color: #FF0000;" +
+            "}" +
+        " </style>"
+    ).appendTo("head");
     
     
     // Reduce the width of the chat button to fit the extra buttons we will add.
     var chat_button = $("ul.segmented_tabs li a").first();
     chat_button.css("width", chat_button.width() - 71);
+	
+    var video_button = $("ul.segmented_tabs li a").last();
+    video_button.css("width", video_button.width() - 71);
     
-    // Add a pair of buttons to toggle the spam on and off.
-    $("<li><a class='CommandsToggle'>Commands</a><a class='ChatToggle'>Talk</a></li>").insertAfter(chat_button);
+    // Add a couple of buttons to toggle the spam on and off and such
+	var newButons = "<li><a class='CommandsToggle'>Commands</a>" +
+					"<a class='ChatToggle'>Talk</a></li>" +
+					"<li><a class='AllCapsToggle'>ALLCAPS</a>" +
+					"<a class='DirectedToggle'>@user</a></li>";
+	$(newButons).insertAfter(chat_button);
     
     $(".CommandsToggle").click(function () {
         $(this).toggleClass("selected");
@@ -225,6 +308,18 @@ var initialize_ui = function(){
         $(this).toggleClass("selected");
         $("#chat_line_list").toggleClass("showSafe");
 		showSafe = !showSafe;
+    }).click();  // Simulate a click on ChatToggle so it starts in the "on" position.
+	
+	$(".AllCapsToggle").click(function () {
+        $(this).toggleClass("selected");
+		allCaps = !allCaps;
+		initialize_filter();
+    });
+	
+	$(".DirectedToggle").click(function () {
+        $(this).toggleClass("selected");
+		colorDirected = !colorDirected;
+		initialize_filter();
     }).click();  // Simulate a click on ChatToggle so it starts in the "on" position.
 };
 
@@ -238,10 +333,82 @@ var initialize_filter = function(){
     $('#chat_line_list li').each(function() {
         var chatLine = $(this);
         var chatText = chatLine.find(".chat_line").text();
+		
+		var noallcaps = function(match, offset, string) {
+			return match.toLowerCase();
+		};
+		if (!allCaps) {
+			chatLine.find(".chat_line").text( chatText.replace(/[^a-z]+/, noallcaps) );
+		}
+		
+		// CBA to care about scopes, so I create this function twice exactly where I need it
+		var direct_message_callback = function(match, p1, p2, p3, p4, offset, string) {
+		   
+			var pre = p1.replace(/(.*)(@)(\w+)(.*)/i, direct_message_callback);
+			if (p1 == pre) {
+					pre = "<span class=\"chat_line\">" + pre + "</span>";
+			}
+		   
+			var directed = "<span class=\"chat_line_directed\">" + p2 + "</span>";
+			var username = "<span class=\"chat_line_directed_username\">" + p3 + "</span>";
+			var post = "<span class=\"chat_line\">" + p4 + "</span>";
+		   
+			return pre + directed + username + post;
+		   
+		};
+		var newInnerHTML = chatText.replace(/(.*)(@)(\w+)(.*)/i, direct_message_callback);
+		if (colorDirected && newInnerHTML != chatText) {
+			var innerHTML = $(this)["0"].innerHTML
+			innerHTML = innerHTML.replace(/<span class=\"chat_line\">.*<\/span>/i, newInnerHTML);
+		}
+		
         var chatClass = is_message_spam(chatText) ? "cSpam" : "cSafe";
         chatLine.addClass(chatClass);
     });
-    
+	
+	
+    // @username coloring (cba to update to new stuff)
+    var _insert_chat_line = CurrentChat.insert_chat_line;
+    CurrentChat.insert_chat_line = function(e){
+        
+		var noallcaps = function(match, offset, string) {
+			return match.toLowerCase();
+		};
+		if (!allCaps) {
+			e.message = e.message.replace(/[^a-z]+/, noallcaps);
+		}
+		
+        // Call original
+        _insert_chat_line.call(this, e);
+        // The original calls insert_with_lock, which adds
+        // an insert operation to a queue
+        // Retrieve this last operation from the queue
+        var queueOp = this.queue[this.queue.length-1];
+		
+		// CBA to care about scopes, so I create this function twice exactly where I need it
+		var direct_message_callback = function(match, p1, p2, p3, p4, offset, string) {
+			
+			var pre = p1.replace(/(.*)(@)(\w+)(.*)/i, direct_message_callback);
+			if (p1 == pre) {
+					pre = "<span class=\"chat_line\">" + pre + "</span>";
+			}
+		   
+			var directed = "<span class=\"chat_line_directed\">" + p2 + "</span>";
+			var username = "<span class=\"chat_line_directed_username\">" + p3 + "</span>";
+			var post = "<span class=\"chat_line\">" + p4 + "</span>";
+		   
+			return pre + directed + username + post;
+		   
+		};
+		var newInnerHTML = e.message.replace(/(.*)(@)(\w+)(.*)/i, direct_message_callback);
+		if (colorDirected && newInnerHTML != e.message) {
+			queueOp.line =
+					queueOp.line.replace(/<span class=\"chat_line\">.*<\/span>/i, newInnerHTML);
+		}
+		 
+    }
+	
+	
 	//Init new counters
 	CurrentChat.spam_count = 0;
 	CurrentChat.safe_count = 0;
