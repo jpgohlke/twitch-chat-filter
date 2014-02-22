@@ -163,7 +163,8 @@ var is_message_spam = function(message){
 };
 
 // --- UI ---
-
+var showSpam = false;
+var showSafe = false;
 var initialize_ui = function(){
 
     $(
@@ -205,11 +206,13 @@ var initialize_ui = function(){
     $(".CommandsToggle").click(function () {
         $(this).toggleClass("selected");
         $("#chat_line_list").toggleClass("showSpam");
+		showSpam = !showSpam;
     });
     
     $(".ChatToggle").click(function () {
         $(this).toggleClass("selected");
         $("#chat_line_list").toggleClass("showSafe");
+		showSafe = !showSafe;
     }).click();  // Simulate a click on ChatToggle so it starts in the "on" position.
 };
 
@@ -218,12 +221,7 @@ var initialize_ui = function(){
 var initialize_filter = function(){
     
     var CurrentChat = myWindow.CurrentChat;
-    
-    //The spam commands still push chat messages out the queue so we 
-    //increase the buffer size from the default 150 so chat messages
-    //last a bit longer.
-    CurrentChat.line_buffer = 800;
-    
+
     // Add classes to existing chat lines (when loaded from console)
     $('#chat_line_list li').each(function() {
         var chatLine = $(this);
@@ -232,32 +230,101 @@ var initialize_filter = function(){
         chatLine.addClass(chatClass);
     });
     
-    // Add classes to new chat lines
-    var _insert_chat_line = CurrentChat.insert_chat_line;
-    CurrentChat.insert_chat_line = function(e){
-        // Call original
-        _insert_chat_line.call(this, e);
-        // The original calls insert_with_lock, which adds
-        // an insert operation to a queue
-        // Retrieve this last operation from the queue
-        var queueOp = this.queue[this.queue.length-1];
-        // Add a class by modifying the operation
-        var chatClass = is_message_spam(e.message) ? "cSpam" : "cSafe";
-        queueOp.line = queueOp.line.replace('class="', 'class="' + chatClass + ' ');
-    }
-    
+	//Init new counters
+	CurrentChat.spam_count = 0;
+	CurrentChat.safe_count = 0;
+	CurrentChat.jtv_count = 0;
+	
+	//Override twitch insert_with_lock_in (process message queue) function
+	CurrentChat.insert_with_lock_in = function () {
+        var t = this.set_currently_scrolling;
+        this.set_currently_scrolling = function () {};
+        var n, r, isSpam = !1,i = "",s = [];
+        while (this.queue.length > 0){ 
+			n = this.queue.shift();
+			//If this has a message...
+			if(n.linkid){
+				//Test if it's spam
+				isSpam = is_message_spam(n.info.message);
+				//And tag it with an appropriate class
+				var chatClass = isSpam ? "cSpam" : "cSafe";
+				n.line = n.line.replace('class="', 'class="' + chatClass + ' ');
+				s.push({
+					info: n.info,
+					linkid: n.linkid
+				});
+				//Increment the individual spam/safe counters
+				if(isSpam) {n.el === "#chat_line_list" && (this.spam_count++);}
+				else {n.el === "#chat_line_list" && (this.safe_count++);}
+			} else if (n.el === "#chat_line_list"){
+				//We keep a separate counter for these guys
+				this.jtv_count++;
+			}
+
+			r && r !== n.el && ($(r).append(i), i = "");
+			r = n.el;
+			i += n.line;
+		}
+        r && $(r).append(i);
+        for (var o = 0; o < s.length; o++) n = s[o], this.setup_viewer_handlers(n.info, n.linkid);
+		
+		//Line count should be the number of messages currently displayed
+		this.line_count = this.jtv_count;
+		if(showSpam){
+			this.line_count += this.spam_count;
+		} else if (this.spam_count > 1000) {
+			//If spam is hidden, let's keep the amount of SPAM li in the DOM down to a reasonable amount
+			var selected = $("#chat_line_list li.cSpam").slice(0, this.spam_count-this.line_buffer);
+			this.spam_count-=selected.length;
+			selected.remove();
+		}
+		if(showSafe){
+			this.line_count += this.safe_count;
+		}
+		
+		//If line count is > buffer (default 150), it's time to trim!
+        if(this.line_count > this.line_buffer){
+			//Create the jQuery selector based on current filter options
+			var selector = "#chat_line_list li";
+			if(showSpam){
+				selector += ".cSpam, #chat_line_list li";
+			}
+			if(showSafe){
+				selector += ".cSafe, #chat_line_list li";
+			}
+			selector += ".fromjtv";
+			
+			//Chop off the oldest messages that are displayed
+			$(selector).slice(0,(this.line_count - this.line_buffer)).each(function(){
+				//Scroll through each element to be deleted and decrement the appropriate counter
+				if($(this).hasClass("cSpam")){
+					CurrentChat.spam_count--;
+				} else if ($(this).hasClass("cSafe")){
+					CurrentChat.safe_count--;
+				} else {
+					CurrentChat.jtv_count--;
+				}
+			}).remove();
+			this.history_ended && this.scroll_chat();
+		}
+        var u = this;
+        setTimeout(function () {
+            u.history_ended && u.scroll_chat(), u.set_currently_scrolling = t, u.appending = !1
+        }, 1)
+    };
 };
 
 $(function(){
     initialize_ui();
     
-    if(myWindow.CurrentChat) {
-        initialize_filter();
-    } else {
-        $(myWindow).on("load", function(){
-            initialize_filter();
-        });
-    }
+	//Instead of testing for the existence of CurrentChat, check if the spinner is gone.
+	var chatLoadedCheck = myWindow.setInterval(function () {
+		if($("#chat_loading_spinner").css('display') == 'none'){
+			myWindow.clearInterval(chatLoadedCheck);
+			initialize_filter();
+		}
+	}, 100);
+	
 });
     
 }());
