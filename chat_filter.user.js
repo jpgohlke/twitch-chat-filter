@@ -131,10 +131,36 @@ function min_edit(a, b) {
 // so test if same message has an url repeated several times.
 var message_has_duplicate_url = function(message){
 	
-	// Define an url as a string ending with "." + 1-3 non-space characters
-	// Befort the ending, a strign of any non-space character is acceptable
-	// if there is a '/' after then end, another non-space string can follow
-	var urls = message.match(/\S*\.[^\.\s]{1,3}\/[^\s\.]*[\.jpg|\.jpeg|\.png|\.mp3]?/g);
+	// An URL is here defined as:
+	// [http[s]://][www.]domainname.domain[/path[.filetype_like_png][?query_string]]
+	// Any urls where the .domain to query (except for whats after the last '=' is equal,
+	// will be considered identical.
+	
+	// One could probably argue that the https://domainname part can be removed since it isnt used,
+	// as well as allowed to not even be there.
+	// I like it though since it can be modified for different stuff easily,
+	// and performance isnt important.
+	var url_regex = new RegExp(
+		"(?:https?\\://)?[^/\\s]*(\\.[^\\.\\s]{1,3}" // '[http[s]://][www.]ex[.]am.ple'
+		+ "(?:/[^\\.\\s]+" // '[/possible/path]'
+			+ "(?:\\.[^\\.\\s]{1,3})?" // '[.file]'
+		+ ")?"
+		+ "(?:\\?[^\\.\\s]+\\=[^\\.\\s]+" // '[?a=query]'
+			+ "(?:&[^\\.\\s]+\\=[^\\.\\s]+])*" // '[&for=stuff]'
+		+ ")?)"
+		, "gi"); // global and case-insensitive.
+	
+	var urls = [];
+	var regexec;
+	while ((regexec = url_regex.exec(message)) !== null)
+	{
+		var withoutLastQueryValue = /(\S*\=)\S*?/gi.exec(regexec[1]);
+		if (withoutLastQueryValue == null) {
+			urls.push(regexec[1]);
+		} else {
+			urls.push(withoutLastQueryValue[1]);
+		}
+	}
 	
 	if (urls != null) {
 		// Would have prefered finding a standard lib functino for this...
@@ -167,12 +193,12 @@ var is_message_spam = function(message){
 	// Ignore one-word messages
 	// not rly spam or such, but there is enough messages as is,
 	// filtering out messages with low signal_per_line ratio makes sense then
-	if (message === original_message) {
+	if (oneWordFilter && message === original_message) {
 		return true;
 	}
 	
 	// This is really what the definition of spamming is
-	if (message_has_duplicate_url(original_message)) {
+	if (urlDuplicateFilter && message_has_duplicate_url(original_message)) {
 		return true;
 	}
     
@@ -223,6 +249,8 @@ var showSpam = false;
 var showSafe = false;
 var colorDirected = false;
 var allCaps = false;
+var oneWordFilter = false;
+var urlDuplicateFilter = false;
 var initialize_ui = function(){
 
     $(
@@ -254,6 +282,22 @@ var initialize_ui = function(){
             ".segmented_tabs li li a.DirectedToggle {" +
                 "width: 35px;" +
                 "padding-left: 15px;" +
+                "padding-top: 0;" +
+                "height: 8px;" +
+                "line-height: 115%;" +
+            "}" +
+    
+            ".segmented_tabs li li a.OneWordFilterToggle {" +
+                "width: 45px;" +
+                "padding-left: 5px;" +
+                "padding-top: 0;" +
+                "height: 8px;" +
+                "line-height: 115%;" +
+            "}" +
+    
+            ".segmented_tabs li li a.URLDuplicateFilterToggle {" +
+                "width: 50px;" +
+                "padding-left: 0;" +
                 "padding-top: 0;" +
                 "height: 8px;" +
                 "line-height: 115%;" +
@@ -294,7 +338,9 @@ var initialize_ui = function(){
 	var newButons = "<li><a class='CommandsToggle'>Commands</a>" +
 					"<a class='ChatToggle'>Talk</a></li>" +
 					"<li><a class='AllCapsToggle'>ALLCAPS</a>" +
-					"<a class='DirectedToggle'>@user</a></li>";
+					"<a class='DirectedToggle'>@user</a></li>"
+					"<li><a class='OneWordFilterToggle'>OneWord</a>" +
+					"<li><a class='URLDuplicateFilterToggle'>URLSpam</a>" +;
 	$(newButons).insertAfter(chat_button);
     
     $(".CommandsToggle").click(function () {
@@ -318,6 +364,18 @@ var initialize_ui = function(){
 	$(".DirectedToggle").click(function () {
         $(this).toggleClass("selected");
 		colorDirected = !colorDirected;
+		initialize_filter();
+    }).click();  // Simulate a click on ChatToggle so it starts in the "on" position.
+	
+	$(".OneWordFilterToggle").click(function () {
+        $(this).toggleClass("selected");
+		oneWordFilter = !oneWordFilter;
+		initialize_filter();
+    });
+	
+	$(".URLDuplicateFilterToggle").click(function () {
+        $(this).toggleClass("selected");
+		urlDuplicateFilter = !urlDuplicateFilter;
 		initialize_filter();
     }).click();  // Simulate a click on ChatToggle so it starts in the "on" position.
 };
