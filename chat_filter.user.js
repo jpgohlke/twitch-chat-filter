@@ -296,8 +296,8 @@ var initialize_ui = function(){
             "}" +
     
             ".segmented_tabs li li a.URLDuplicateFilterToggle {" +
-                "width: 50px;" +
-                "padding-left: 0;" +
+                "width: 48px;" +
+                "padding-left: 2px;" +
                 "padding-top: 0;" +
                 "height: 8px;" +
                 "line-height: 115%;" +
@@ -329,10 +329,10 @@ var initialize_ui = function(){
     
     // Reduce the width of the chat button to fit the extra buttons we will add.
     var chat_button = $("ul.segmented_tabs li a").first();
-    chat_button.css("width", chat_button.width() - 71);
+    chat_button.css("width", chat_button.width() - 80);
 	
     var video_button = $("ul.segmented_tabs li a").last();
-    video_button.css("width", video_button.width() - 71);
+    video_button.css("width", video_button.width() - 80);
     
     // Add a couple of buttons to toggle the spam on and off and such
 	var newButons = "<li><a class='CommandsToggle'>Commands</a>" +
