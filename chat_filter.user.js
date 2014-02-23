@@ -289,8 +289,6 @@ var initialize_ui = function(){
         
     });
     
-    console.log("okokok");
-    
     document.body.appendChild(customStyles);
     document.body.appendChild(controlPanel);
 };
