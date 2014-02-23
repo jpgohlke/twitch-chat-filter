@@ -57,7 +57,7 @@
 
 var BLOCKED_WORDS = [
     //Standard Commands
-    "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy",                                                
+    "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy", "wait",                   
     //Other spam
     "oligarchy", "bureaucracy", "monarchy", "alt f4", "helix"
 ];
