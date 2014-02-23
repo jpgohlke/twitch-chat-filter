@@ -63,7 +63,8 @@ var BLOCKED_WORDS = [
 ];
 
 var BLOCKED_URLS = [
-    "nakedjenna", "bit.ly", "bitly", "tinyurl", "teespring", "youtube.com/user", "naked-riley"
+    "nakedjenna", "bit.ly", "bitly", "tinyurl", "teespring", "youtube.com/user", "naked-riley",
+    "twitch.tv", "ow.ly", "steam-games-free", "free-steam-games", "cheap games"
 ];
 
 var MINIMUM_MESSAGE_LENGTH = 3; // For Kappas and other short messages.
