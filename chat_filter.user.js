@@ -62,6 +62,20 @@ var TPP_COMMANDS = [
     "democracy", "anarchy",
 ];
 
+var URL_WHITELIST = [
+    //us
+     "github.com",
+    //reddit
+    "reddit.com",
+    "webchat.freenode.net/?channels=twitchplayspokemon",
+    "sites.google.com/site/twitchplayspokemonstatus/",
+    "http://www.reddit.com/live/sw7bubeycai6hey4ciytwamw3a",
+    //miscelaneous
+    "strawpoll.me",
+    "imgur.com",
+    "http://pokeworld.herokuapp.com"
+];
+
 var MINIMUM_DISTANCE_ERROR = 2; // Number of insertions / deletions / substitutions away from a blocked word.
 var MAXIMUM_NON_ASCII_CHARACTERS = 2; // For donger smilies, etc
 var MINIMUM_MESSAGE_WORDS = 2; // For Kappas and other short messages.
@@ -152,13 +166,30 @@ function message_is_command(message){
     return true;
 }
 
-function message_is_link(message){
+function is_whitelisted_url(url){
+    //This doesnt actually parse the URLs but it
+    //should do the job when it comes to filtering.
+    for(var i=0; i<URL_WHITELIST.length; i++){
+        if(0 <= url.indexOf(URL_WHITELIST[i])){
+            return true;
+        }
+    }
+    return false;
+}
+
+function message_is_forbidden_link(message){
     message = message.toLowerCase();
 
-    //TODO: whitelist some websites
+    var urls = message.match(myWindow.CurrentChat.linkify_re);
+    if(!urls) return false;
     
-    //Detect links using the same logic that Twitch uses.
-    return myWindow.CurrentChat.linkify_re.test(message);
+    for(var i=0; i<urls.length; i++){
+        if(!is_whitelisted_url(urls[i])){
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 function message_is_donger(message){
@@ -195,7 +226,7 @@ var filters = [
   { name: 'TppFilterLink',
     comment: "Hide messages with non-whitelisted URLs",
     def: true,
-    predicate: message_is_link
+    predicate: message_is_forbidden_link
   },
   
   { name: 'TppFilterDonger',
