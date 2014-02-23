@@ -340,7 +340,7 @@ var initialize_ui = function(){
 					"<li><a class='AllCapsToggle'>ALLCAPS</a>" +
 					"<a class='DirectedToggle'>@user</a></li>"
 					"<li><a class='OneWordFilterToggle'>OneWord</a>" +
-					"<li><a class='URLDuplicateFilterToggle'>URLSpam</a>" +;
+					"<a class='URLDuplicateFilterToggle'>URLSpam</a></li>" +;
 	$(newButons).insertAfter(chat_button);
     
     $(".CommandsToggle").click(function () {
