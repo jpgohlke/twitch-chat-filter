@@ -47,29 +47,38 @@
  */
 
 /* global unsafeWindow:false */
+/* jshint lastsemic:true */
 
 
 (function(){
 "use strict";
 
-
 // --- Script configuration ---
 
-var BLOCKED_WORDS = [
-    //Standard Commands
-    "left", "right", "up", "down", "start", "select", "a", "b", "democracy", "anarchy", "wait",                   
-    //Other spam
-    "oligarchy", "bureaucracy", "monarchy", "alt f4", "helix"
+var TPP_COMMANDS = [
+    "left", "right", "up", "down",
+    "start", "select",
+    "a", "b",
+    "democracy", "anarchy", "wait"
 ];
 
-var BLOCKED_URLS = [
-    "nakedjenna", "bit.ly", "bitly", "tinyurl", "teespring", "youtube.com/user", "naked-riley",
-    "twitch.tv", "ow.ly", "steam-games-free", "free-steam-games", "cheap games"
+var URL_WHITELIST = [
+    //us
+     "github.com",
+    //reddit
+    "reddit.com",
+    "webchat.freenode.net/?channels=twitchplayspokemon",
+    "sites.google.com/site/twitchplayspokemonstatus/",
+    "www.reddit.com/live/sw7bubeycai6hey4ciytwamw3a",
+    //miscelaneous
+    "strawpoll.me",
+    "imgur.com",
+    "pokeworld.herokuapp.com"
 ];
 
-var MINIMUM_MESSAGE_LENGTH = 3; // For Kappas and other short messages.
-var MAXIMUM_NON_ASCII_CHARACTERS = 2; // For donger smilies, etc
 var MINIMUM_DISTANCE_ERROR = 2; // Number of insertions / deletions / substitutions away from a blocked word.
+var MAXIMUM_NON_ASCII_CHARACTERS = 2; // For donger smilies, etc
+var MINIMUM_MESSAGE_WORDS = 2; // For Kappas and other short messages.
 
 // --- Greasemonkey loading ---
 
@@ -84,13 +93,7 @@ try{
 
 var $ = myWindow.jQuery;
     
-// --- Filtering ---
-
-//This regex recognizes messages that contain exactly a chat command,
-//without any extra words around. This includes compound democracy mode
-//commands like `up2left4` and `start9`.
-// (remember to escape the backslashes when building a regexes from strings!)
-var commands_regex = new RegExp("^((" + BLOCKED_WORDS.join("|") + ")\\d?)+$", "i");
+// --- Filtering predicates ---
 
 // Adapted from https://gist.github.com/andrei-m/982927
 // Compute the edit distance between the two given strings
@@ -117,9 +120,11 @@ function min_edit(a, b) {
             if(b.charAt(i-1) == a.charAt(j-1)){
                 matrix[i][j] = matrix[i-1][j-1];
             } else {
-                matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, // substitution
-                                        Math.min(matrix[i][j-1] + 1, // insertion
-                                                 matrix[i-1][j] + 1)); // deletion
+                matrix[i][j] = 1 + Math.min(
+                    matrix[i-1][j-1], // substitution
+                    matrix[i][j-1]  , // insertion
+                    matrix[i-1][j]    // deletion
+                ); 
             }
         }
     }
@@ -127,29 +132,68 @@ function min_edit(a, b) {
     return matrix[b.length][a.length];
 }
 
-var is_message_spam = function(message){
+//This regex recognizes messages that contain exactly a chat command,
+//without any extra words around. This includes compound democracy mode
+//commands like `up2left4` and `start9`.
+// (remember to escape the backslashes when building a regexes from strings!)
+var compound_command_regex = new RegExp("^((" + TPP_COMMANDS.join("|") + ")\\d*)+$", "i");
 
-    //Ignore spaces
-    message = message.replace(/\s/g, '');
+function word_is_command(word){
+
+    if(compound_command_regex.test(word)) return true;
+
+    for(var j=0; j<TPP_COMMANDS.length; j++){
+        var cmd = TPP_COMMANDS[j];
+          
+        if(min_edit(cmd, word) <= MINIMUM_DISTANCE_ERROR){
+           return true;
+        }
+    }
+    return false;   
+}
+
+function message_is_command(message){
+    message = message.toLowerCase();
     
-    //Filter needlessly short messages
-    if(message.length < MINIMUM_MESSAGE_LENGTH) {
-        return true;
+    var segments = message.split(/[\d\s]+/);
+    
+    for(var i=0; i<segments.length; i++){
+        var segment = segments[i];
+        if(!segment) continue;
+        if(!word_is_command(segment)) return false;
     }
     
-    //Filter messages identified as spam 
-    if(message.match(commands_regex)) {
-        return true;
+    return true;
+}
+
+function is_whitelisted_url(url){
+    //This doesnt actually parse the URLs but it
+    //should do the job when it comes to filtering.
+    for(var i=0; i<URL_WHITELIST.length; i++){
+        if(0 <= url.indexOf(URL_WHITELIST[i])){
+            return true;
+        }
+    }
+    return false;
+}
+
+function message_is_forbidden_link(message){
+    message = message.toLowerCase();
+
+    var urls = message.match(myWindow.CurrentChat.linkify_re);
+    if(!urls) return false;
+    
+    for(var i=0; i<urls.length; i++){
+        if(!is_whitelisted_url(urls[i])){
+            return true;
+        }
     }
     
-    //Filter messages which have blocked links
-    for(var i = 0; i < BLOCKED_URLS.length; i++) {
-    	if(message.indexOf(BLOCKED_URLS[i]) !== -1) {
-    		return true;
-    	}
-    }
-    
-    //Filter messages with too many non-ASCII characters
+    return false;
+}
+
+function message_is_donger(message){
+
     var nonASCII = 0;
     for(var i = 0; i < message.length; i++) {
         if(message.charCodeAt(i) > 127) {
@@ -159,73 +203,126 @@ var is_message_spam = function(message){
             }
         }
     }
-    
-    //Find and filter common misspellings
-    //Maps distance function across all blocked words, and then takes the minimum integer in the array
-    var min_distance =
-      BLOCKED_WORDS
-      .map(function(word){ return min_edit(word, message) })
-      .reduce(function(x,y,i,arr){ return Math.min(x,y) });
-    if(min_distance <= MINIMUM_DISTANCE_ERROR) {
-        return true;
-    }
-
-    //If we've gotten here, then we've passed all of our tests; the message is valid
     return false;
-};
+}
+
+function message_is_small(message){
+    return message.split(/\s/g).length < MINIMUM_MESSAGE_WORDS;
+}
+
+function message_is_uppercase(message){
+    return message.toUpperCase() === message;
+}
+
+// --- Filtering ---
+
+var filters = [
+  { name: 'TppFilterCommand',
+    comment: "Hide commands (up, down, anarchy, etc)",
+    def: true,
+    predicate: message_is_command
+  },
+  
+  { name: 'TppFilterLink',
+    comment: "Hide messages with non-whitelisted URLs",
+    def: true,
+    predicate: message_is_forbidden_link
+  },
+  
+  { name: 'TppFilterDonger',
+    comment: "Hide dongers and ascii art. ヽ༼ຈل͜ຈ༽ﾉ",
+    def: false,
+    predicate: message_is_donger
+  },
+  
+  { name: 'TppFilterSmall',
+    comment: "Hide one-word messages (Kappa, \"yesss!\", etc)",
+    def: false,
+    predicate: message_is_small
+  },
+  
+  { name: 'TppFilterUppercase',
+    comment: "Hide ALLCAPS",
+    def: false,
+    predicate: message_is_uppercase
+  }
+];
+
+function classify_message(message){
+    message = $.trim(message);
+    
+    var classes = [];
+    filters.forEach(function(filter){
+      if(filter.predicate(message)){
+        classes.push(filter.name);
+      }
+    });
+    return classes;
+}
+
 
 // --- UI ---
-var showSpam = false;
-var showSafe = false;
+
 var initialize_ui = function(){
 
-    $(
-        "<style type='text/css' >" +
-            ".segmented_tabs li li a.CommandsToggle {" +
-                "width: 50px;" +
-                "padding-left: 0;" +
-                "padding-top: 0;" +
-                "height: 8px;" +
-                "line-height: 115%;" +
-            "}" +
-    
-            ".segmented_tabs li li a.ChatToggle {" +
-                "width: 35px;" +
-                "padding-left: 15px;" +
-                "padding-top: 0;" +
-                "height: 8px;" +
-                "line-height: 115%;" +
-            "}" +
-    
-            "#chat_line_list li { display:none }" + // hide new, uncategorized messages
-    
-            "#chat_line_list li.fromjtv,"         + // show twitch error messages
-            "#chat_line_list.showSpam li.cSpam,"  + // show commands if they toggled on
-            "#chat_line_list.showSafe li.cSafe {" + // show non-commands if they are enabled
-                "display:inherit;" +
-            "}" +
-        " </style>"
-    ).appendTo("head");
-    
-    
-    // Reduce the width of the chat button to fit the extra buttons we will add.
-    var chat_button = $("ul.segmented_tabs li a").first();
-    chat_button.css("width", chat_button.width() - 71);
-    
-    // Add a pair of buttons to toggle the spam on and off.
-    $("<li><a class='CommandsToggle'>Commands</a><a class='ChatToggle'>Talk</a></li>").insertAfter(chat_button);
-    
-    $(".CommandsToggle").click(function () {
-        $(this).toggleClass("selected");
-        $("#chat_line_list").toggleClass("showSpam");
-		showSpam = !showSpam;
+    var chatList = $("#chat_line_list");
+
+    //TODO: #chat_line_list li.fromjtv
+
+    var customCssParts = [];
+    filters.forEach(function(filter){
+        var cls = filter.name;
+        customCssParts.push('#chat_line_list.'+cls+' li.'+cls+'{display:none}');
     });
     
-    $(".ChatToggle").click(function () {
-        $(this).toggleClass("selected");
-        $("#chat_line_list").toggleClass("showSafe");
-		showSafe = !showSafe;
-    }).click();  // Simulate a click on ChatToggle so it starts in the "on" position.
+    var customStyles = document.createElement("style");
+    customStyles.appendChild(document.createTextNode(customCssParts.join("")));
+
+    var controlPanel = document.createElement("div");
+    controlPanel.id = "TppControlPanel";
+    
+    var panelTable = document.createElement("table");
+    controlPanel.appendChild(panelTable);
+    
+    filters.forEach(function(filter){
+        var tr = document.createElement("tr");
+        panelTable.appendChild(tr);
+        
+        var td;
+        
+        td = document.createElement("td");
+        var ipt = document.createElement("input");
+        ipt.type = "checkbox";
+        ipt.checked = filter.def; // <---
+        td.appendChild(ipt);
+        tr.appendChild(td);
+        
+        td = document.createElement("td");
+        td.appendChild(document.createTextNode(filter.comment)); // <---
+        
+        tr.appendChild(td);
+        
+        if(filter.def){
+            chatList.addClass(filter.name);
+        }
+        
+        $(ipt).click(function(){
+            chatList.toggleClass(filter.name);
+        });
+        
+    });
+    
+    var toggleControlPanel = document.createElement("button");
+    toggleControlPanel.appendChild(document.createTextNode("Chat Filter settings"));
+    $(toggleControlPanel).click(function(){
+      $(controlPanel).toggleClass("hidden");
+    });
+    
+    var controls = document.getElementById("controls");
+    
+    document.body.appendChild(customStyles);
+    controls.appendChild(toggleControlPanel);
+    controls.appendChild(controlPanel);
 };
 
 // --- Main ---
@@ -238,105 +335,91 @@ var initialize_filter = function(){
     $('#chat_line_list li').each(function() {
         var chatLine = $(this);
         var chatText = chatLine.find(".chat_line").text();
-        var chatClass = is_message_spam(chatText) ? "cSpam" : "cSafe";
-        chatLine.addClass(chatClass);
+        classify_message(chatText).forEach(function(cls){
+          chatLine.addClass(cls);
+        });
     });
     
-	//Init new counters
-	CurrentChat.spam_count = 0;
-	CurrentChat.safe_count = 0;
-	CurrentChat.jtv_count = 0;
-	
-	//Override twitch insert_with_lock_in (process message queue) function
-	CurrentChat.insert_with_lock_in = function () {
+    CurrentChat.line_buffer = 800;
+    
+    //Override twitch insert_with_lock_in (process message queue) function
+    CurrentChat.insert_with_lock_in = function () {
         var t = this.set_currently_scrolling;
         this.set_currently_scrolling = function () {};
-        var n, r, isSpam = !1,i = "",s = [];
+        var n, r, i = "",s = [];
         while (this.queue.length > 0){ 
-			n = this.queue.shift();
-			//If this has a message...
-			if(n.linkid){
-				//Test if it's spam
-				isSpam = is_message_spam(n.info.message);
-				//And tag it with an appropriate class
-				var chatClass = isSpam ? "cSpam" : "cSafe";
-				n.line = n.line.replace('class="', 'class="' + chatClass + ' ');
-				s.push({
-					info: n.info,
-					linkid: n.linkid
-				});
-				//Increment the individual spam/safe counters
-				if(isSpam) {n.el === "#chat_line_list" && (this.spam_count++);}
-				else {n.el === "#chat_line_list" && (this.safe_count++);}
-			} else if (n.el === "#chat_line_list"){
-				//We keep a separate counter for these guys
-				this.jtv_count++;
-			}
-
-			r && r !== n.el && ($(r).append(i), i = "");
-			r = n.el;
-			i += n.line;
-		}
-        r && $(r).append(i);
-        for (var o = 0; o < s.length; o++) n = s[o], this.setup_viewer_handlers(n.info, n.linkid);
-		
-		//Line count should be the number of messages currently displayed
-		this.line_count = this.jtv_count;
-		if(showSpam){
-			this.line_count += this.spam_count;
-		} else if (this.spam_count > 1000) {
-			//If spam is hidden, let's keep the amount of SPAM li in the DOM down to a reasonable amount
-			var selected = $("#chat_line_list li.cSpam").slice(0, this.spam_count-this.line_buffer);
-			this.spam_count-=selected.length;
-			selected.remove();
-		}
-		if(showSafe){
-			this.line_count += this.safe_count;
-		}
-		
-		//If line count is > buffer (default 150), it's time to trim!
+            n = this.queue.shift();
+            //If this has a message...
+            if(n.linkid){
+                var chatClass = classify_message(n.info.message).join(" ");
+                n.line = n.line.replace('class="', 'class="' + chatClass + ' ');
+                s.push({
+                    info: n.info,
+                    linkid: n.linkid
+                });
+            }
+            
+            if(n.el === "#chat_line_list"){
+              this.line_count += 1;
+            }
+            
+            if(r && r !== n.el){
+                $(r).append(i);
+                i = "";
+            }
+            
+            r = n.el;
+            i += n.line;
+        }
+        
+        if(r){ $(r).append(i) }
+        
+        for (var o = 0; o < s.length; o++){
+            n = s[o];
+            this.setup_viewer_handlers(n.info, n.linkid);
+        }
+        
         if(this.line_count > this.line_buffer){
-			//Create the jQuery selector based on current filter options
-			var selector = "#chat_line_list li";
-			if(showSpam){
-				selector += ".cSpam, #chat_line_list li";
-			}
-			if(showSafe){
-				selector += ".cSafe, #chat_line_list li";
-			}
-			selector += ".fromjtv";
-			
-			//Chop off the oldest messages that are displayed
-			$(selector).slice(0,(this.line_count - this.line_buffer)).each(function(){
-				//Scroll through each element to be deleted and decrement the appropriate counter
-				if($(this).hasClass("cSpam")){
-					CurrentChat.spam_count--;
-				} else if ($(this).hasClass("cSafe")){
-					CurrentChat.safe_count--;
-				} else {
-					CurrentChat.jtv_count--;
-				}
-			}).remove();
-			this.history_ended && this.scroll_chat();
-		}
+            //Get rid of spam first
+            var spamLis = $("#chat_line_list li:hidden");
+            this.line_count -= spamLis.length;
+            spamLis.remove();
+            
+            if(this.line_count > this.line_buffer){
+                //All Already removed all the spam; Remove normal chat.
+                var excessLis = $("#chat_line_list li:lt(" + (this.line_count - this.line_buffer) + ")");
+                this.line_count -= excessLis.length;
+                excessLis.remove();
+            }
+            
+            if(this.history_ended){
+                this.scroll_chat();
+            }
+        }
+        
         var u = this;
         setTimeout(function () {
-            u.history_ended && u.scroll_chat(), u.set_currently_scrolling = t, u.appending = !1
-        }, 1)
+            if(u.history_ended){
+                u.scroll_chat();
+                u.set_currently_scrolling = t;
+                u.appending = false;
+            }
+        }, 1);
     };
+    
 };
 
 $(function(){
     initialize_ui();
     
-	//Instead of testing for the existence of CurrentChat, check if the spinner is gone.
-	var chatLoadedCheck = myWindow.setInterval(function () {
-		if($("#chat_loading_spinner").css('display') == 'none'){
-			myWindow.clearInterval(chatLoadedCheck);
-			initialize_filter();
-		}
-	}, 100);
-	
+    //Instead of testing for the existence of CurrentChat, check if the spinner is gone.
+    var chatLoadedCheck = setInterval(function () {
+        if($("#chat_loading_spinner").css('display') == 'none'){
+            clearInterval(chatLoadedCheck);
+            initialize_filter();
+        }
+    }, 100);
+    
 });
     
 }());
