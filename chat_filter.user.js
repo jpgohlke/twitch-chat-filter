@@ -338,7 +338,7 @@ var initialize_ui = function(){
 	var newButons = "<li><a class='CommandsToggle'>Commands</a>" +
 					"<a class='ChatToggle'>Talk</a></li>" +
 					"<li><a class='AllCapsToggle'>ALLCAPS</a>" +
-					"<a class='DirectedToggle'>@user</a></li>"
+					"<a class='DirectedToggle'>@user</a></li>" +
 					"<li><a class='OneWordFilterToggle'>OneWord</a>" +
 					"<a class='URLDuplicateFilterToggle'>URLSpam</a></li>";
 	$(newButons).insertAfter(chat_button);
