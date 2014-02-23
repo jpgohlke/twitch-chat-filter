@@ -269,15 +269,7 @@ var initialize_ui = function(){
 
     //TODO: #chat_line_list li.fromjtv
 
-    var customCssParts = [
-        "#TppControlPanel {",
-            "background-color:white;",
-            "position:absolute;",
-            "top:0px;",
-            "left:0px;",
-            "z-index:999;",
-        "}"
-    ];
+    var customCssParts = [];
     filters.forEach(function(filter){
         var cls = filter.name;
         customCssParts.push('#chat_line_list.'+cls+' li.'+cls+'{display:none}');
@@ -320,8 +312,17 @@ var initialize_ui = function(){
         
     });
     
+    var toggleControlPanel = document.createElement("button");
+    toggleControlPanel.appendChild(document.createTextNode("Chat Filter settings"));
+    $(toggleControlPanel).click(function(){
+      $(controlPanel).toggleClass("hidden");
+    });
+    
+    var controls = document.getElementById("controls");
+    
     document.body.appendChild(customStyles);
-    document.body.appendChild(controlPanel);
+    controls.appendChild(toggleControlPanel);
+    controls.appendChild(controlPanel);
 };
 
 // --- Main ---
