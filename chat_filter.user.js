@@ -69,11 +69,11 @@ var URL_WHITELIST = [
     "reddit.com",
     "webchat.freenode.net/?channels=twitchplayspokemon",
     "sites.google.com/site/twitchplayspokemonstatus/",
-    "http://www.reddit.com/live/sw7bubeycai6hey4ciytwamw3a",
+    "www.reddit.com/live/sw7bubeycai6hey4ciytwamw3a",
     //miscelaneous
     "strawpoll.me",
     "imgur.com",
-    "http://pokeworld.herokuapp.com"
+    "pokeworld.herokuapp.com"
 ];
 
 var MINIMUM_DISTANCE_ERROR = 2; // Number of insertions / deletions / substitutions away from a blocked word.
