@@ -45,6 +45,7 @@
  *     /u/hugomg
  *     /u/MKody
  *     /u/feha
+ *     /u/jakery2
  */
 
 /* global unsafeWindow:false */
@@ -67,6 +68,15 @@ var TPP_COMMANDS = [
 //of where they appear in the text
 var NON_COMMAND_SPAM = [
     "misty"
+];
+
+// Score-based filter for "Guys, we need to beat Misty" spam.
+var MISTY_SUBSTRINGS = [
+    "misty",
+    "guys",
+    "we have to",
+    "we need to",
+    "beat"
 ];
 
 var URL_WHITELIST = [
@@ -171,6 +181,24 @@ function message_is_command(message){
     }
     
     return true;
+}
+
+// Determine if message is variant of "Guys, we need to beat Misty."
+function message_is_misty(message) {
+	message = message.toLowerCase();
+	
+	var misty_score = 0;
+	for (var i = 0; i < MISTY_SUBSTRINGS.length; i++) {
+	    if (message.indexOf(MISTY_SUBSTRINGS[i]) != -1) {
+	        misty_score++;
+	        if (misty_score > 1) {
+	
+	            return true;
+	        }
+	    }
+	}
+	
+	return false;
 }
 
 function is_whitelisted_url(url){
@@ -327,8 +355,14 @@ var filters = [
   
   { name: 'TppFilterSpam',
 	comment: 'Hide common spam (\"MISTY\")',
-	def: true,
+	def: false,
 	predicate: message_is_spam
+  },
+ 
+  { name: 'TppFilterMisty',
+      comment: "Hide 'Guys we have to beat misty' spam. (More selective)",
+      def: true,
+      predicate: message_is_misty
   }
 ];
 
