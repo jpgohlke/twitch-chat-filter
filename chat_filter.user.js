@@ -63,6 +63,12 @@ var TPP_COMMANDS = [
     "democracy", "anarchy", "wait"
 ];
 
+//Words listed here will filter a message *regardless*
+//of where they appear in the text
+var NON_COMMAND_SPAM = [
+    "misty"
+];
+
 var URL_WHITELIST = [
     //us
      "github.com",
@@ -215,6 +221,16 @@ function message_is_uppercase(message){
     return message.toUpperCase() === message;
 }
 
+function message_is_spam(message) {
+	message = message.toLowerCase();
+	for(var i = 0; i < NON_COMMAND_SPAM.length; i++) {
+		if(message.indexOf(NON_COMMAND_SPAM[i]) !== -1) {
+			return true;
+		}
+	}
+	return false;
+}
+
 var message_has_duplicate_url = function(message){
 	
 	// An URL is here defined as:
@@ -307,6 +323,12 @@ var filters = [
     comment: "Hide ALLCAPS",
     def: false,
     predicate: message_is_uppercase
+  },
+  
+  { name: 'TppFilterSpam',
+	comment: 'Hide common spam (\"MISTY\")',
+	def: true,
+	predicate: message_is_spam
   }
 ];
 
