@@ -353,7 +353,6 @@ var color_directed_messages = function( innerHTML, message ) {
 var convert_ALLCAPS = function( innerHTML, message ) {
 	if (message === message.toUpperCase()) {
 		var no_ALLCAPS = function(match, offset, string) {
-			console.log(match);
 			return match.toLowerCase();
 		}
 		
@@ -499,6 +498,22 @@ var initialize_ui = function(){
     document.body.appendChild(customStyles);
     controls.appendChild(toggleControlPanel);
     controls.appendChild(controlPanel);
+    
+    // adjust chat scroll height so that we can see the bottom of it, even with the extra buttons
+    function adjustChatElements() {
+        var el = $("#twitch_chat .js-chat-scroll");  // need to resize this
+        
+        if(adjustChatElements.baseHeight == undefined)  // first time
+            adjustChatElements.baseHeight = parseInt(el.css("bottom"));
+            
+        el.css("bottom", adjustChatElements.baseHeight + 
+            $("#TppControlPanel").height() + 
+            $(toggleControlPanel).height());
+    }
+    $(toggleControlPanel).click(adjustChatElements);
+    
+    // trigger initial resizing
+    adjustChatElements();
 };
 
 
