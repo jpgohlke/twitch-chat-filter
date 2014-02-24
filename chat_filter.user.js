@@ -569,7 +569,7 @@ var initialize_filter = function(){
 	
 	CurrentChat.line_buffer = 800;
     
-        //Override twitch insert_with_lock_in (process message queue) function
+    //Override twitch insert_with_lock_in (process message queue) function
     CurrentChat.insert_with_lock_in = function () {
         var t = this.set_currently_scrolling;
         this.set_currently_scrolling = function () {};
