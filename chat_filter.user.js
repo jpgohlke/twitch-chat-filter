@@ -425,6 +425,7 @@ var initialize_ui = function(){
 
     var controlPanel = document.createElement("div");
     controlPanel.id = "TppControlPanel";
+    controlPanel.className = "hidden";
     
     var panelTable = document.createElement("table");
     controlPanel.appendChild(panelTable);
