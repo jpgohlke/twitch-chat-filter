@@ -364,7 +364,7 @@ var convert_ALLCAPS = function( innerHTML, message ) {
 };
 
 
-// GUI-options
+// GUI-options (modifying text/html = changing graphics. Not rly UI, but close enough)
 var gui_options = [
 	{ name: 'TppGUIColorDirected',
 		comment: "Color Directed Messages (@Username)",
@@ -513,6 +513,10 @@ var initialize_filter = function(){
         var chatLine = $(this);
         var chatText = chatLine.find(".chat_line").text();
 		
+		// If there is a bug with modifying functions not having any effect on existing text
+		// It will likely be because this part uses "innerHTML =",
+		// rather than to use "$(this)["0"].innerHTML = ".
+		// Not sure if javascript passes pointers or copies when doing string stuff.
 		var innerHTML = $(this)["0"].innerHTML;
 		var newHTML = perform_gui( innerHTML, chatText );
 		if (!(newHTML === innerHTML)) {
@@ -543,7 +547,7 @@ var initialize_filter = function(){
                     linkid: n.linkid
                 });
 				
-				// Keep original message (hidden), and append new if gui modifes anything
+				// Keep original message (hidden), and append new if gui modifies anything
 				var newHTML = perform_gui( n.line, n.info.message );
 				if (!(newHTML === n.line)) {
 					n.line = n.line.replace('class="',
