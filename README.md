@@ -19,7 +19,13 @@ Installing the userscript via Greasemonkey will automatically run it everytime y
 
 Tampermonkey lets you install userscripts in Chrome, similarly to how Greasemonkey does it in Firefox.
 
-TODO: Detailed isntructions.
+1. Install the [Tampermonkey extension](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo/related) for Chrome.
+
+2. Click this link to navigate to the script URL: https://raw.github.com/jpgohlke/twitch-chat-filter/master/chat_filter.user.js
+
+3. Greasemonkey will detect the userscript and ask confirmation on installing it. Click Ok.
+
+4. Refresh the page TPP stream page.
 
 ## Run the script via the console (no extensions needed)
 
