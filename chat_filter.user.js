@@ -44,6 +44,7 @@
  *     /u/yankjenets
  *     /u/hugomg
  *     /u/MKody
+ *     /u/feha
  */
 
 /* global unsafeWindow:false */
@@ -214,6 +215,101 @@ function message_is_uppercase(message){
     return message.toUpperCase() === message;
 }
 
+var message_has_duplicate_url = function(message){
+	
+	// An URL is here defined as:
+	// [http[s]://][www.]domainname.domain[/path[.filetype_like_png][?query_string]]
+	// Any urls where the .domain to query (except for whats after the last '=' is equal,
+	// will be considered identical.
+	
+	// The commented out regex doesnt matter if included or not. Commented out since it is useless,
+	// but kept as comments because it can be used if something is tweaked
+	var url_regex = new RegExp( ""
+//		+ "(?:https?\\://)?"			// '[http[s]://]'
+//		+ "[^/\\s]*"					// '[www.ex.am]'
+		+ "(\\.[^\\.\\s]{1,3}"			// '.ple'
+		+ "(?:/[^\\.\\s]+"				// '[/possible/path]'
+			+ "(?:\\.[^\\.\\s]{1,3})?" // '[.file]'
+		+ ")?"
+		+ "(?:\\?[^\\.\\s]+\\=[^\\.\\s]+" // '[?a=query]'
+			+ "(?:&[^\\.\\s]+\\=[^\\.\\s]+])*" // '[&for=stuff]'
+		+ ")?)"
+		, "gi"); // global and case-insensitive.
+	
+	var urls = [];
+	var regexec;
+	while ((regexec = url_regex.exec(message)) !== null)
+	{
+		 // drop last query-value, useful if the url isnt followed by a space before the next word.
+		var withoutLastQueryValue = /(\S*\=)\S*?/gi.exec(regexec[1]);
+		if (withoutLastQueryValue == null) {
+			urls.push(regexec[1]);
+		} else {
+			urls.push(withoutLastQueryValue[1]);
+		}
+	}
+	
+	if (urls != null) {
+		// Would have prefered finding a standard lib functino for this...
+		// But credits to http://stackoverflow.com/a/7376645 for this code snippet
+		// Straight forward and kinda obvious, except for the note about
+		// Object.prototype.hasOwnProperty.call(urlsSoFar, url)
+		var urlsSoFar = {};
+		for (var i = 0; i < urls.length; ++i) {
+			var url = urls[i];
+			if (Object.prototype.hasOwnProperty.call(urlsSoFar, url)) {
+				return true;
+			}
+			urlsSoFar[url] = true;
+		}
+	}
+	
+    //If we've gotten here, then we've passed all of our tests; the message is valid
+    return false;
+	
+};
+
+
+// GUI helper functions
+var color_directed_messages = function( innerHTML, message ) {
+	
+	var direct_message_callback = function(match, p1, p2, p3, p4, offset, string) {
+		
+		var pre = p1.replace(/(.*)(@)(\w+)(.*)/i, direct_message_callback);
+		if (p1 == pre) {
+				pre = "<span class=\"chat_line\">" + pre + "</span>";
+		}
+	   
+		var directed = "<span class=\"chat_line_directed\">" + p2 + "</span>";
+		var username = "<span class=\"chat_line_directed_username\">" + p3 + "</span>";
+		var post = "<span class=\"chat_line\">" + p4 + "</span>";
+	   
+		return pre + directed + username + post;
+	   
+	};
+	var newInnerHTML = message.replace(/(.*)(@)(\w+)(.*)/i, direct_message_callback);
+	if (newInnerHTML != message) {
+		innerHTML = innerHTML.replace(/<span class=\"chat_line\">.*<\/span>/i, newInnerHTML);
+	}
+	
+	return innerHTML;
+	
+}
+
+// converts ALLCAPS messages to lowercase
+var convert_ALLCAPS = function( innerHTML, message ) {
+	var no_ALLCAPS = function(match, offset, string) {
+		if (match === match.toUpperCase()) {
+			return match.toLowerCase();
+		}
+		
+		return match;
+	}
+	
+	return innerHTML.replace(message, no_ALLCAPS);
+}
+
+
 // --- Filtering ---
 
 var filters = [
@@ -227,6 +323,12 @@ var filters = [
     comment: "Hide messages with non-whitelisted URLs",
     def: true,
     predicate: message_is_forbidden_link
+  },
+  
+  { name: 'TppFilterDuplicateURL',
+    comment: "Hide duplicate URLS",
+    def: true,
+    predicate: message_has_duplicate_url
   },
   
   { name: 'TppFilterDonger',
@@ -261,6 +363,46 @@ function classify_message(message){
 }
 
 
+// GUI-options
+var gui_options = [
+	{ name: 'TppGUIColorDirected',
+		comment: "Color Directed Messages (@Username)",
+		def: true,
+		customCss: [
+			".chat_line_directed {",
+				"color: #0000FF;",
+				"font-weight: bold;",
+			"}",
+					   
+			".chat_line_directed_username {",
+				"color: #FF0000;",
+			"}"
+		],
+		predicate: color_directed_messages
+	},
+	
+	{ name: 'TppGUIConvertALLCAPS',
+		comment: "Convert ALLCAPS to lowercase",
+		def: true,
+		customCss: [],
+		predicate: convert_ALLCAPS
+	}
+];
+
+// most converts the message somehow, but some needs access directly to the html
+function perform_gui( innerHTML, message ) {
+    message = $.trim(message);
+    
+    var classes = [];
+    gui_options.forEach(function(gui_option) {
+		if (gui_option.def) {
+			innerHTML = gui_option.predicate( innerHTML, message );
+		}
+	});
+    return innerHTML;
+}
+
+
 // --- UI ---
 
 var initialize_ui = function(){
@@ -270,9 +412,15 @@ var initialize_ui = function(){
     //TODO: #chat_line_list li.fromjtv
 
     var customCssParts = [];
-    filters.forEach(function(filter){
+	filters.forEach(function(filter){
         var cls = filter.name;
         customCssParts.push('#chat_line_list.'+cls+' li.'+cls+'{display:none}');
+    });
+	
+    gui_options.forEach(function(gui_option) {
+        gui_option.customCss.forEach(function(cssLine) {
+			customCssParts.push(cssLine);
+		});
     });
     
     var customStyles = document.createElement("style");
@@ -311,7 +459,37 @@ var initialize_ui = function(){
         });
         
     });
-    
+	
+    gui_options.forEach(function(gui_option){
+        var tr = document.createElement("tr");
+		
+        panelTable.appendChild(tr);
+        
+        var td;
+        
+        td = document.createElement("td");
+        var ipt = document.createElement("input");
+        ipt.type = "checkbox";
+        ipt.checked = gui_option.def; // <---
+        td.appendChild(ipt);
+        tr.appendChild(td);
+        
+        td = document.createElement("td");
+        td.appendChild(document.createTextNode(gui_option.comment)); // <---
+        
+        tr.appendChild(td);
+        
+        if(gui_option.def){
+            //chatList.addClass(gui_option.name);
+        }
+        
+        $(ipt).click(function(){
+			gui_option.def = !gui_option.def;
+            //chatList.toggleClass(gui_option.name);
+        });
+		
+    });
+	
     var toggleControlPanel = document.createElement("button");
     toggleControlPanel.appendChild(document.createTextNode("Chat Filter settings"));
     $(toggleControlPanel).click(function(){
@@ -325,22 +503,31 @@ var initialize_ui = function(){
     controls.appendChild(controlPanel);
 };
 
+
 // --- Main ---
 
 var initialize_filter = function(){
     
     var CurrentChat = myWindow.CurrentChat;
-
-    // Add classes to existing chat lines (when loaded from console)
+	
+    // Add classes to existing chat lines (i.e. when loaded from console)
     $('#chat_line_list li').each(function() {
         var chatLine = $(this);
         var chatText = chatLine.find(".chat_line").text();
+		
+		var innerHTML = $(this)["0"].innerHTML;
+		var newHTML = perform_gui( innerHTML, chatText );
+		if (!(newHTML === innerHTML)) {
+			innerHTML = innerHTML.replace('class="','style="display:none" class="original_message ')
+					+ newHTML.replace('class="', 'class="modified_message ');
+		}
+		
         classify_message(chatText).forEach(function(cls){
-          chatLine.addClass(cls);
+			chatLine.addClass(cls);
         });
     });
-    
-    CurrentChat.line_buffer = 800;
+	
+	CurrentChat.line_buffer = 800;
     
     //Override twitch insert_with_lock_in (process message queue) function
     CurrentChat.insert_with_lock_in = function () {
@@ -357,6 +544,14 @@ var initialize_filter = function(){
                     info: n.info,
                     linkid: n.linkid
                 });
+				
+				// Keep original message (hidden), and append new if gui modifes anything
+				var newHTML = perform_gui( n.line, n.info.message );
+				if (!(newHTML === n.line)) {
+					n.line = n.line.replace('class="',
+									'style="display:none" class="original_message ')
+							+ newHTML.replace('class="', 'class="modified_message ');
+				}
             }
             
             if(n.el === "#chat_line_list"){
