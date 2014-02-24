@@ -270,46 +270,6 @@ var message_has_duplicate_url = function(message){
 };
 
 
-// GUI helper functions
-var color_directed_messages = function( innerHTML, message ) {
-	
-	var direct_message_callback = function(match, p1, p2, p3, p4, offset, string) {
-		
-		var pre = p1.replace(/(.*)(@)(\w+)(.*)/i, direct_message_callback);
-		if (p1 == pre) {
-				pre = "<span class=\"chat_line\">" + pre + "</span>";
-		}
-	   
-		var directed = "<span class=\"chat_line_directed\">" + p2 + "</span>";
-		var username = "<span class=\"chat_line_directed_username\">" + p3 + "</span>";
-		var post = "<span class=\"chat_line\">" + p4 + "</span>";
-	   
-		return pre + directed + username + post;
-	   
-	};
-	var newInnerHTML = message.replace(/(.*)(@)(\w+)(.*)/i, direct_message_callback);
-	if (newInnerHTML != message) {
-		innerHTML = innerHTML.replace(/<span class=\"chat_line\">.*<\/span>/i, newInnerHTML);
-	}
-	
-	return innerHTML;
-	
-}
-
-// converts ALLCAPS messages to lowercase
-var convert_ALLCAPS = function( innerHTML, message ) {
-	var no_ALLCAPS = function(match, offset, string) {
-		if (match === match.toUpperCase()) {
-			return match.toLowerCase();
-		}
-		
-		return match;
-	}
-	
-	return innerHTML.replace(message, no_ALLCAPS);
-}
-
-
 // --- Filtering ---
 
 var filters = [
@@ -363,6 +323,47 @@ function classify_message(message){
 }
 
 
+// GUI helper functions
+var color_directed_messages = function( innerHTML, message ) {
+	
+	var direct_message_callback = function(match, p1, p2, p3, p4, offset, string) {
+		
+		var pre = p1.replace(/(.*)(@)(\w+)(.*)/i, direct_message_callback);
+		if (p1 == pre) {
+				pre = "<span class=\"chat_line\">" + pre + "</span>";
+		}
+	   
+		var directed = "<span class=\"chat_line_directed\">" + p2 + "</span>";
+		var username = "<span class=\"chat_line_directed_username\">" + p3 + "</span>";
+		var post = "<span class=\"chat_line\">" + p4 + "</span>";
+	   
+		return pre + directed + username + post;
+	   
+	};
+	var newInnerHTML = message.replace(/(.*)(@)(\w+)(.*)/i, direct_message_callback);
+	if (newInnerHTML != message) {
+		innerHTML = innerHTML.replace(/<span class=\"chat_line\">.*<\/span>/i, newInnerHTML);
+	}
+	
+	return innerHTML;
+	
+};
+
+// converts ALLCAPS messages to lowercase
+var convert_ALLCAPS = function( innerHTML, message ) {
+	if (message === message.toUpperCase()) {
+		var no_ALLCAPS = function(match, offset, string) {
+			console.log(match);
+			return match.toLowerCase();
+		}
+		
+		return innerHTML.replace(/>.*</ig, no_ALLCAPS);
+	}
+	
+	return innerHTML;
+};
+
+
 // GUI-options
 var gui_options = [
 	{ name: 'TppGUIColorDirected',
@@ -391,9 +392,6 @@ var gui_options = [
 
 // most converts the message somehow, but some needs access directly to the html
 function perform_gui( innerHTML, message ) {
-    message = $.trim(message);
-    
-    var classes = [];
     gui_options.forEach(function(gui_option) {
 		if (gui_option.def) {
 			innerHTML = gui_option.predicate( innerHTML, message );
