@@ -569,30 +569,35 @@ var initialize_filter = function(){
 	
 	CurrentChat.line_buffer = 800;
     
-    //Override twitch insert_with_lock_in (process message queue) function
+        //Override twitch insert_with_lock_in (process message queue) function
     CurrentChat.insert_with_lock_in = function () {
         var t = this.set_currently_scrolling;
         this.set_currently_scrolling = function () {};
         var n, r, i = "",s = [];
         while (this.queue.length > 0){ 
             n = this.queue.shift();
-            //If this has a message...
-            if(n.linkid){
-                var chatClass = classify_message(n.info.message).join(" ");
-                n.line = n.line.replace('class="', 'class="' + chatClass + ' ');
+
+            var splitted = $(n.line).text().trim().split(/\s/, 2);
+            if(splitted.length < 2 && n.info == undefined)
+                continue;
+            
+            var chatClass = classify_message(n.info ? n.info.message : splitted[1]).join(" ");
+            n.line = n.line.replace('class="', 'class="' + chatClass + ' ');
+            if(n.linkid) {
                 s.push({
                     info: n.info,
                     linkid: n.linkid
                 });
-				
-				// Keep original message (hidden), and append new if gui modifies anything
-				var newHTML = perform_gui( n.line, n.info.message );
-				if (!(newHTML === n.line)) {
-					n.line = n.line.replace('class="',
-									'style="display:none" class="original_message ')
-							+ newHTML.replace('class="', 'class="modified_message ');
-				}
             }
+            
+            // Keep original message (hidden), and append new if gui modifies anything
+            var newHTML = perform_gui( n.line, n.info ? n.info.message : splitted[1] );
+            if (!(newHTML === n.line)) {
+                n.line = n.line.replace('class="',
+                                'style="display:none" class="original_message ')
+                        + newHTML.replace('class="', 'class="modified_message ');
+            }
+
             
             if(n.el === "#chat_line_list"){
               this.line_count += 1;
