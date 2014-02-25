@@ -319,49 +319,49 @@ var message_has_duplicate_url = function(message){
 
 var filters = [
   { name: 'TppFilterCommand',
-    comment: "Hide commands (up, down, anarchy, etc)",
+    comment: "Commands (up, down, anarchy, etc)",
     def: true,
     predicate: message_is_command
   },
   
   { name: 'TppFilterLink',
-    comment: "Hide messages with non-whitelisted URLs",
+    comment: "Non-whitelisted URLs",
     def: true,
     predicate: message_is_forbidden_link
   },
   
   { name: 'TppFilterDuplicateURL',
-    comment: "Hide duplicate URLS",
+    comment: "Duplicate URLS",
     def: true,
     predicate: message_has_duplicate_url
   },
   
   { name: 'TppFilterDonger',
-    comment: "Hide dongers and ascii art. ヽ༼ຈل͜ຈ༽ﾉ",
+    comment: "Ascii art",
     def: false,
     predicate: message_is_donger
   },
   
   { name: 'TppFilterSmall',
-    comment: "Hide one-word messages (Kappa, \"yesss!\", etc)",
+    comment: "One-word messages",
     def: false,
     predicate: message_is_small
   },
   
   { name: 'TppFilterUppercase',
-    comment: "Hide ALLCAPS",
+    comment: "ALLCAPS",
     def: false,
     predicate: message_is_uppercase
   },
   
   { name: 'TppFilterSpam',
-	comment: 'Hide common spam (\"MISTY\")',
+	comment: 'Common spam (\"MISTY\")',
 	def: false,
 	predicate: message_is_spam
   },
  
   { name: 'TppFilterMisty',
-      comment: "Hide 'Guys we have to beat misty' spam. (More selective)",
+      comment: "'Beat misty' spam. (More selective)",
       def: true,
       predicate: message_is_misty
   }
