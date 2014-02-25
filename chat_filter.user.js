@@ -611,6 +611,7 @@ var initialize_filter = function(){
         while (this.queue.length > 0){ 
             n = this.queue.shift();
 
+            // n.info===undefined indicates that it's a /me message
             var splitted = $(n.line).text().trim().split(/\s/, 2);
             if(splitted.length < 2 && n.info == undefined)
                 continue;
@@ -684,12 +685,12 @@ var initialize_filter = function(){
 };
 
 $(function(){
-    initialize_ui();
     
     //Instead of testing for the existence of CurrentChat, check if the spinner is gone.
     var chatLoadedCheck = setInterval(function () {
         if($("#chat_loading_spinner").css('display') == 'none'){
             clearInterval(chatLoadedCheck);
+            initialize_ui();
             initialize_filter();
         }
     }, 100);
