@@ -65,12 +65,6 @@ var TPP_COMMANDS = [
     "democracy", "anarchy", "wait"
 ];
 
-//Words listed here will filter a message *regardless*
-//of where they appear in the text
-var NON_COMMAND_SPAM = [
-    "misty"
-];
-
 // Score-based filter for "Guys, we need to beat Misty" spam.
 var MISTY_SUBSTRINGS = [
     "misty",
@@ -110,6 +104,7 @@ try{
 }
 
 var $ = myWindow.jQuery;
+var CurrentChat = null;
     
 // --- Filtering predicates ---
 
@@ -186,20 +181,19 @@ function message_is_command(message){
 
 // Determine if message is variant of "Guys, we need to beat Misty."
 function message_is_misty(message) {
-	message = message.toLowerCase();
-	
-	var misty_score = 0;
-	for (var i = 0; i < MISTY_SUBSTRINGS.length; i++) {
-	    if (message.indexOf(MISTY_SUBSTRINGS[i]) != -1) {
-	        misty_score++;
-	        if (misty_score > 1) {
-	
-	            return true;
-	        }
-	    }
-	}
-	
-	return false;
+    message = message.toLowerCase();
+    
+    var misty_score = 0;
+    for (var i = 0; i < MISTY_SUBSTRINGS.length; i++) {
+        if (message.indexOf(MISTY_SUBSTRINGS[i]) != -1) {
+            misty_score++;
+            if (misty_score > 1) {    
+                return true;
+            }
+        }
+    }
+    
+    return false;
 }
 
 function is_whitelisted_url(url){
@@ -216,7 +210,7 @@ function is_whitelisted_url(url){
 function message_is_forbidden_link(message){
     message = message.toLowerCase();
 
-    var urls = message.match(myWindow.CurrentChat.linkify_re);
+    var urls = message.match(CurrentChat.linkify_re);
     if(!urls) return false;
     
     for(var i=0; i<urls.length; i++){
@@ -229,7 +223,6 @@ function message_is_forbidden_link(message){
 }
 
 function message_is_donger(message){
-
     var nonASCII = 0;
     for(var i = 0; i < message.length; i++) {
         if(message.charCodeAt(i) > 127) {
@@ -246,72 +239,64 @@ function message_is_small(message){
     return message.split(/\s/g).length < MINIMUM_MESSAGE_WORDS;
 }
 
-function message_is_uppercase(message){
-    return message.toUpperCase() === message;
-}
-
-function message_is_spam(message) {
-	message = message.toLowerCase();
-	for(var i = 0; i < NON_COMMAND_SPAM.length; i++) {
-		if(message.indexOf(NON_COMMAND_SPAM[i]) !== -1) {
-			return true;
-		}
-	}
-	return false;
-}
-
 var message_has_duplicate_url = function(message){
-	
-	// An URL is here defined as:
-	// [http[s]://][www.]domainname.domain[/path[.filetype_like_png][?query_string]]
-	// Any urls where the .domain to query (except for whats after the last '=' is equal,
-	// will be considered identical.
-	
-	// The commented out regex doesnt matter if included or not. Commented out since it is useless,
-	// but kept as comments because it can be used if something is tweaked
-	var url_regex = new RegExp( ""
-//		+ "(?:https?\\://)?"			// '[http[s]://]'
-//		+ "[^/\\s]*"					// '[www.ex.am]'
-		+ "(\\.[^\\.\\s]{1,3}"			// '.ple'
-		+ "(?:/[^\\.\\s]+"				// '[/possible/path]'
-			+ "(?:\\.[^\\.\\s]{1,3})?" // '[.file]'
-		+ ")?"
-		+ "(?:\\?[^\\.\\s]+\\=[^\\.\\s]+" // '[?a=query]'
-			+ "(?:&[^\\.\\s]+\\=[^\\.\\s]+])*" // '[&for=stuff]'
-		+ ")?)"
-		, "gi"); // global and case-insensitive.
-	
-	var urls = [];
-	var regexec;
-	while ((regexec = url_regex.exec(message)) !== null)
-	{
-		 // drop last query-value, useful if the url isnt followed by a space before the next word.
-		var withoutLastQueryValue = /(\S*\=)\S*?/gi.exec(regexec[1]);
-		if (withoutLastQueryValue == null) {
-			urls.push(regexec[1]);
-		} else {
-			urls.push(withoutLastQueryValue[1]);
-		}
-	}
-	
-	if (urls != null) {
-		// Would have prefered finding a standard lib functino for this...
-		// But credits to http://stackoverflow.com/a/7376645 for this code snippet
-		// Straight forward and kinda obvious, except for the note about
-		// Object.prototype.hasOwnProperty.call(urlsSoFar, url)
-		var urlsSoFar = {};
-		for (var i = 0; i < urls.length; ++i) {
-			var url = urls[i];
-			if (Object.prototype.hasOwnProperty.call(urlsSoFar, url)) {
-				return true;
-			}
-			urlsSoFar[url] = true;
-		}
-	}
-	
+    
+    // An URL is here defined as:
+    // [http[s]://][www.]domainname.domain[/path[.filetype_like_png][?query_string]]
+    // Any urls where the .domain to query (except for whats after the last '=' is equal,
+    // will be considered identical.
+    
+    // The commented out regex doesnt matter if included or not. Commented out since it is useless,
+    // but kept as comments because it can be used if something is tweaked
+    var url_regex = new RegExp( ""
+//        + "(?:https?\\://)?"            // '[http[s]://]'
+//        + "[^/\\s]*"                    // '[www.ex.am]'
+        + "(\\.[^\\.\\s]{1,3}"            // '.ple'
+        + "(?:/[^\\.\\s]+"                // '[/possible/path]'
+            + "(?:\\.[^\\.\\s]{1,3})?" // '[.file]'
+        + ")?"
+        + "(?:\\?[^\\.\\s]+\\=[^\\.\\s]+" // '[?a=query]'
+            + "(?:&[^\\.\\s]+\\=[^\\.\\s]+])*" // '[&for=stuff]'
+        + ")?)"
+        , "gi"); // global and case-insensitive.
+    
+    var urls = [];
+    var regexec;
+    while ((regexec = url_regex.exec(message)) !== null)
+    {
+         // drop last query-value, useful if the url isnt followed by a space before the next word.
+        var withoutLastQueryValue = /(\S*\=)\S*?/gi.exec(regexec[1]);
+        if (withoutLastQueryValue == null) {
+            urls.push(regexec[1]);
+        } else {
+            urls.push(withoutLastQueryValue[1]);
+        }
+    }
+    
+    if (urls != null) {
+        // Would have prefered finding a standard lib functino for this...
+        // But credits to http://stackoverflow.com/a/7376645 for this code snippet
+        // Straight forward and kinda obvious, except for the note about
+        // Object.prototype.hasOwnProperty.call(urlsSoFar, url)
+        var urlsSoFar = {};
+        for (var i = 0; i < urls.length; ++i) {
+            var url = urls[i];
+            if (Object.prototype.hasOwnProperty.call(urlsSoFar, url)) {
+                return true;
+            }
+            urlsSoFar[url] = true;
+        }
+    }
+    
     //If we've gotten here, then we've passed all of our tests; the message is valid
     return false;
-	
+    
+};
+
+var convert_allcaps = function(message) {
+    //Only convert words preceded by a space, to avoid
+    //converting case-sensitive URLs.
+    return message.replace(/(^|\s)(\w+)/g, function(msg){ return msg.toLowerCase() });
 };
 
 
@@ -320,162 +305,85 @@ var message_has_duplicate_url = function(message){
 var filters = [
   { name: 'TppFilterCommand',
     comment: "Hide commands (up, down, anarchy, etc)",
-    def: true,
+    isActive: true,
     predicate: message_is_command
   },
   
   { name: 'TppFilterLink',
     comment: "Hide messages with non-whitelisted URLs",
-    def: true,
+    isActive: true,
     predicate: message_is_forbidden_link
   },
   
   { name: 'TppFilterDuplicateURL',
     comment: "Hide duplicate URLS",
-    def: true,
+    isActive: true,
     predicate: message_has_duplicate_url
   },
   
   { name: 'TppFilterDonger',
     comment: "Hide dongers and ascii art. ヽ༼ຈل͜ຈ༽ﾉ",
-    def: false,
+    isActive: false,
     predicate: message_is_donger
   },
   
   { name: 'TppFilterSmall',
     comment: "Hide one-word messages (Kappa, \"yesss!\", etc)",
-    def: false,
+    isActive: false,
     predicate: message_is_small
   },
   
-  { name: 'TppFilterUppercase',
-    comment: "Hide ALLCAPS",
-    def: false,
-    predicate: message_is_uppercase
-  },
-  
   { name: 'TppFilterSpam',
-	comment: 'Hide common spam (\"MISTY\")',
-	def: false,
-	predicate: message_is_spam
+    comment: 'Hide Misty spam',
+    isActive: false,
+    predicate: message_is_misty
   },
- 
-  { name: 'TppFilterMisty',
-      comment: "Hide 'Guys we have to beat misty' spam. (More selective)",
-      def: true,
-      predicate: message_is_misty
-  }
 ];
 
-function classify_message(message){
-    message = $.trim(message);
-    
-    var classes = [];
-    filters.forEach(function(filter){
-      if(filter.predicate(message)){
-        classes.push(filter.name);
-      }
-    });
-    return classes;
-}
 
 
-// GUI helper functions
-var color_directed_messages = function( innerHTML, message ) {
-	
-	var direct_message_callback = function(match, p1, p2, p3, p4, offset, string) {
-		
-		var pre = p1.replace(/(.*)(@)(\w+)(.*)/i, direct_message_callback);
-		if (p1 == pre) {
-				pre = "<span class=\"chat_line\">" + pre + "</span>";
-		}
-	   
-		var directed = "<span class=\"chat_line_directed\">" + p2 + "</span>";
-		var username = "<span class=\"chat_line_directed_username\">" + p3 + "</span>";
-		var post = "<span class=\"chat_line\">" + p4 + "</span>";
-	   
-		return pre + directed + username + post;
-	   
-	};
-	var newInnerHTML = message.replace(/(.*)(@)(\w+)(.*)/i, direct_message_callback);
-	if (newInnerHTML != message) {
-		innerHTML = innerHTML.replace(/<span class=\"chat_line\">.*<\/span>/i, newInnerHTML);
-	}
-	
-	return innerHTML;
-	
-};
-
-// converts ALLCAPS messages to lowercase
-var convert_ALLCAPS = function( innerHTML, message ) {
-	if (message === message.toUpperCase()) {
-		var no_ALLCAPS = function(match, offset, string) {
-			return match.toLowerCase();
-		}
-		
-		return innerHTML.replace(/>.*</ig, no_ALLCAPS);
-	}
-	
-	return innerHTML;
-};
-
-
-// GUI-options (modifying text/html = changing graphics. Not rly UI, but close enough)
-var gui_options = [
-	{ name: 'TppGUIColorDirected',
-		comment: "Color Directed Messages (@Username)",
-		def: true,
-		customCss: [
-			".chat_line_directed {",
-				"color: #0000FF;",
-				"font-weight: bold;",
-			"}",
-					   
-			".chat_line_directed_username {",
-				"color: #FF0000;",
-			"}"
-		],
-		predicate: color_directed_messages
-	},
-	
-	{ name: 'TppGUIConvertALLCAPS',
-		comment: "Convert ALLCAPS to lowercase",
-		def: true,
-		customCss: [],
-		predicate: convert_ALLCAPS
-	}
+var rewriters = [
+   { name: 'TppConvertAllcaps',
+     comment: "Convert ALLCAPS to lowercase",
+     isActive: true,
+     rewriter: convert_allcaps
+   }
 ];
 
-// most converts the message somehow, but some needs access directly to the html
-function perform_gui( innerHTML, message ) {
-    gui_options.forEach(function(gui_option) {
-		if (gui_option.def) {
-			innerHTML = gui_option.predicate( innerHTML, message );
-		}
-	});
-    return innerHTML;
+
+var all_options = [].concat(filters).concat(rewriters);
+
+function passes_active_filters(message){
+    for(var i=0; i < filters.length; i++){
+        var filter = filters[i];
+        if(filter.isActive && filter.predicate(message)){
+            //console.log("Filter", filter.name, message);
+            return false;
+        }
+    }
+    return true;
 }
 
+function rewrite_with_active_rewriters(message){
+    var newMessage = message;
+    for(var i=0;  i < rewriters.length; i++){
+        var rewriter = rewriters[i];
+        if(rewriter.isActive){
+            newMessage = (rewriter.rewriter(newMessage) || newMessage);
+        }
+    }
+    return newMessage;
+}
 
 // --- UI ---
 
-var initialize_ui = function(){
-
-    var chatList = $("#chat_line_list");
+function initialize_ui(){
 
     //TODO: #chat_line_list li.fromjtv
 
-    var customCssParts = [];
-	filters.forEach(function(filter){
-        var cls = filter.name;
-        customCssParts.push('#chat_line_list.'+cls+' li.'+cls+'{display:none}');
-    });
-	
-    gui_options.forEach(function(gui_option) {
-        gui_option.customCss.forEach(function(cssLine) {
-			customCssParts.push(cssLine);
-		});
-    });
+    var customCssParts = [
+        "#chat_line_list .TppFiltered {display:none;}"
+    ];
     
     var customStyles = document.createElement("style");
     customStyles.appendChild(document.createTextNode(customCssParts.join("")));
@@ -487,7 +395,7 @@ var initialize_ui = function(){
     var panelTable = document.createElement("table");
     controlPanel.appendChild(panelTable);
     
-    filters.forEach(function(filter){
+    all_options.forEach(function(option){
         var tr = document.createElement("tr");
         panelTable.appendChild(tr);
         
@@ -496,196 +404,81 @@ var initialize_ui = function(){
         td = document.createElement("td");
         var ipt = document.createElement("input");
         ipt.type = "checkbox";
-        ipt.checked = filter.def; // <---
+        ipt.checked = option.isActive; // <---
         td.appendChild(ipt);
         tr.appendChild(td);
         
         td = document.createElement("td");
-        td.appendChild(document.createTextNode(filter.comment)); // <---
+        td.appendChild(document.createTextNode(option.comment)); // <---
         
         tr.appendChild(td);
         
-        if(filter.def){
-            chatList.addClass(filter.name);
-        }
-        
         $(ipt).click(function(){
-            chatList.toggleClass(filter.name);
+            option.isActive = !option.isActive;
+            update_chat_with_filter();
         });
         
     });
-	
-    gui_options.forEach(function(gui_option){
-        var tr = document.createElement("tr");
-		
-        panelTable.appendChild(tr);
-        
-        var td;
-        
-        td = document.createElement("td");
-        var ipt = document.createElement("input");
-        ipt.type = "checkbox";
-        ipt.checked = gui_option.def; // <---
-        td.appendChild(ipt);
-        tr.appendChild(td);
-        
-        td = document.createElement("td");
-        td.appendChild(document.createTextNode(gui_option.comment)); // <---
-        
-        tr.appendChild(td);
-        
-        if(gui_option.def){
-            //chatList.addClass(gui_option.name);
-        }
-        
-        $(ipt).click(function(){
-			gui_option.def = !gui_option.def;
-            //chatList.toggleClass(gui_option.name);
-        });
-		
-    });
-	
+    
     var controls = document.getElementById("controls");
     document.body.appendChild(customStyles);
-	
-	//use a default jtv style for button so it looks natural and works with BetterTTV
-	var toggleControlPanel = $("<div>", {
-		style: "background-image: none !important; margin-bottom: 5px;",
- 		class: "dropdown_static"
-	});
-	toggleControlPanel.text("Chat Filter Settings");
-	
-	//create arrow using jtv styles/images
-	var icon = $("<span>", {style: "background-image: url('../images/xarth/left_col_dropdown_arrow.png'); background-position: 50% -32px; height: 10px; margin-left: 10px; width: 10px; background-repeat: no-repeat; display: inline-block;"});
-	toggleControlPanel.append(icon);
-	toggleControlPanel.click(function(){
-		$(controlPanel).toggleClass("hidden");
-		//flip arrow
-		icon.css('background-position', (icon.css('background-position') == '50% -7px') ? '50% -32px' : '50% -7px' );
-	});
-	$(controls).append(toggleControlPanel);
+    
+    //use a default jtv style for button so it looks natural and works with BetterTTV
+    var toggleControlPanel = $("<div>", {
+        style: "background-image: none !important; margin-bottom: 5px;",
+        className: "dropdown_static"
+    });
+    toggleControlPanel.text("Chat Filter Settings");
+    
+    //create arrow using jtv styles/images
+    var icon = $("<span>", {style: "background-image: url('../images/xarth/left_col_dropdown_arrow.png'); background-position: 50% -32px; height: 10px; margin-left: 10px; width: 10px; background-repeat: no-repeat; display: inline-block;"});
+    toggleControlPanel.append(icon);
+    toggleControlPanel.click(function(){
+        $(controlPanel).toggleClass("hidden");
+        //flip arrow
+        icon.css('background-position', (icon.css('background-position') == '50% -7px') ? '50% -32px' : '50% -7px' );
+    });
+    $(controls).append(toggleControlPanel);
     controls.appendChild(controlPanel);
-    
-    // adjust chat scroll height so that we can see the bottom of it, even with the extra buttons
-    function adjustChatElements() {
-        var el = $("#twitch_chat .js-chat-scroll");  // need to resize this
-        el.css("bottom", $("#twitch_chat .bottom").outerHeight(true));
-    }
-    $(toggleControlPanel).click(adjustChatElements);
-    
-    // trigger initial resizing
-    adjustChatElements();
-};
+}
 
 
 // --- Main ---
 
-var initialize_filter = function(){
-    
-    var CurrentChat = myWindow.CurrentChat;
-	
-    // Add classes to existing chat lines (i.e. when loaded from console)
+function update_chat_with_filter(){
+    if(!CurrentChat) return; //Chat hasnt loaded yet.
+
     $('#chat_line_list li').each(function() {
         var chatLine = $(this);
         var chatText = chatLine.find(".chat_line").text();
-		
-		var oldHTML = $(this)[0].outerHTML;
-		var newHTML = perform_gui( oldHTML, chatText );
-		if (!(newHTML === oldHTML)) {
-			$(this)[0].outerHTML = (oldHTML.replace('class="','style="display:none" class="original_message ')
-					+ newHTML.replace('class="', 'class="modified_message '));
-		}
-		
-        classify_message(chatText).forEach(function(cls){
-			chatLine.addClass(cls);
-        });
+        
+        if(passes_active_filters(chatText)){ 
+            chatLine.removeClass("TppFiltered");
+        }else{
+            chatLine.addClass("TppFiltered");
+        }
     });
+}
+
+function initialize_filter(){
+    CurrentChat = myWindow.CurrentChat;
     
-    //Override twitch insert_with_lock_in (process message queue) function
-    CurrentChat.insert_with_lock_in = function () {
-        var t = this.set_currently_scrolling;
-        this.set_currently_scrolling = function () {};
-        var n, r, i = "",s = [];
-        while (this.queue.length > 0){ 
-            n = this.queue.shift();
-
-            // n.info===undefined indicates that it's a /me message
-            var splitted = $(n.line).text().trim().split(/\s/, 2);
-            if(splitted.length < 2 && n.info == undefined)
-                continue;
-            
-            var chatClass = classify_message(n.info ? n.info.message : splitted[1]).join(" ");
-            n.line = n.line.replace('class="', 'class="' + chatClass + ' ');
-            if(n.linkid) {
-                s.push({
-                    info: n.info,
-                    linkid: n.linkid
-                });
-            }
-            
-            // Keep original message (hidden), and append new if gui modifies anything
-            var newHTML = perform_gui( n.line, n.info ? n.info.message : splitted[1] );
-            if (!(newHTML === n.line)) {
-                n.line = n.line.replace('class="',
-                                'style="display:none" class="original_message ')
-                        + newHTML.replace('class="', 'class="modified_message ');
-                this.line_count += 1;  // since newHTML is an entire new line
-            }
-
-            
-            if(n.el === "#chat_line_list"){
-                this.line_count += 1;
-            }
-            
-            if(r && r !== n.el){
-                $(r).append(i);
-                i = "";
-            }
-            
-            r = n.el;
-            i += n.line;
-        }
+    update_chat_with_filter();
+    
+    var original_insert_chat_line = CurrentChat.insert_chat_line;
+    CurrentChat.insert_chat_line = function(info) {
+        if(!passes_active_filters(info.message)){ return false }
+        info.message = rewrite_with_active_rewriters(info.message);
         
-        if(r){ $(r).append(i) }
+        //console.log("----", info.message);
         
-        for (var o = 0; o < s.length; o++){
-            n = s[o];
-            this.setup_viewer_handlers(n.info, n.linkid);
-        }
-        
-        if(this.line_count > this.line_buffer){
-            //Get rid of spam first
-            var spamLis = $("#chat_line_list li:hidden");
-            this.line_count -= spamLis.length;
-            spamLis.remove();
-            
-            if(this.line_count > this.line_buffer){
-                //All Already removed all the spam; Remove normal chat.
-                var excessLis = $("#chat_line_list li:lt(" + (this.line_count - this.line_buffer) + ")");
-                this.line_count -= excessLis.length;
-                excessLis.remove();
-            }
-            
-            if(this.history_ended){
-                this.scroll_chat();
-            }
-        }
-        
-        var u = this;
-        setTimeout(function () {
-            if(u.history_ended){
-                u.scroll_chat();
-                u.set_currently_scrolling = t;
-                u.appending = false;
-            }
-        }, 1);
+        return original_insert_chat_line.apply(this, arguments);
     };
-    
-};
+}
 
 $(function(){
-    
-    //Instead of testing for the existence of CurrentChat, check if the spinner is gone.
+    //Checking for the spinner being gone is a more reliable way to chack
+    //if the CurrentChat is fully loaded.
     var chatLoadedCheck = setInterval(function () {
         if($("#chat_loading_spinner").css('display') == 'none'){
             clearInterval(chatLoadedCheck);
@@ -693,7 +486,6 @@ $(function(){
             initialize_filter();
         }
     }, 100);
-    
 });
     
 }());
