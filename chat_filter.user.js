@@ -239,66 +239,19 @@ function message_is_small(message){
     return message.split(/\s/g).length < MINIMUM_MESSAGE_WORDS;
 }
 
-var message_has_duplicate_url = function(message){
-    
-    // An URL is here defined as:
-    // [http[s]://][www.]domainname.domain[/path[.filetype_like_png][?query_string]]
-    // Any urls where the .domain to query (except for whats after the last '=' is equal,
-    // will be considered identical.
-    
-    // The commented out regex doesnt matter if included or not. Commented out since it is useless,
-    // but kept as comments because it can be used if something is tweaked
-    var url_regex = new RegExp( ""
-//        + "(?:https?\\://)?"            // '[http[s]://]'
-//        + "[^/\\s]*"                    // '[www.ex.am]'
-        + "(\\.[^\\.\\s]{1,3}"            // '.ple'
-        + "(?:/[^\\.\\s]+"                // '[/possible/path]'
-            + "(?:\\.[^\\.\\s]{1,3})?" // '[.file]'
-        + ")?"
-        + "(?:\\?[^\\.\\s]+\\=[^\\.\\s]+" // '[?a=query]'
-            + "(?:&[^\\.\\s]+\\=[^\\.\\s]+])*" // '[&for=stuff]'
-        + ")?)"
-        , "gi"); // global and case-insensitive.
-    
-    var urls = [];
-    var regexec;
-    while ((regexec = url_regex.exec(message)) !== null)
-    {
-         // drop last query-value, useful if the url isnt followed by a space before the next word.
-        var withoutLastQueryValue = /(\S*\=)\S*?/gi.exec(regexec[1]);
-        if (withoutLastQueryValue == null) {
-            urls.push(regexec[1]);
-        } else {
-            urls.push(withoutLastQueryValue[1]);
-        }
-    }
-    
-    if (urls != null) {
-        // Would have prefered finding a standard lib functino for this...
-        // But credits to http://stackoverflow.com/a/7376645 for this code snippet
-        // Straight forward and kinda obvious, except for the note about
-        // Object.prototype.hasOwnProperty.call(urlsSoFar, url)
-        var urlsSoFar = {};
-        for (var i = 0; i < urls.length; ++i) {
-            var url = urls[i];
-            if (Object.prototype.hasOwnProperty.call(urlsSoFar, url)) {
-                return true;
-            }
-            urlsSoFar[url] = true;
-        }
-    }
-    
-    //If we've gotten here, then we've passed all of our tests; the message is valid
-    return false;
-    
-};
-
 var convert_allcaps = function(message) {
     //Only convert words preceded by a space, to avoid
     //converting case-sensitive URLs.
     return message.replace(/(^|\s)(\w+)/g, function(msg){ return msg.toLowerCase() });
 };
 
+function convert_copy_paste(message){
+    //Replace repetitive text with only one instance of it
+    //Useful for text and links where people do
+    // ctrl-c ctrl-v ctrl-v ctrl-v in order to increase the
+    //size of the message.
+    return message.replace(/(.{4}.*?)(\s*?\1)+/g, "$1");
+}
 
 // --- Filtering ---
 
@@ -313,12 +266,6 @@ var filters = [
     comment: "Non-whitelisted URLs",
     isActive: true,
     predicate: message_is_forbidden_link
-  },
-  
-  { name: 'TppFilterDuplicateURL',
-    comment: "Duplicate URLS",
-    isActive: true,
-    predicate: message_has_duplicate_url
   },
   
   { name: 'TppFilterDonger',
@@ -341,11 +288,17 @@ var filters = [
 ];
 
 var rewriters = [
-   { name: 'TppConvertAllcaps',
-     comment: "Convert ALLCAPS to lowercase",
-     isActive: true,
-     rewriter: convert_allcaps
-   }
+  { name: 'TppConvertAllcaps',
+    comment: "ALLCAPS to lowercase",
+    isActive: true,
+    rewriter: convert_allcaps
+  },
+  
+  { name: 'TppFilterDuplicateURL',
+    comment: "Copy pasted repetitions",
+    isActive: true,
+    rewriter: convert_copy_paste
+  },
 ];
 
 function passes_active_filters(message){
