@@ -46,6 +46,7 @@
  *     /u/MKody
  *     /u/feha
  *     /u/jakery2
+ *     /u/redopium
  */
 
 /* global unsafeWindow:false */
@@ -585,15 +586,11 @@ var initialize_filter = function(){
         var chatLine = $(this);
         var chatText = chatLine.find(".chat_line").text();
 		
-		// If there is a bug with modifying functions not having any effect on existing text
-		// It will likely be because this part uses "innerHTML =",
-		// rather than to use "$(this)["0"].innerHTML = ".
-		// Not sure if javascript passes pointers or copies when doing string stuff.
-		var innerHTML = $(this)["0"].innerHTML;
-		var newHTML = perform_gui( innerHTML, chatText );
-		if (!(newHTML === innerHTML)) {
-			innerHTML = innerHTML.replace('class="','style="display:none" class="original_message ')
-					+ newHTML.replace('class="', 'class="modified_message ');
+		var oldHTML = $(this)[0].outerHTML;
+		var newHTML = perform_gui( oldHTML, chatText );
+		if (!(newHTML === oldHTML)) {
+			$(this)[0].outerHTML = (oldHTML.replace('class="','style="display:none" class="original_message ')
+					+ newHTML.replace('class="', 'class="modified_message '));
 		}
 		
         classify_message(chatText).forEach(function(cls){
