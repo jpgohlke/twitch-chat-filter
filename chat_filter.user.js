@@ -600,8 +600,6 @@ var initialize_filter = function(){
 			chatLine.addClass(cls);
         });
     });
-	
-	CurrentChat.line_buffer = 800;
     
     //Override twitch insert_with_lock_in (process message queue) function
     CurrentChat.insert_with_lock_in = function () {
@@ -631,11 +629,12 @@ var initialize_filter = function(){
                 n.line = n.line.replace('class="',
                                 'style="display:none" class="original_message ')
                         + newHTML.replace('class="', 'class="modified_message ');
+                this.line_count += 1;  // since newHTML is an entire new line
             }
 
             
             if(n.el === "#chat_line_list"){
-              this.line_count += 1;
+                this.line_count += 1;
             }
             
             if(r && r !== n.el){
