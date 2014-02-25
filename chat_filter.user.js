@@ -545,16 +545,25 @@ var initialize_ui = function(){
 		
     });
 	
-    var toggleControlPanel = document.createElement("button");
-    toggleControlPanel.appendChild(document.createTextNode("Chat Filter settings"));
-    $(toggleControlPanel).click(function(){
-      $(controlPanel).toggleClass("hidden");
-    });
-    
     var controls = document.getElementById("controls");
-    
     document.body.appendChild(customStyles);
-    controls.appendChild(toggleControlPanel);
+	
+	//use a default jtv style for button so it looks natural and works with BetterTTV
+	var toggleControlPanel = $("<div>", {
+		style: "background-image: none !important; margin-bottom: 5px;",
+ 		class: "dropdown_static"
+	});
+	toggleControlPanel.text("Chat Filter Settings");
+	
+	//create arrow using jtv styles/images
+	var icon = $("<span>", {style: "background-image: url('../images/xarth/left_col_dropdown_arrow.png'); background-position: 50% -32px; height: 10px; margin-left: 10px; width: 10px; background-repeat: no-repeat; display: inline-block;"});
+	toggleControlPanel.append(icon);
+	toggleControlPanel.click(function(){
+		$(controlPanel).toggleClass("hidden");
+		//flip arrow
+		icon.css('background-position', (icon.css('background-position') == '50% -7px') ? '50% -32px' : '50% -7px' );
+	});
+	$(controls).append(toggleControlPanel);
     controls.appendChild(controlPanel);
     
     // adjust chat scroll height so that we can see the bottom of it, even with the extra buttons
@@ -566,7 +575,7 @@ var initialize_ui = function(){
             
         el.css("bottom", adjustChatElements.baseHeight + 
             $("#TppControlPanel").height() + 
-            $(toggleControlPanel).height());
+            $(toggleControlPanel).outerHeight(true));
     }
     $(toggleControlPanel).click(adjustChatElements);
     
