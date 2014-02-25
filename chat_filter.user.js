@@ -569,13 +569,7 @@ var initialize_ui = function(){
     // adjust chat scroll height so that we can see the bottom of it, even with the extra buttons
     function adjustChatElements() {
         var el = $("#twitch_chat .js-chat-scroll");  // need to resize this
-        
-        if(adjustChatElements.baseHeight == undefined)  // first time
-            adjustChatElements.baseHeight = parseInt(el.css("bottom"));
-            
-        el.css("bottom", adjustChatElements.baseHeight + 
-            $("#TppControlPanel").height() + 
-            $(toggleControlPanel).outerHeight(true));
+        el.css("bottom", $("#twitch_chat .bottom").outerHeight(true));
     }
     $(toggleControlPanel).click(adjustChatElements);
     
