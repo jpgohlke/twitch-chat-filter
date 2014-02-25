@@ -304,43 +304,41 @@ var convert_allcaps = function(message) {
 
 var filters = [
   { name: 'TppFilterCommand',
-    comment: "Hide commands (up, down, anarchy, etc)",
+    comment: "Commands (up, down, anarchy, etc)",
     isActive: true,
     predicate: message_is_command
   },
   
   { name: 'TppFilterLink',
-    comment: "Hide messages with non-whitelisted URLs",
+    comment: "Non-whitelisted URLs",
     isActive: true,
     predicate: message_is_forbidden_link
   },
   
   { name: 'TppFilterDuplicateURL',
-    comment: "Hide duplicate URLS",
+    comment: "Duplicate URLS",
     isActive: true,
     predicate: message_has_duplicate_url
   },
   
   { name: 'TppFilterDonger',
-    comment: "Hide dongers and ascii art. ヽ༼ຈل͜ຈ༽ﾉ",
+    comment: "Ascii art. ヽ༼ຈل͜ຈ༽ﾉ",
     isActive: false,
     predicate: message_is_donger
   },
   
   { name: 'TppFilterSmall',
-    comment: "Hide one-word messages (Kappa, \"yesss!\", etc)",
+    comment: "One-word messages",
     isActive: false,
     predicate: message_is_small
   },
   
   { name: 'TppFilterSpam',
-    comment: 'Hide Misty spam',
-    isActive: false,
+    comment: 'Misty spam',
+    isActive: true,
     predicate: message_is_misty
   },
 ];
-
-
 
 var rewriters = [
    { name: 'TppConvertAllcaps',
@@ -349,9 +347,6 @@ var rewriters = [
      rewriter: convert_allcaps
    }
 ];
-
-
-var all_options = [].concat(filters).concat(rewriters);
 
 function passes_active_filters(message){
     for(var i=0; i < filters.length; i++){
@@ -381,65 +376,44 @@ function initialize_ui(){
 
     //TODO: #chat_line_list li.fromjtv
 
+    $("#chat_viewers_dropmenu_button").after('<a id="chat_filter_dropmenu_button" class="dropdown_glyph"><span></span><a>');
+    $('#chat_filter_dropmenu_button').on('click', function(){
+        $('#chat_filter_dropmenu').toggle();
+    });
+    
+    $('#chat_filter_dropmenu_button span')
+        .css('background', 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAv0lEQVQ4jc3SIQ7CQBAF0C8rK5E9AhI5R1gccpLOn+UACARHwCO5Aq6HQHAUQsAhwJGmlNBdIOEnY18mfwb4u4hIYWaSOySnAABVrWKMt9xx97OqVlDVkbufPoAuZiYAgBBC6e5NBnJQ1eqpK5KbBKQJIZQvyyc5f4eQ3A66pJlJjLG3N3dfJr0FyUUHudZ1PUtCWls9IDPbJyN90OBeulHV8beg6lfQKgsSkaJ18qOZTbIgAHD3NcmdiBTZSGruBIYOSjStwb0AAAAASUVORK5CYII=)')
+        .css('position', 'relative');
+        
+    $('#chat_speak').css('width', '149px');
+    $('#controls').append('<div id="chat_filter_dropmenu" class="dropmenu menu-like" style="position:absolute; bottom:45px; right:170px; display:none;"><p style="margin-left:6px">Hide:</p></div>');
+    
+    
+    var controlPanel = $('#chat_filter_dropmenu');
+    
     var customCssParts = [
         "#chat_line_list .TppFiltered {display:none;}"
     ];
-    
-    var customStyles = document.createElement("style");
-    customStyles.appendChild(document.createTextNode(customCssParts.join("")));
 
-    var controlPanel = document.createElement("div");
-    controlPanel.id = "TppControlPanel";
-    controlPanel.className = "hidden";
+    $('head').append('<style>' + customCssParts.join("") + '</style>');
     
-    var panelTable = document.createElement("table");
-    controlPanel.appendChild(panelTable);
-    
-    all_options.forEach(function(option){
-        var tr = document.createElement("tr");
-        panelTable.appendChild(tr);
-        
-        var td;
-        
-        td = document.createElement("td");
-        var ipt = document.createElement("input");
-        ipt.type = "checkbox";
-        ipt.checked = option.isActive; // <---
-        td.appendChild(ipt);
-        tr.appendChild(td);
-        
-        td = document.createElement("td");
-        td.appendChild(document.createTextNode(option.comment)); // <---
-        
-        tr.appendChild(td);
-        
-        $(ipt).click(function(){
-            option.isActive = !option.isActive;
-            update_chat_with_filter();
+    function add_option(option){
+        controlPanel
+        .append('<p class="dropmenu_action"><label for="' + option.name + '"> <input type="checkbox" id="' + option.name + '">' + option.comment + '</label></p>');
+
+        $('#' + option.name)
+        .prop('checked', option.isActive)
+        .on('change', function(){ 
+            option.isActive = $(this).prop("checked");
+            update_chat_with_filter(); 
         });
-        
-    });
+    }
     
-    var controls = document.getElementById("controls");
-    document.body.appendChild(customStyles);
+
+    filters.forEach(add_option);
+    $('#chat_filter_dropmenu').append('<p style="margin-left:6px;">Automatically rewrite:</p>');
+    rewriters.forEach(add_option);
     
-    //use a default jtv style for button so it looks natural and works with BetterTTV
-    var toggleControlPanel = $("<div>", {
-        style: "background-image: none !important; margin-bottom: 5px;",
-        className: "dropdown_static"
-    });
-    toggleControlPanel.text("Chat Filter Settings");
-    
-    //create arrow using jtv styles/images
-    var icon = $("<span>", {style: "background-image: url('../images/xarth/left_col_dropdown_arrow.png'); background-position: 50% -32px; height: 10px; margin-left: 10px; width: 10px; background-repeat: no-repeat; display: inline-block;"});
-    toggleControlPanel.append(icon);
-    toggleControlPanel.click(function(){
-        $(controlPanel).toggleClass("hidden");
-        //flip arrow
-        icon.css('background-position', (icon.css('background-position') == '50% -7px') ? '50% -32px' : '50% -7px' );
-    });
-    $(controls).append(toggleControlPanel);
-    controls.appendChild(controlPanel);
 }
 
 
