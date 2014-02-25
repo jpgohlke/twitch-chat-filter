@@ -461,10 +461,19 @@ function perform_gui( innerHTML, message ) {
 
 var initialize_ui = function(){
 
-    var chatList = $("#chat_line_list");
+    	//TODO: #chat_line_list li.fromjtv
+	var chatList = $("#chat_line_list");
 
-    //TODO: #chat_line_list li.fromjtv
-
+    $("#chat_viewers_dropmenu_button").after('<a id="chat_filter_dropmenu_button" class="dropdown_glyph"><span></span><a>');
+	$('#chat_filter_dropmenu_button').on('click', function(){ $('#chat_filter_dropmenu').toggle();})
+	$('#chat_filter_dropmenu_button span').css('background', 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAv0lEQVQ4jc3SIQ7CQBAF0C8rK5E9AhI5R1gccpLOn+UACARHwCO5Aq6HQHAUQsAhwJGmlNBdIOEnY18mfwb4u4hIYWaSOySnAABVrWKMt9xx97OqVlDVkbufPoAuZiYAgBBC6e5NBnJQ1eqpK5KbBKQJIZQvyyc5f4eQ3A66pJlJjLG3N3dfJr0FyUUHudZ1PUtCWls9IDPbJyN90OBeulHV8beg6lfQKgsSkaJ18qOZTbIgAHD3NcmdiBTZSGruBIYOSjStwb0AAAAASUVORK5CYII=)')
+		.css('position', 'relative')
+		
+	$('#chat_speak').css('width', '149px');
+	$('#controls').append('<div id="chat_filter_dropmenu" class="dropmenu menu-like" style="position:absolute; bottom:45px; right:170px; display:none;"><p style="margin-left:6px">Hide:</p></div>')
+	
+	var controlPanel = $('#chat_filter_dropmenu');
+	
     var customCssParts = [];
 	filters.forEach(function(filter){
         var cls = filter.name;
@@ -476,111 +485,26 @@ var initialize_ui = function(){
 			customCssParts.push(cssLine);
 		});
     });
-    
-    var customStyles = document.createElement("style");
-    customStyles.appendChild(document.createTextNode(customCssParts.join("")));
 
-    var controlPanel = document.createElement("div");
-    controlPanel.id = "TppControlPanel";
-    controlPanel.className = "hidden";
+	$('head').append('<style>' + customCssParts.join("") + '</style>');
     
-    var panelTable = document.createElement("table");
-    controlPanel.appendChild(panelTable);
-    
-    filters.forEach(function(filter){
-        var tr = document.createElement("tr");
-        panelTable.appendChild(tr);
-        
-        var td;
-        
-        td = document.createElement("td");
-        var ipt = document.createElement("input");
-        ipt.type = "checkbox";
-        ipt.checked = filter.def; // <---
-        td.appendChild(ipt);
-        tr.appendChild(td);
-        
-        td = document.createElement("td");
-        td.appendChild(document.createTextNode(filter.comment)); // <---
-        
-        tr.appendChild(td);
-        
-        if(filter.def){
-            chatList.addClass(filter.name);
-        }
-        
-        $(ipt).click(function(){
-            chatList.toggleClass(filter.name);
-        });
-        
-    });
-	
-    gui_options.forEach(function(gui_option){
-        var tr = document.createElement("tr");
-		
-        panelTable.appendChild(tr);
-        
-        var td;
-        
-        td = document.createElement("td");
-        var ipt = document.createElement("input");
-        ipt.type = "checkbox";
-        ipt.checked = gui_option.def; // <---
-        td.appendChild(ipt);
-        tr.appendChild(td);
-        
-        td = document.createElement("td");
-        td.appendChild(document.createTextNode(gui_option.comment)); // <---
-        
-        tr.appendChild(td);
-        
-        if(gui_option.def){
-            //chatList.addClass(gui_option.name);
-        }
-        
-        $(ipt).click(function(){
-			gui_option.def = !gui_option.def;
-            //chatList.toggleClass(gui_option.name);
-        });
-		
-    });
-	
-    var controls = document.getElementById("controls");
-    document.body.appendChild(customStyles);
-	
-	//use a default jtv style for button so it looks natural and works with BetterTTV
-	var toggleControlPanel = $("<div>", {
-		style: "background-image: none !important; margin-bottom: 5px;",
- 		class: "dropdown_static"
+	filters.forEach(function(filter){
+		$('#chat_filter_dropmenu').append('<p class="dropmenu_action" id="' + filter.name + '-p"><input type="checkbox" id="' + filter.name + '"> ' + filter.comment +'</p>');
+		$('#' + filter.name + '-p').on('click', function(){ $('#' + filter.name).prop('checked', !$('#' + filter.name).prop('checked')); });
+		$('#' + filter.name).on('change', function(){ chatList.toggleClass(filter.name); }).prop('checked', filter.def);
+		if(filter.def)
+			chatList.addClass(filter.name);
 	});
-	toggleControlPanel.text("Chat Filter Settings");
 	
-	//create arrow using jtv styles/images
-	var icon = $("<span>", {style: "background-image: url('../images/xarth/left_col_dropdown_arrow.png'); background-position: 50% -32px; height: 10px; margin-left: 10px; width: 10px; background-repeat: no-repeat; display: inline-block;"});
-	toggleControlPanel.append(icon);
-	toggleControlPanel.click(function(){
-		$(controlPanel).toggleClass("hidden");
-		//flip arrow
-		icon.css('background-position', (icon.css('background-position') == '50% -7px') ? '50% -32px' : '50% -7px' );
+	$('#chat_filter_dropmenu').append('<p style="margin-left:6px;">GUI Options:</p>');
+	
+	gui_options.forEach(function(gui_option){
+		$('#chat_filter_dropmenu').append('<p class="dropmenu_action" id="' + gui_option.name + '-p"><input type="checkbox" id="' + gui_option.name + '"> ' + gui_option.comment +'</p>');
+		$('#' + gui_option.name + '-p').on('click', function(){ $('#' + gui_option.name).prop('checked', !$('#' + gui_option.name).prop('checked')); });
+		$('#' + gui_option.name).on('change', function(){ chatList.toggleClass(gui_option.name); }).prop('checked', gui_option.def);
+		if(gui_option.def)
+			chatList.addClass(gui_option.name);
 	});
-	$(controls).append(toggleControlPanel);
-    controls.appendChild(controlPanel);
-    
-    // adjust chat scroll height so that we can see the bottom of it, even with the extra buttons
-    function adjustChatElements() {
-        var el = $("#twitch_chat .js-chat-scroll");  // need to resize this
-        
-        if(adjustChatElements.baseHeight == undefined)  // first time
-            adjustChatElements.baseHeight = parseInt(el.css("bottom"));
-            
-        el.css("bottom", adjustChatElements.baseHeight + 
-            $("#TppControlPanel").height() + 
-            $(toggleControlPanel).outerHeight(true));
-    }
-    $(toggleControlPanel).click(adjustChatElements);
-    
-    // trigger initial resizing
-    adjustChatElements();
 };
 
 
