@@ -243,7 +243,7 @@ function message_is_small(message){
 }
 
 var convert_allcaps = function(message) {
-    //Only convert words preceded by a spaaaaaace, to avoid
+    //Only convert words preceded by a space, to avoid
     //converting case-sensitive URLs.
     return message.replace(/(^|\s)(\w+)/g, function(msg){ return msg.toLowerCase() });
 };
