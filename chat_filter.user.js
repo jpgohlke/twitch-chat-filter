@@ -270,7 +270,7 @@ var filters = [
   },
   
   { name: 'TppFilterDonger',
-    comment: "Ascii art. ヽ༼ຈل͜ຈ༽ﾉ",
+    comment: "Ascii art and dongers",
     isActive: false,
     predicate: message_is_donger
   },
