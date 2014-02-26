@@ -346,14 +346,14 @@ function initialize_ui(){
     var controlPanel = $('#chat_filter_dropmenu');
     
     var customCssParts = [
-        "#chat_line_list .TppFiltered {display:none;}"
+        "#chat_line_list .TppFiltered {display:none;} .filter_option{font-weight:normal; margin-bottom:0; color: #B9A3E3;}"
     ];
 
     $('head').append('<style>' + customCssParts.join("") + '</style>');
     
     function add_option(option){
         controlPanel
-        .append('<p class="dropmenu_action"><label for="' + option.name + '" style="font-weight:normal; margin-bottom:0; color:#B9A3E3;> <input type="checkbox" id="' + option.name + '">' + option.comment + '</label></p>');
+        .append('<p class="dropmenu_action"><label for="' + option.name + '" class="filter_option"> <input type="checkbox" id="' + option.name + '">' + option.comment + '</label></p>');
 
         $('#' + option.name)
         .prop('checked', option.isActive)
