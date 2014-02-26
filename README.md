@@ -2,6 +2,28 @@
 
 A Javascript userscript to filter chat commands and other spam from the chat on the [Twitch Plays Pokemon stream](http://www.twitch.tv/twitchplayspokemon)
 
+
+![Chat-Filter Preview](tpp-chat-filter-preview.png "State of Screenshot: 0dc02e14e8")
+
+## Using the script as a javascript bookmark
+
+Fastest and lightweight way to run the script.
+
+1. Navigate to the userscript URL in another Tab:  https://raw.github.com/jpgohlke/twitch-chat-filter/master/chat_filter.user.js
+
+2. Copy everything with `Ctrl` + `A` & `Ctrl` + `C`.
+
+3. Go to the bookmark menu and add a new bookmark with the title of your choice.
+
+4. Write the following in the URL-Field: "javascript: "
+
+5. Append the code to the URL-Field by pressing `Ctrl` + `V` with the cursor one space away from the ":".
+
+6. Save the Bookmark.
+
+7. From now on, you can just click on that bookmark when you have the TPP-Tab open to enable the script.
+
+
 ## Installing the script using Greasemonkey (Firefox)
 
 Installing the userscript via Greasemonkey will automatically run it everytime you visit the TPP stream.
