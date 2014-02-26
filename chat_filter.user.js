@@ -4,7 +4,7 @@
 // @description Hide input commands from the chat.
 // @include     http://www.twitch.tv/twitchplayspokemon
 // @include     http://www.twitch.tv/twitchplayspokemon/
-// @version     1.3
+// @version     1.4
 // @updateURL   https://raw.github.com/jpgohlke/twitch-chat-filter/master/chat_filter.user.js
 // @grant       unsafeWindow
 // ==/UserScript==
@@ -47,6 +47,7 @@
  *     /u/feha
  *     /u/jakery2
  *     /u/redopium
+ *     /u/codefusion
  */
 
 /* global unsafeWindow:false */
@@ -352,7 +353,7 @@ function initialize_ui(){
     
     function add_option(option){
         controlPanel
-        .append('<p class="dropmenu_action"><label for="' + option.name + '"> <input type="checkbox" id="' + option.name + '">' + option.comment + '</label></p>');
+        .append('<p class="dropmenu_action"><label for="' + option.name + '" style="font-weight:normal; margin-bottom:0; color:#B9A3E3;> <input type="checkbox" id="' + option.name + '">' + option.comment + '</label></p>');
 
         $('#' + option.name)
         .prop('checked', option.isActive)
