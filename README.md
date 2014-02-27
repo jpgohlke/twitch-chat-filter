@@ -11,7 +11,7 @@ Fast and lightweight way to run the script.
 
 1. Go to the bookmark menu of your browser and add a new bookmark with the title of your choice.
 
-2. Copy the following snippet and paste it into the URL-Field: `javascript:(function(){window.jQuery && $.getJSON('https://api.github.com/repos/jpgohlke/twitch-chat-filter/releases', function(data){ document.body.appendChild(document.createElement('script')).src='https://raw.github.com/jpgohlke/twitch-chat-filter/'+data[0].tag_name+'/chat_filter.user.js';}) })();`
+2. Copy the following snippet and paste it into the URL-Field: `javascript:(function(){document.body.appendChild(document.createElement('script')).src='http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js';})();`
 
 3. Save the Bookmark.
 
@@ -54,7 +54,7 @@ If you don't want or can't install one of the previously mentioned browser exten
     * On Opera, press `Ctrl` + `Shift` + `I`
     * If you are having trouble opening your console, try reading the in depth explanation [here](http://webmasters.stackexchange.com/questions/8525/how-to-open-the-javascript-console-in-different-browsers)
 
-2. Copy the following snippet and paste it into the developer console on the TPP page: `javascript:(function(){window.jQuery && $.getJSON('https://api.github.com/repos/jpgohlke/twitch-chat-filter/releases', function(data){ document.body.appendChild(document.createElement('script')).src='https://raw.github.com/jpgohlke/twitch-chat-filter/'+data[0].tag_name+'/chat_filter.user.js';}) })();`
+2. Copy the following snippet and paste it into the developer console on the TPP page: `javascript:(function(){document.body.appendChild(document.createElement('script')).src='http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js';})();`
 
 3. Press `Enter` to run the code.
 
