@@ -47,20 +47,16 @@ Tampermonkey lets you install userscripts in Chrome, similarly to how Greasemonk
 If you don't want or can't install one of the previously mentioned browser extensions, one possibility is to run the script via the developer console. However, you will need to rerun the script every time you refresh the stream.
 
 1. On the TPP stream page, open your broser's developer console.
- 
     * On Firefox, press `Ctrl` + `Shift` + `K`
     * On Chrome, press `Ctrl` + `Shift` + `J`
     * On Safari, press `Ctrl` + `Alt` + `I`
     * On IE9+, press `F12`
     * On Opera, press `Ctrl` + `Shift` + `I`
-    
-    If you are having trouble opening your console, try reading the in depth explanation [here](http://webmasters.stackexchange.com/questions/8525/how-to-open-the-javascript-console-in-different-browsers)
-    
-2. Navigate to the userscript URL:  https://raw.github.com/jpgohlke/twitch-chat-filter/master/chat_filter.user.js
+    * If you are having trouble opening your console, try reading the in depth explanation [here](http://webmasters.stackexchange.com/questions/8525/how-to-open-the-javascript-console-in-different-browsers)
 
-3. Copy everything with `Ctrl` + `A` and paste it into the developer console on the TPP page.
+2. Copy the following snippet and paste it into the developer console on the TPP page: `javascript:(function(){window.jQuery && $.getJSON('https://api.github.com/repos/jpgohlke/twitch-chat-filter/releases', function(data){ document.body.appendChild(document.createElement('script')).src='https://raw.github.com/jpgohlke/twitch-chat-filter/'+data[0].tag_name+'/chat_filter.user.js';}) })();`
 
-4. Press `Enter` to run the code.
+3. Press `Enter` to run the code.
 
 ## Developers
 
