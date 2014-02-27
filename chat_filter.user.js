@@ -72,12 +72,10 @@ var TPP_COMMANDS = [
 // Score-based filter for "Guys, we need to beat Misty" spam.
 var MISTY_SUBSTRINGS = [
     "misty",
-    "mіѕтy",
     "guys",
     "we have to",
     "we need to",
     "beat",
-    "bеaт"
 ];
 
 var URL_WHITELIST = [
@@ -245,6 +243,11 @@ function message_is_small(message){
     return message.split(/\s/g).length < MINIMUM_MESSAGE_WORDS;
 }
 
+function message_is_cyrillic(message){
+    //Some people use cyrillic characters to write spam that gets past the filter.
+    return /[\u0400-\u04FF]/.test(message);
+}
+
 function convert_copy_paste(message){
     //Replace repetitive text with only one instance of it
     //Useful for text and links where people do
@@ -287,6 +290,12 @@ var filters = [
     isActive: true,
     predicate: message_is_misty
   },
+  
+  { name: 'TppFilterCyrillic',
+    comment: 'Cyrillic characters',
+    isActive: true,
+    predicate: message_is_cyrillic
+  }
 ];
 
 

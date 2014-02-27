@@ -9,20 +9,13 @@ A Javascript userscript to filter chat commands and other spam from the chat on 
 
 Fastest and lightweight way to run the script.
 
-1. Navigate to the userscript URL in another Tab:  https://raw.github.com/jpgohlke/twitch-chat-filter/master/chat_filter.user.js
+1. Go to the bookmark menu of your browser and add a new bookmark with the title of your choice.
 
-2. Copy everything with `Ctrl` + `A` & `Ctrl` + `C`.
+2. Copy the following snippet and paste it into the URL-Field: `javascript:(function(){window.jQuery && $.getJSON('https://api.github.com/repos/jpgohlke/twitch-chat-filter/releases', function(data){ document.body.appendChild(document.createElement('script')).src='https://raw.github.com/jpgohlke/twitch-chat-filter/'+data[0].tag_name+'/chat_filter.user.js';}) })();`
 
-3. Go to the bookmark menu and add a new bookmark with the title of your choice.
+3. Save the Bookmark.
 
-4. Write the following in the URL-Field: "javascript: "
-
-5. Append the code to the URL-Field by pressing `Ctrl` + `V` with the cursor one space away from the ":".
-
-6. Save the Bookmark.
-
-7. From now on, you can just click on that bookmark when you have the TPP-Tab open to enable the script.
-
+4. From now on, you can just click on that bookmark when you have the TPP-Tab open to enable the script.
 
 ## Installing the script using Greasemonkey (Firefox)
 
