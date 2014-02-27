@@ -11,7 +11,7 @@ Fastest and lightweight way to run the script.
 
 1. Go to the bookmark menu of your browser and add a new bookmark with the title of your choice.
 
-2. Copy the following snippet and paste it into the URL-Field: `javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://github.com/jpgohlke/twitch-chat-filter/raw/master/chat_filter.user.js';})();`
+2. Copy the following snippet and paste it into the URL-Field: `javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://github.com/jpgohlke/twitch-chat-filter/raw/master/chat_filter.min.js';})();`
 
 3. Save the Bookmark.
 
