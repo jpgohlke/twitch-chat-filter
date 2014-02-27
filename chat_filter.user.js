@@ -51,6 +51,7 @@
  *     /u/jakery2
  *     /u/redopium
  *     /u/codefusion
+ *	   /u/TRU3XV3T3R4N
  */
 
 /* global unsafeWindow:false */
@@ -75,7 +76,8 @@ var MISTY_SUBSTRINGS = [
     "guys",
     "we have to",
     "we need to",
-    "beat"
+    "beat",
+	"what about"
 ];
 
 var URL_WHITELIST = [
@@ -257,6 +259,32 @@ function convert_copy_paste(message){
     return message.replace(/(.{4}.*?)(\s*?\1)+/g, "$1");
 }
 
+var URLDef = [ //Defining what a URL consists of.
+	"http://",
+	"https://",
+	"www.",
+	".org",
+	".com",
+	".net",
+	".me"
+
+
+];
+
+function message_is_url(message){
+	//Make the chat 'URL only mode' allowing people to click links
+	//at times when the chat is too fast. Also for when people don't
+	//want to read the crap being posted and are looking for links.
+	for(var i = 0; i < URLDef.length; i++){
+		if(message.indexOf(URLDef[i]) != -1){
+			return false;
+			
+		}
+	}
+	return true;
+		
+}
+
 // --- Filtering ---
 
 var filters = [
@@ -289,6 +317,13 @@ var filters = [
     isActive: true,
     predicate: message_is_misty
   },
+  
+  { 
+	name: 'URLOnlyMessages',
+	comment: "URL messages only",
+	isActive: false,
+	predicate: message_is_url
+  },
 ];
 
 var rewriters = [
@@ -303,7 +338,15 @@ var rewriters = [
     isActive: true,
     rewriter: convert_copy_paste
   },
+  
+  
 ];
+
+
+	
+
+
+
 
 function passes_active_filters(message){
     for(var i=0; i < filters.length; i++){
