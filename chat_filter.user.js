@@ -2,9 +2,12 @@
 // @name        Twitch Plays Pokemon Chat Filter
 // @namespace   https://github.com/jpgohlke/twitch-chat-filter
 // @description Hide input commands from the chat.
+
 // @include     http://www.twitch.tv/twitchplayspokemon
 // @include     http://www.twitch.tv/twitchplayspokemon/
-// @version     1.4
+// @include     http://www.twitch.tv/chat/embed?channel=twitchplayspokemon&popout_chat=true
+
+// @version     1.5
 // @updateURL   https://raw.github.com/jpgohlke/twitch-chat-filter/master/chat_filter.user.js
 // @grant       unsafeWindow
 // ==/UserScript==
@@ -340,7 +343,7 @@ function initialize_ui(){
         .css('position', 'relative');
         
     $('#chat_speak').css('width', '149px');
-    $('#controls').append('<div id="chat_filter_dropmenu" class="dropmenu menu-like" style="position:absolute; bottom:45px; right:170px; display:none;"><p style="margin-left:6px">Hide:</p></div>');
+    $('#controls').append('<div id="chat_filter_dropmenu" class="dropmenu menu-like" style="position:absolute; bottom:45px; display:none;"><p style="margin-left:6px">Hide:</p></div>');
     
     
     var controlPanel = $('#chat_filter_dropmenu');
