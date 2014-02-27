@@ -243,11 +243,16 @@ function message_is_small(message){
     return message.split(/\s/g).length < MINIMUM_MESSAGE_WORDS;
 }
 
-var convert_allcaps = function(message) {
+function message_is_cyrillic(message){
+    //Some people use cyrillic characters to write spam that gets past the filter.
+    return /[\u0400-\u04FF]/.test(message);
+}
+
+function convert_allcaps(message) {
     //Only convert words preceded by a space, to avoid
     //converting case-sensitive URLs.
     return message.replace(/(^|\s)(\w+)/g, function(msg){ return msg.toLowerCase() });
-};
+}
 
 function convert_copy_paste(message){
     //Replace repetitive text with only one instance of it
@@ -289,6 +294,12 @@ var filters = [
     isActive: true,
     predicate: message_is_misty
   },
+  
+  { name: 'TppFilterCyrillic',
+    comment: 'Cyrillic characters',
+    isActive: true,
+    predicate: message_is_cyrillic
+  }
 ];
 
 var rewriters = [
