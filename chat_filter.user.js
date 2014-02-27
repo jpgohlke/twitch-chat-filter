@@ -361,8 +361,6 @@ function initialize_ui(){
     $('head').append('<style>' + customCssParts.join("") + '</style>');
     
     function add_option(option, update){
-        update = update || update_chat_with_filter;
-        
         controlPanel
         .append('<p class="dropmenu_action"><label for="' + option.name + '" class="filter_option"> <input type="checkbox" id="' + option.name + '">' + option.comment + '</label></p>');
 
@@ -375,15 +373,18 @@ function initialize_ui(){
         .prop('checked', option.isActive);
     }
     
-    filters.forEach(add_option);
+    filters.forEach(function(filter){
+        add_option(filter, update_chat_with_filter);
+    });
     $('#chat_filter_dropmenu').append('<p style="margin-left:6px;">Automatically rewrite:</p>');
-    rewriters.forEach(add_option);
-    
+    rewriters.forEach(function(rewriter){
+        add_option(rewriter, function(rewriter){});
+    });
     function update_css(styler){
-            if(styler.isActive)
-                $(styler.element).addClass(styler.class);
-            else
-                $(styler.element).removeClass(styler.class);
+		if(styler.isActive)
+			$(styler.element).addClass(styler.class);
+		else
+			$(styler.element).removeClass(styler.class);
     }
     stylers.forEach(function(option){
         add_option(option, update_css);
