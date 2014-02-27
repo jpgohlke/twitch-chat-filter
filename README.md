@@ -5,9 +5,9 @@ A Javascript userscript to filter chat commands and other spam from the chat on 
 
 ![Chat-Filter Preview](tpp-chat-filter-preview.png "State of Screenshot: 0dc02e14e8")
 
-## Using the script as a javascript bookmark
+## Using the script as a JavaScript bookmark
 
-Fastest and lightweight way to run the script.
+Fast and lightweight way to run the script.
 
 1. Go to the bookmark menu of your browser and add a new bookmark with the title of your choice.
 
