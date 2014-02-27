@@ -1,4 +1,4 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name        Twitch Plays Pokemon Chat Filter
 // @namespace   https://github.com/jpgohlke/twitch-chat-filter
 // @description Hide input commands from the chat.
@@ -72,10 +72,12 @@ var TPP_COMMANDS = [
 // Score-based filter for "Guys, we need to beat Misty" spam.
 var MISTY_SUBSTRINGS = [
     "misty",
+    "mіѕтy",
     "guys",
     "we have to",
     "we need to",
-    "beat"
+    "beat",
+    "bеaт"
 ];
 
 var URL_WHITELIST = [
@@ -243,12 +245,6 @@ function message_is_small(message){
     return message.split(/\s/g).length < MINIMUM_MESSAGE_WORDS;
 }
 
-var convert_allcaps = function(message) {
-    //Only convert words preceded by a space, to avoid
-    //converting case-sensitive URLs.
-    return message.replace(/(^|\s)(\w+)/g, function(msg){ return msg.toLowerCase() });
-};
-
 function convert_copy_paste(message){
     //Replace repetitive text with only one instance of it
     //Useful for text and links where people do
@@ -259,6 +255,8 @@ function convert_copy_paste(message){
 
 // --- Filtering ---
 
+//Filters have predicates that are called for every message
+//to determine whether it should get dropped or not
 var filters = [
   { name: 'TppFilterCommand',
     comment: "Commands (up, down, anarchy, etc)",
@@ -291,19 +289,26 @@ var filters = [
   },
 ];
 
-var rewriters = [
-  { name: 'TppConvertAllcaps',
-    comment: "ALLCAPS to lowercase",
-    isActive: true,
-    rewriter: convert_allcaps
-  },
-  
+
+//Rewriters are applied to the text of a message 
+//before it is inserted in the chat box
+var rewriters = [  
   { name: 'TppFilterDuplicateURL',
     comment: "Copy pasted repetitions",
     isActive: true,
     rewriter: convert_copy_paste
   },
 ];
+
+//Stylers are CSS classes that get toggled on/off
+var stylers = [
+  { name: 'TppConvertAllcaps',
+    comment: "Lowercase-only mode",
+    isActive: true,
+    element: '#chat_line_list',
+    class: 'allcaps_filtered'
+  },
+]
 
 function passes_active_filters(message){
     for(var i=0; i < filters.length; i++){
@@ -349,7 +354,8 @@ function initialize_ui(){
     var controlPanel = $('#chat_filter_dropmenu');
     
     var customCssParts = [
-        "#chat_line_list .TppFiltered {display:none;} .filter_option{font-weight:normal; margin-bottom:0; color: #B9A3E3;}"
+        "#chat_line_list .TppFiltered {display:none;} .filter_option{font-weight:normal; margin-bottom:0; color: #B9A3E3;}",
+        "#chat_line_list.allcaps_filtered span.chat_line{text-transform:lowercase;}"
     ];
 
     $('head').append('<style>' + customCssParts.join("") + '</style>');
@@ -370,7 +376,18 @@ function initialize_ui(){
     filters.forEach(add_option);
     $('#chat_filter_dropmenu').append('<p style="margin-left:6px;">Automatically rewrite:</p>');
     rewriters.forEach(add_option);
-    
+    stylers.forEach(function(option){
+        //TODO: find a clever way to be DRY and not call update_chat_with_filter()
+        add_option(option);
+        function applyStyles(){
+            if(option.isActive)
+                $(option.element).addClass(option.class);
+            else
+                $(option.element).removeClass(option.class);
+        }
+        applyStyles();
+        $('#' + option.name).change(applyStyles);
+    });
 }
 
 
