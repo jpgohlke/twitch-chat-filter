@@ -360,33 +360,34 @@ function initialize_ui(){
 
     $('head').append('<style>' + customCssParts.join("") + '</style>');
     
-    function add_option(option){
+    function add_option(option, update){
+        update = update || update_chat_with_filter;
+        
         controlPanel
         .append('<p class="dropmenu_action"><label for="' + option.name + '" class="filter_option"> <input type="checkbox" id="' + option.name + '">' + option.comment + '</label></p>');
 
         $('#' + option.name)
-        .prop('checked', option.isActive)
         .on('change', function(){ 
             option.isActive = $(this).prop("checked");
-            update_chat_with_filter(); 
-        });
+            update(option);
+                
+        })
+        .prop('checked', option.isActive);
     }
     
-
     filters.forEach(add_option);
     $('#chat_filter_dropmenu').append('<p style="margin-left:6px;">Automatically rewrite:</p>');
     rewriters.forEach(add_option);
-    stylers.forEach(function(option){
-        //TODO: find a clever way to be DRY and not call update_chat_with_filter()
-        add_option(option);
-        function applyStyles(){
-            if(option.isActive)
-                $(option.element).addClass(option.class);
+    
+    function update_css(styler){
+            if(styler.isActive)
+                $(styler.element).addClass(styler.class);
             else
-                $(option.element).removeClass(option.class);
-        }
-        applyStyles();
-        $('#' + option.name).change(applyStyles);
+                $(styler.element).removeClass(styler.class);
+    }
+    stylers.forEach(function(option){
+        add_option(option, update_css);
+        update_css(option);
     });
 }
 
