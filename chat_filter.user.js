@@ -1,4 +1,4 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name        Twitch Plays Pokemon Chat Filter
 // @namespace   https://github.com/jpgohlke/twitch-chat-filter
 // @description Hide input commands from the chat.
@@ -75,7 +75,7 @@ var MISTY_SUBSTRINGS = [
     "guys",
     "we have to",
     "we need to",
-    "beat"
+    "beat",
 ];
 
 var URL_WHITELIST = [
@@ -248,12 +248,6 @@ function message_is_cyrillic(message){
     return /[\u0400-\u04FF]/.test(message);
 }
 
-function convert_allcaps(message) {
-    //Only convert words preceded by a space, to avoid
-    //converting case-sensitive URLs.
-    return message.replace(/(^|\s)(\w+)/g, function(msg){ return msg.toLowerCase() });
-}
-
 function convert_copy_paste(message){
     //Replace repetitive text with only one instance of it
     //Useful for text and links where people do
@@ -264,6 +258,8 @@ function convert_copy_paste(message){
 
 // --- Filtering ---
 
+//Filters have predicates that are called for every message
+//to determine whether it should get dropped or not
 var filters = [
   { name: 'TppFilterCommand',
     comment: "Commands (up, down, anarchy, etc)",
@@ -302,19 +298,26 @@ var filters = [
   }
 ];
 
-var rewriters = [
-  { name: 'TppConvertAllcaps',
-    comment: "ALLCAPS to lowercase",
-    isActive: true,
-    rewriter: convert_allcaps
-  },
-  
+
+//Rewriters are applied to the text of a message 
+//before it is inserted in the chat box
+var rewriters = [  
   { name: 'TppFilterDuplicateURL',
     comment: "Copy pasted repetitions",
     isActive: true,
     rewriter: convert_copy_paste
   },
 ];
+
+//Stylers are CSS classes that get toggled on/off
+var stylers = [
+  { name: 'TppConvertAllcaps',
+    comment: "Lowercase-only mode",
+    isActive: true,
+    element: '#chat_line_list',
+    class: 'allcaps_filtered'
+  },
+]
 
 function passes_active_filters(message){
     for(var i=0; i < filters.length; i++){
@@ -360,28 +363,42 @@ function initialize_ui(){
     var controlPanel = $('#chat_filter_dropmenu');
     
     var customCssParts = [
-        "#chat_line_list .TppFiltered {display:none;} .filter_option{font-weight:normal; margin-bottom:0; color: #B9A3E3;}"
+        "#chat_line_list .TppFiltered {display:none;} .filter_option{font-weight:normal; margin-bottom:0; color: #B9A3E3;}",
+        "#chat_line_list.allcaps_filtered span.chat_line{text-transform:lowercase;}"
     ];
 
     $('head').append('<style>' + customCssParts.join("") + '</style>');
     
-    function add_option(option){
+    function add_option(option, update){
         controlPanel
         .append('<p class="dropmenu_action"><label for="' + option.name + '" class="filter_option"> <input type="checkbox" id="' + option.name + '">' + option.comment + '</label></p>');
 
         $('#' + option.name)
-        .prop('checked', option.isActive)
         .on('change', function(){ 
             option.isActive = $(this).prop("checked");
-            update_chat_with_filter(); 
-        });
+            update(option);
+                
+        })
+        .prop('checked', option.isActive);
     }
     
-
-    filters.forEach(add_option);
+    filters.forEach(function(filter){
+        add_option(filter, update_chat_with_filter);
+    });
     $('#chat_filter_dropmenu').append('<p style="margin-left:6px;">Automatically rewrite:</p>');
-    rewriters.forEach(add_option);
-    
+    rewriters.forEach(function(rewriter){
+        add_option(rewriter, function(rewriter){});
+    });
+    function update_css(styler){
+		if(styler.isActive)
+			$(styler.element).addClass(styler.class);
+		else
+			$(styler.element).removeClass(styler.class);
+    }
+    stylers.forEach(function(option){
+        add_option(option, update_css);
+        update_css(option);
+    });
 }
 
 
