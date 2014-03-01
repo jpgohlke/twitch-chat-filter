@@ -85,16 +85,31 @@ var URL_WHITELIST = [
     "reddit.com",
     "webchat.freenode.net/?channels=twitchplayspokemon",
     "sites.google.com/site/twitchplayspokemonstatus/",
-    "www.reddit.com/live/sw7bubeycai6hey4ciytwamw3a",
+    "reddit.com/live/sw7bubeycai6hey4ciytwamw3a",
     //miscelaneous
     "strawpoll.me",
     "imgur.com",
-    "pokeworld.herokuapp.com"
+    "pokeworld.herokuapp.com",
+    "strategywiki.org/wiki/Pok", //truncated before special characters
+    "vgmaps.com"
+];
+
+var BANNED_WORDS = [
+    "anus",
+    "giveaway", "t-shirt", "hoodie",
+    "imgur.com/4jlbxid.jpg"
 ];
 
 var MINIMUM_DISTANCE_ERROR = 2; // Number of insertions / deletions / substitutions away from a blocked word.
 var MAXIMUM_NON_ASCII_CHARACTERS = 2; // For donger smilies, etc
 var MINIMUM_MESSAGE_WORDS = 2; // For Kappas and other short messages.
+
+// The regexp Twitch uses to detect and automatically linkify URLs, with some modifications
+// so we can blacklist more messages.
+// - Recognizes *** in URLS (due to the Twitch chat censoring)
+// - Recognizes .mx and .sh TLDs
+var URL_REGEX = /\x02?((?:https?:\/\/|[\w\-\.\+]+@)?\x02?(?:[\w\-\*]+\x02?\.)+\x02?(?:com|au|org|tv|net|info|jp|uk|us|cn|fr|mobi|gov|co|ly|me|vg|eu|ca|fm|am|ws|mx|sh)\x02?(?:\:\d+)?\x02?(?:\/[\w\.\/@\?\&\%\#\(\)\,\-\+\=\;\:\x02?]+\x02?[\w\/@\?\&\%\#\(\)\=\;\x02?]|\x02?\w\x02?|\x02?)?\x02?)\x02?/g;
+var CENSORED_URL = /\*\*\*[\/\?\#\%]/g;
 
 // --- Greasemonkey loading ---
 
@@ -183,10 +198,17 @@ function message_is_command(message){
     return true;
 }
 
-// Determine if message is variant of "Guys, we need to beat Misty."
-function message_is_misty(message) {
+
+function message_is_spam(message) {
     message = message.toLowerCase();
     
+    for(var i=0; i < BANNED_WORDS.length; i++){
+        if(0 <= message.indexOf(BANNED_WORDS[i])){
+            return true;
+        }
+    }
+    
+    // Determine if message is variant of "Guys, we need to beat Misty."
     var misty_score = 0;
     for (var i = 0; i < MISTY_SUBSTRINGS.length; i++) {
         if (message.indexOf(MISTY_SUBSTRINGS[i]) != -1) {
@@ -214,7 +236,9 @@ function is_whitelisted_url(url){
 function message_is_forbidden_link(message){
     message = message.toLowerCase();
 
-    var urls = message.match(CurrentChat.linkify_re);
+    if(CENSORED_URL.test(message)) return true;
+
+    var urls = message.match(URL_REGEX);
     if(!urls) return false;
     
     for(var i=0; i<urls.length; i++){
@@ -286,9 +310,9 @@ var filters = [
   },
   
   { name: 'TppFilterSpam',
-    comment: 'Misty spam',
+    comment: 'Spam',
     isActive: true,
-    predicate: message_is_misty
+    predicate: message_is_spam
   },
   
   { name: 'TppFilterCyrillic',
@@ -317,7 +341,7 @@ var stylers = [
     element: '#chat_line_list',
     class: 'allcaps_filtered'
   },
-]
+];
 
 function passes_active_filters(message){
     for(var i=0; i < filters.length; i++){
