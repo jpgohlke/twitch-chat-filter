@@ -72,6 +72,8 @@ var TPP_COMMANDS = [
 // Score-based filter for "Guys, we need to beat Misty" spam.
 var MISTY_SUBSTRINGS = [
     "misty",
+    "whitney",
+    "milk",
     "guys",
     "we have to",
     "we need to",
