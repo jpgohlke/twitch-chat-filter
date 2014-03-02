@@ -127,6 +127,7 @@ try{
 var $ = myWindow.jQuery;
 var chat_is_loaded = false;
 
+var NEW_TWITCH_CHAT = ($("button.viewers").length > 0) ? true : false;
 // --- Filtering predicates ---
 
 // Adapted from https://gist.github.com/andrei-m/982927
@@ -340,7 +341,7 @@ var stylers = [
   { name: 'TppConvertAllcaps',
     comment: "Lowercase-only mode",
     isActive: true,
-    element: '#chat',
+    element: (NEW_TWITCH_CHAT) ? '#chat' : '#chat_line_list',
     class: 'allcaps_filtered'
   },
 ];
@@ -372,38 +373,58 @@ function rewrite_with_active_rewriters(message){
 function initialize_ui(){
 
     //TODO: #chat_line_list li.fromjtv
+    if(NEW_TWITCH_CHAT){
+        $("button.viewers").after('<a id="chat_filter_dropmenu_button" class="dropdown_glyph"><span></span><a>');
+        $('#chat_filter_dropmenu_button').on('click', function(){
+            $('#chat_filter_dropmenu').toggle();
+        });
 
-    $("button.viewers").after('<a id="chat_filter_dropmenu_button" class="dropdown_glyph"><span></span><a>');
-    $('#chat_filter_dropmenu_button').on('click', function(){
-        $('#chat_filter_dropmenu').toggle();
-    });
+        $('#chat_filter_dropmenu_button span')
+            .css('background', 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAv0lEQVQ4jc3SIQ7CQBAF0C8rK5E9AhI5R1gccpLOn+UACARHwCO5Aq6HQHAUQsAhwJGmlNBdIOEnY18mfwb4u4hIYWaSOySnAABVrWKMt9xx97OqVlDVkbufPoAuZiYAgBBC6e5NBnJQ1eqpK5KbBKQJIZQvyyc5f4eQ3A66pJlJjLG3N3dfJr0FyUUHudZ1PUtCWls9IDPbJyN90OBeulHV8beg6lfQKgsSkaJ18qOZTbIgAHD3NcmdiBTZSGruBIYOSjStwb0AAAAASUVORK5CYII=)')
+            .css('position', 'relative');
 
-    $('#chat_filter_dropmenu_button span')
-        .css('background', 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAv0lEQVQ4jc3SIQ7CQBAF0C8rK5E9AhI5R1gccpLOn+UACARHwCO5Aq6HQHAUQsAhwJGmlNBdIOEnY18mfwb4u4hIYWaSOySnAABVrWKMt9xx97OqVlDVkbufPoAuZiYAgBBC6e5NBnJQ1eqpK5KbBKQJIZQvyyc5f4eQ3A66pJlJjLG3N3dfJr0FyUUHudZ1PUtCWls9IDPbJyN90OBeulHV8beg6lfQKgsSkaJ18qOZTbIgAHD3NcmdiBTZSGruBIYOSjStwb0AAAAASUVORK5CYII=)')
-        .css('position', 'relative');
+        //Temporal fix to filter button style -- Begin
+        $('#chat_filter_dropmenu_button')
+            .css('background', '#c4c3c3')
+            .css('border', 'none')
+            .css('margin-left', '5px')
+            .css('padding', '4px 3px 2px')
+            .css('top', '10px');
+        $('.chat-buttons-container').css('top', '60px');
+        $('.send-chat-button').css('top', '10px');
+        $('.send-chat-button').css('left', '90px');
+        //Temporal fix to filter button style -- End
 
-    //Temporal fix to filter button style -- Begin
-    $('#chat_filter_dropmenu_button')
-        .css('background', '#c4c3c3')
-        .css('border', 'none')
-        .css('margin-left', '5px')
-        .css('padding', '4px 3px 2px')
-        .css('top', '10px');
-    $('.chat-buttons-container').css('top', '60px');
-    $('.send-chat-button').css('top', '10px');
-    $('.send-chat-button').css('left', '90px');
-    //Temporal fix to filter button style -- End
-
-    $('.chat-interface').append('<div id="chat_filter_dropmenu" class="dropmenu menu-like" style="position:absolute; bottom:45px; display:none;"><p style="margin-left:6px">Hide:</p></div>');
+        $('.chat-interface').append('<div id="chat_filter_dropmenu" class="dropmenu menu-like" style="position:absolute; bottom:45px; display:none;"><p style="margin-left:6px">Hide:</p></div>');
 
 
-    var controlPanel = $('#chat_filter_dropmenu');
+        var controlPanel = $('#chat_filter_dropmenu');
 
-    var customCssParts = [
-        ".chat-messages .TppFiltered {display:none;} .filter_option{font-weight:normal; margin-bottom:0; color: #B9A3E3;}",
-        "#chat.allcaps_filtered span.message{text-transform:lowercase;}"
-    ];
-
+        var customCssParts = [
+            ".chat-messages .TppFiltered {display:none;} .filter_option{font-weight:normal; margin-bottom:0; color: #B9A3E3;}",
+            "#chat.allcaps_filtered span.message{text-transform:lowercase;}"
+        ];
+    } else {
+        $("#chat_viewers_dropmenu_button").after('<a id="chat_filter_dropmenu_button" class="dropdown_glyph"><span></span><a>');
+        $('#chat_filter_dropmenu_button').on('click', function(){
+            $('#chat_filter_dropmenu').toggle();
+        });
+        
+        $('#chat_filter_dropmenu_button span')
+            .css('background', 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAv0lEQVQ4jc3SIQ7CQBAF0C8rK5E9AhI5R1gccpLOn+UACARHwCO5Aq6HQHAUQsAhwJGmlNBdIOEnY18mfwb4u4hIYWaSOySnAABVrWKMt9xx97OqVlDVkbufPoAuZiYAgBBC6e5NBnJQ1eqpK5KbBKQJIZQvyyc5f4eQ3A66pJlJjLG3N3dfJr0FyUUHudZ1PUtCWls9IDPbJyN90OBeulHV8beg6lfQKgsSkaJ18qOZTbIgAHD3NcmdiBTZSGruBIYOSjStwb0AAAAASUVORK5CYII=)')
+            .css('position', 'relative');
+            
+        $('#chat_speak').css('width', '149px');
+        $('#controls').append('<div id="chat_filter_dropmenu" class="dropmenu menu-like" style="position:absolute; bottom:45px; display:none;"><p style="margin-left:6px">Hide:</p></div>');
+        
+        
+        var controlPanel = $('#chat_filter_dropmenu');
+        
+        var customCssParts = [
+            "#chat_line_list .TppFiltered {display:none;} .filter_option{font-weight:normal; margin-bottom:0; color: #B9A3E3;}",
+            "#chat_line_list.allcaps_filtered span.chat_line{text-transform:lowercase;}"
+        ];
+    }
     $('head').append('<style>' + customCssParts.join("") + '</style>');
 
     function add_option(option, update){
@@ -444,11 +465,11 @@ function initialize_ui(){
 // --- Main ---
 
 function update_chat_with_filter(){
-    if(chat_is_loaded) return;
+    if(!chat_is_loaded) return;
 
-    $('.chat-line').each(function() {
+    $((NEW_TWITCH_CHAT) ? '.chat-line' : '#chat_line_list li').each(function() {
         var chatLine = $(this);
-        var chatText = chatLine.find(".message").text().trim();
+        var chatText = chatLine.find((NEW_TWITCH_CHAT) ? ".message" : ".chat_line").text().trim();
 
         if(passes_active_filters(chatText)){
             chatLine.removeClass("TppFiltered");
@@ -459,27 +480,40 @@ function update_chat_with_filter(){
 }
 
 function initialize_filter(){
-    update_chat_with_filter();
-
-    var Room_proto = myWindow.App.Room.prototype;
-    var original_insert_chat_line = Room_proto.addMessage;
-    Room_proto.addMessage = function(info) {
+    var original_insert_chat_line;
+    
+    function filtered_addMessage(info) {
         if(!passes_active_filters(info.message)){ return false }
         info.message = rewrite_with_active_rewriters(info.message);
         return original_insert_chat_line.apply(this, arguments);
     };
+    
+    if(NEW_TWITCH_CHAT){
+        var Room_proto = myWindow.App.Room.prototype;
+        original_insert_chat_line = Room_proto.addMessage;
+        Room_proto.addMessage = filtered_addMessage;
+    }else{
+        var Chat_proto = myWindow.Chat.prototype;
+        original_insert_chat_line = Chat_proto.insert_chat_line;
+        Chat_proto.insert_chat_line = filtered_addMessage;
+    }
+    update_chat_with_filter();
 }
 
 $(function(){
     //Checking for the spinner being gone is a more reliable way to chack
     //if the CurrentChat is fully loaded.
+    function initialize_all(){
+        chat_is_loaded = true;
+        clearInterval(chatLoadedCheck);
+        initialize_ui();
+        initialize_filter();
+    }
     var chatLoadedCheck = setInterval(function () {
-        if($(".loading-mask").length <= 0){
-            chat_is_loaded = true;
-            clearInterval(chatLoadedCheck);
-            initialize_ui();
-            initialize_filter();
-        }
+        if(NEW_TWITCH_CHAT && $(".loading-mask").length <= 0)
+            initialize_all();
+        else if($("#chat_loading_spinner").css('display') == 'none')
+            initialize_all();
     }, 100);
 
 });
