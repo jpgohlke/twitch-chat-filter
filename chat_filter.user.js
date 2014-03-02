@@ -73,6 +73,7 @@ var TPP_COMMANDS = [
 // Score-based filter for "Guys, we need to beat Misty" spam.
 var MISTY_SUBSTRINGS = [
     "misty",
+    "whitney",
     "guys",
     "we have to",
     "we need to",
@@ -100,6 +101,8 @@ var BANNED_WORDS = [
     "giveaway", "t-shirt", "hoodie",
     "imgur.com/4jlbxid.jpg"
 ];
+
+
  
 var MINIMUM_DISTANCE_ERROR = 2; // Number of insertions / deletions / substitutions away from a blocked word.
 var MAXIMUM_NON_ASCII_CHARACTERS = 2; // For donger smilies, etc
