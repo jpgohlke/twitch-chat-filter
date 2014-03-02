@@ -480,7 +480,6 @@ function update_chat_with_filter(){
 }
 
 function initialize_filter(){
-    update_chat_with_filter();
     var original_insert_chat_line;
     
     function filtered_addMessage(info) {
@@ -494,10 +493,11 @@ function initialize_filter(){
         original_insert_chat_line = Room_proto.addMessage;
         Room_proto.addMessage = filtered_addMessage;
     }else{
-        CurrentChat = myWindow.CurrentChat;
-        original_insert_chat_line = CurrentChat.insert_chat_line;
-        CurrentChat.insert_chat_line = filtered_addMessage;
+        var Chat_proto = myWindow.Chat.prototype;
+        original_insert_chat_line = Chat_proto.insert_chat_line;
+        Chat_proto.insert_chat_line = filtered_addMessage;
     }
+    update_chat_with_filter();
 }
 
 $(function(){
