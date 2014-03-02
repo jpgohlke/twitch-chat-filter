@@ -74,6 +74,7 @@ var TPP_COMMANDS = [
 var MISTY_SUBSTRINGS = [
     "misty",
     "whitney",
+    "milk",
     "guys",
     "we have to",
     "we need to",
