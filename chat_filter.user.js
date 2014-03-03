@@ -6,6 +6,9 @@
 // @include     http://www.twitch.tv/twitchplayspokemon
 // @include     http://www.twitch.tv/twitchplayspokemon/
 // @include     http://www.twitch.tv/chat/embed?channel=twitchplayspokemon&popout_chat=true
+// @include     http://beta.twitch.tv/twitchplayspokemon
+// @include     http://beta.twitch.tv/twitchplayspokemon/
+// @include     http://beta.twitch.tv/twitchplayspokemon/chat?popout=&secret=safe
 
 // @version     1.8
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
