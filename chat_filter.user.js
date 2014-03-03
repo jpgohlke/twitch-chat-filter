@@ -290,6 +290,9 @@ $(function(){
 
 //Must wait until DOM load to do feature detection
 var NEW_TWITCH_CHAT = ($("button.viewers").length > 0);
+//Selectors
+var chatListSelector = (NEW_TWITCH_CHAT) ? '.chat-messages' : '#chat_line_list';
+var chatMessageSelector = (NEW_TWITCH_CHAT) ? '.message' : '.chat_line';
 
 //Filters have predicates that are called for every message
 //to determine whether it should get dropped or not
@@ -347,7 +350,7 @@ var stylers = [
   { name: 'TppConvertAllcaps',
     comment: "Lowercase-only mode",
     isActive: true,
-    element: (NEW_TWITCH_CHAT) ? '#chat' : '#chat_line_list',
+    element: chatListSelector,
     class: 'allcaps_filtered'
   },
 ];
@@ -381,8 +384,8 @@ function initialize_ui(){
     //TODO: #chat_line_list li.fromjtv
     var controlButton, controlPanel;
     var customCssParts = [
-        ".chat-messages .TppFiltered {display:none;}",
-        "#chat.allcaps_filtered span.message{text-transform:lowercase;}"
+        chatListSelector+" .TppFiltered {display:none;}",
+        chatListSelector+".allcaps_filtered "+chatMessageSelector+"{text-transform:lowercase;}"
     ];
     
     if(NEW_TWITCH_CHAT){
@@ -485,7 +488,7 @@ function update_chat_with_filter(){
 
     $((NEW_TWITCH_CHAT) ? '.chat-line' : '#chat_line_list li').each(function() {
         var chatLine = $(this);
-        var chatText = chatLine.find((NEW_TWITCH_CHAT) ? ".message" : ".chat_line").text().trim();
+        var chatText = chatLine.find(chatMessageSelector).text().trim();
 
         if(passes_active_filters(chatText)){
             chatLine.removeClass("TppFiltered");
