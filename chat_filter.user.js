@@ -290,6 +290,9 @@ $(function(){
 
 //Must wait until DOM load to do feature detection
 var NEW_TWITCH_CHAT = ($("button.viewers").length > 0);
+//Selectors
+var chatListSelector = (NEW_TWITCH_CHAT) ? '.chat-messages' : '#chat_line_list';
+var chatMessageSelector = (NEW_TWITCH_CHAT) ? '.message' : '.chat_line';
 
 //Filters have predicates that are called for every message
 //to determine whether it should get dropped or not
@@ -347,7 +350,7 @@ var stylers = [
   { name: 'TppConvertAllcaps',
     comment: "Lowercase-only mode",
     isActive: true,
-    element: (NEW_TWITCH_CHAT) ? '#chat' : '#chat_line_list',
+    element: chatListSelector,
     class: 'allcaps_filtered'
   },
 ];
@@ -379,81 +382,91 @@ function rewrite_with_active_rewriters(message){
 function initialize_ui(){
 
     //TODO: #chat_line_list li.fromjtv
+    var controlButton, controlPanel;
+    var customCssParts = [
+        chatListSelector+" .TppFiltered {display:none;}",
+        chatListSelector+".allcaps_filtered "+chatMessageSelector+"{text-transform:lowercase;}"
+    ];
+    
     if(NEW_TWITCH_CHAT){
-        $("button.viewers").after('<a id="chat_filter_dropmenu_button" class="dropdown_glyph"><span></span><a>');
-        $('#chat_filter_dropmenu_button').on('click', function(){
-            $('#chat_filter_dropmenu').toggle();
-        });
-
-        $('#chat_filter_dropmenu_button span')
-            .css('background', 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAv0lEQVQ4jc3SIQ7CQBAF0C8rK5E9AhI5R1gccpLOn+UACARHwCO5Aq6HQHAUQsAhwJGmlNBdIOEnY18mfwb4u4hIYWaSOySnAABVrWKMt9xx97OqVlDVkbufPoAuZiYAgBBC6e5NBnJQ1eqpK5KbBKQJIZQvyyc5f4eQ3A66pJlJjLG3N3dfJr0FyUUHudZ1PUtCWls9IDPbJyN90OBeulHV8beg6lfQKgsSkaJ18qOZTbIgAHD3NcmdiBTZSGruBIYOSjStwb0AAAAASUVORK5CYII=)')
-            .css('position', 'relative');
-
-        //Temporal fix to filter button style -- Begin
-        $('#chat_filter_dropmenu_button')
-            .css('background', '#c4c3c3')
-            .css('border', 'none')
+        // Create button
+        controlButton = $('<button id="chat_filter_dropmenu_button" class="button-simple light tooltip"/>')
             .css('margin-left', '5px')
-            .css('padding', '4px 3px 2px')
-            .css('top', '10px');
-        $('.chat-buttons-container').css('top', '60px');
-        $('.send-chat-button').css('top', '10px');
+            .insertAfter('button.viewers');
+
+        // Place filter icon on button
+        controlButton
+            .css('background-image', 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAv0lEQVQ4jc3SIQ7CQBAF0C8rK5E9AhI5R1gccpLOn+UACARHwCO5Aq6HQHAUQsAhwJGmlNBdIOEnY18mfwb4u4hIYWaSOySnAABVrWKMt9xx97OqVlDVkbufPoAuZiYAgBBC6e5NBnJQ1eqpK5KbBKQJIZQvyyc5f4eQ3A66pJlJjLG3N3dfJr0FyUUHudZ1PUtCWls9IDPbJyN90OBeulHV8beg6lfQKgsSkaJ18qOZTbIgAHD3NcmdiBTZSGruBIYOSjStwb0AAAAASUVORK5CYII=)')
+            .css('background-position', '3px 3px')
+            .attr('original-title', 'Chat Filter');
+
+        // Make room for extra button by shrinking the chat button
         $('.send-chat-button').css('left', '90px');
-        //Temporal fix to filter button style -- End
 
-        $('.chat-interface').append('<div id="chat_filter_dropmenu" class="dropmenu menu-like" style="position:absolute; bottom:45px; display:none;"><p style="margin-left:6px">Hide:</p></div>');
-
-
-        var controlPanel = $('#chat_filter_dropmenu');
-
-        var customCssParts = [
-            ".chat-messages .TppFiltered {display:none;} .filter_option{font-weight:normal; margin-bottom:0; color: #B9A3E3;}",
-            "#chat.allcaps_filtered span.message{text-transform:lowercase;}"
-        ];
+        // Create menu
+        controlPanel = $('<div id="chat_filter_dropmenu" class="chat-settings chat-menu"/>')
+            .css('position', 'absolute')
+            .css('bottom', '38px')
+            .css('display', 'none')
+            .appendTo('.chat-interface');
     } else {
-        $("#chat_viewers_dropmenu_button").after('<a id="chat_filter_dropmenu_button" class="dropdown_glyph"><span></span><a>');
-        $('#chat_filter_dropmenu_button').on('click', function(){
-            $('#chat_filter_dropmenu').toggle();
-        });
+        // Create button
+        controlButton = $('<a id="chat_filter_dropmenu_button" class="dropdown_glyph"/>')
+            .insertAfter('#chat_viewers_dropmenu_button');
         
-        $('#chat_filter_dropmenu_button span')
+        // Place filter icon on button
+        $('<span/>')
             .css('background', 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAv0lEQVQ4jc3SIQ7CQBAF0C8rK5E9AhI5R1gccpLOn+UACARHwCO5Aq6HQHAUQsAhwJGmlNBdIOEnY18mfwb4u4hIYWaSOySnAABVrWKMt9xx97OqVlDVkbufPoAuZiYAgBBC6e5NBnJQ1eqpK5KbBKQJIZQvyyc5f4eQ3A66pJlJjLG3N3dfJr0FyUUHudZ1PUtCWls9IDPbJyN90OBeulHV8beg6lfQKgsSkaJ18qOZTbIgAHD3NcmdiBTZSGruBIYOSjStwb0AAAAASUVORK5CYII=)')
-            .css('position', 'relative');
-            
+            .appendTo(controlButton);
+
+        // Make room for extra button by shrinking the chat button
         $('#chat_speak').css('width', '149px');
-        $('#controls').append('<div id="chat_filter_dropmenu" class="dropmenu menu-like" style="position:absolute; bottom:45px; display:none;"><p style="margin-left:6px">Hide:</p></div>');
         
-        
-        var controlPanel = $('#chat_filter_dropmenu');
-        
-        var customCssParts = [
-            "#chat_line_list .TppFiltered {display:none;} .filter_option{font-weight:normal; margin-bottom:0; color: #B9A3E3;}",
-            "#chat_line_list.allcaps_filtered span.chat_line{text-transform:lowercase;}"
-        ];
+        // Create menu
+        controlPanel = $('<div id="chat_filter_dropmenu" class="dropmenu menu-like"/>')
+            .css('position', 'absolute')
+            .css('bottom', '45px')
+            .css('display', 'none')
+            .appendTo('#controls');
+
+        // Add extra CSS styles
+        customCssParts.push("#chat_filter_dropmenu .chat-menu-header{margin-left:6px;}");
+        customCssParts.push("#chat_filter_dropmenu label{font-weight:normal; margin-bottom:0; color: #B9A3E3;}");
     }
+
+    // Open menu on button click
+    controlButton.on('click', function(){
+        controlPanel.toggle();
+    });
+
+    // Add custom CSS styles
     $('head').append('<style>' + customCssParts.join("") + '</style>');
 
-    function add_option(option, update){
-        controlPanel
-        .append('<p class="dropmenu_action"><label for="' + option.name + '" class="filter_option"> <input type="checkbox" id="' + option.name + '">' + option.comment + '</label></p>');
+    // Add an option to a filter section
+    function add_option(section, option, update){
+        section
+        .append('<p class="dropmenu_action"><label for="' + option.name + '" class="filter_option"><input type="checkbox" id="' + option.name + '"> ' + option.comment + '</label></p>');
 
         $('#' + option.name)
         .on('change', function(){
             option.isActive = $(this).prop("checked");
             update(option);
-
         })
         .prop('checked', option.isActive);
     }
-
-    filters.forEach(function(filter){
-        add_option(filter, update_chat_with_filter);
-    });
-    $('#chat_filter_dropmenu').append('<p style="margin-left:6px;">Automatically rewrite:</p>');
-    rewriters.forEach(function(rewriter){
-        add_option(rewriter, function(rewriter){});
-    });
-
+    
+    // Add an filter option section
+    function add_section(name, options, update){
+        var header = $('<div class="chat-menu-header"/>')
+            .html(name)
+            .appendTo(controlPanel);
+        var section = $('<div class="chat-menu-content"/>')
+            .appendTo(controlPanel);
+        options.forEach(function(option){
+            add_option(section, option, update);
+        });
+    }
+    
     function update_css(styler){
         if(styler.isActive){
             $(styler.element).addClass(styler.class);
@@ -461,10 +474,11 @@ function initialize_ui(){
             $(styler.element).removeClass(styler.class);
         }
     }
-    stylers.forEach(function(option){
-        add_option(option, update_css);
-        update_css(option);
-    });
+    stylers.forEach(update_css);
+    
+    add_section("Hide", filters, update_chat_with_filter);
+    add_section("Automatically rewrite", rewriters, function(){});
+    add_section("Style", stylers, update_css);
 }
 
 
@@ -474,7 +488,7 @@ function update_chat_with_filter(){
 
     $((NEW_TWITCH_CHAT) ? '.chat-line' : '#chat_line_list li').each(function() {
         var chatLine = $(this);
-        var chatText = chatLine.find((NEW_TWITCH_CHAT) ? ".message" : ".chat_line").text().trim();
+        var chatText = chatLine.find(chatMessageSelector).text().trim();
 
         if(passes_active_filters(chatText)){
             chatLine.removeClass("TppFiltered");
