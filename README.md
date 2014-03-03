@@ -57,9 +57,3 @@ If you don't want or can't install one of the previously mentioned browser exten
 2. Copy the following snippet and paste it into the developer console on the TPP page: `javascript:(function(){document.body.appendChild(document.createElement('script')).src='http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js';})();`
 
 3. Press `Enter` to run the code.
-
-## Developers
-
-All changes should be made in `chat_filter.user.js` from now on.  Please try to ensure that your changes work in both the console and with the UserScript.
-
-Update the compressed (minified) version whenever you make a substantive update.  No need for small things like formatting or comments, obviously.
