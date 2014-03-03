@@ -7,7 +7,7 @@
 // @include     http://www.twitch.tv/twitchplayspokemon/
 // @include     http://www.twitch.tv/chat/embed?channel=twitchplayspokemon&popout_chat=true
 
-// @version     1.6
+// @version     1.7
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 // @grant       unsafeWindow
 // ==/UserScript==
