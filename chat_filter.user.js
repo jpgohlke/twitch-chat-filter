@@ -6,7 +6,11 @@
 // @include     http://www.twitch.tv/twitchplayspokemon
 // @include     http://www.twitch.tv/twitchplayspokemon/
 // @include     http://www.twitch.tv/chat/embed?channel=twitchplayspokemon&popout_chat=true
-// @version     1.8
+// @include     http://beta.twitch.tv/twitchplayspokemon
+// @include     http://beta.twitch.tv/twitchplayspokemon/
+// @include     http://beta.twitch.tv/twitchplayspokemon/chat?popout=&secret=safe
+
+// @version     1.9
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 // @grant       unsafeWindow
 // ==/UserScript==
@@ -124,9 +128,7 @@ try{
 }
 
 var $ = myWindow.jQuery;
-var chat_is_loaded = false;
 
-var NEW_TWITCH_CHAT = ($("button.viewers").length > 0) ? true : false;
 // --- Filtering predicates ---
 
 // Adapted from https://gist.github.com/andrei-m/982927
@@ -283,6 +285,11 @@ function convert_copy_paste(message){
 }
 
 // --- Filtering ---
+
+$(function(){
+
+//Must wait until DOM load to do feature detection
+var NEW_TWITCH_CHAT = ($("button.viewers").length > 0);
 
 //Filters have predicates that are called for every message
 //to determine whether it should get dropped or not
@@ -464,7 +471,6 @@ function initialize_ui(){
 // --- Main ---
 
 function update_chat_with_filter(){
-    if(!chat_is_loaded) return;
 
     $((NEW_TWITCH_CHAT) ? '.chat-line' : '#chat_line_list li').each(function() {
         var chatLine = $(this);
@@ -485,7 +491,7 @@ function initialize_filter(){
         if(!passes_active_filters(info.message)){ return false }
         info.message = rewrite_with_active_rewriters(info.message);
         return original_insert_chat_line.apply(this, arguments);
-    };
+    }
     
     if(NEW_TWITCH_CHAT){
         var Room_proto = myWindow.App.Room.prototype;
@@ -499,21 +505,10 @@ function initialize_filter(){
     update_chat_with_filter();
 }
 
-$(function(){
-    //Checking for the spinner being gone is a more reliable way to chack
-    //if the CurrentChat is fully loaded.
-    function initialize_all(){
-        chat_is_loaded = true;
-        clearInterval(chatLoadedCheck);
-        initialize_ui();
-        initialize_filter();
-    }
-    var chatLoadedCheck = setInterval(function () {
-        if(NEW_TWITCH_CHAT && $(".loading-mask").length <= 0)
-            initialize_all();
-        else if($("#chat_loading_spinner").css('display') == 'none')
-            initialize_all();
-    }, 100);
+
+initialize_ui();
+initialize_filter();
+
 
 });
 
