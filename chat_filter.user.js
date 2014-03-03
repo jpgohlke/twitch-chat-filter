@@ -519,7 +519,6 @@ function initialize_filter(){
     update_chat_with_filter();
 }
 
-//TODO: Look for slow mode messages to update input_time_limit
 var last_input = false;
 var input_time_limit = 20;
 var same_input_time_limit = 30;
@@ -530,12 +529,15 @@ var current_input = "";
 var input_disabled;
 var textarea_elem;
 var button_elem;
+var admin_elem
 if(NEW_TWITCH_CHAT){
     button_elem = ".send-chat-button button";
     textarea_elem = ".ember-text-area";
+    admin_elem = ".chat-line.admin span";
 }else{
     button_elem = "#chat_speak";
     textarea_elem = "#chat_text_input";
+    admin_elem = "li.fromjtv p";
 }
 
 
@@ -551,15 +553,31 @@ function countdown_input(){
         .text("Chat")
         .css("background","#6441A5")
         .removeAttr("disabled");
-        clearInterval(interval_id);
         input_disabled = false;
     }
     else
     {
+        disable_button(relevant_countdown);
         var countdown_text = "Wait " + relevant_countdown + " seconds";
         if(is_same_input) countdown_text += " (repeated message)";
         button.text(countdown_text);
     }
+    //Only clear Interval if *both* countdowns hit 0
+    //Potentially, the user might pass the regular 20 second limit, then enter his old message and get the 30 second countdown back
+    //I am not overthinking this, am I?
+    if(input_countdown <= 0 && same_input_countdown <= 0){
+        clearInterval(interval_id);
+        input_disabled = false;
+    }
+}
+
+function disable_button(seconds){
+    var button = $(button_elem);
+        button
+        .css("background","#d00")
+        .text("Wait " + seconds + " seconds")
+        .attr("disabled", "disabled");
+    input_disabled = true;
 }
 
 function get_current_input(){
@@ -570,7 +588,7 @@ function update_user_input(){
     //do nothing if no message has been typed
     if(current_input.trim() == '') return;
     
-    //if the countdown is still running and we got here somehow, give the user back his inout and do nothing
+    //if the countdown is still running and we got here somehow, give the user back his input and do nothing
     //TODO: Actually disable somehow to send message when user hits enter (I don't know what function to overwrite)
     if(input_disabled){
         $(textarea_elem).val(current_input);
@@ -580,16 +598,40 @@ function update_user_input(){
     //If we get here, a message has been sent, so set the new countdown and save what message it was
     last_input = current_input;
     get_current_input();
-    var button = $(button_elem);
-    button
-    .css("background","#d00")
-    .text("Wait " + input_time_limit + " seconds")
-    .attr("disabled", "disabled");
+    disable_button(input_time_limit);
     input_countdown = input_time_limit;
     same_input_countdown = same_input_time_limit;
+    //clear the old interval if it's still running
+    if(interval_id) clearInterval(interval_id);
     interval_id = setInterval(function(){countdown_input()}, 1000);
-    input_disabled = true;
 }
+
+function check_for_time_limit(){
+    $(admin_elem + ":not(.tpp-processed)").each(function(){
+        $(this).addClass("tpp-processed");
+        var admin_text = $(this).text().trim();
+        if(/now in slow mode/.test(admin_text)){
+            var regex_result = /every (\d+) second/.exec(admin_text)
+            if(regex_result){
+                input_time_limit = parseInt(regex_result[1]);
+                //console.log("We have a new time limit", input_time_limit);
+            }
+            
+        }
+        if(/identical to the previous/.test(admin_text)){
+            var regex_result = /than (\d+) second/.exec(admin_text)
+            if(regex_result){
+                same_input_time_limit = parseInt(regex_result[1]);
+                //console.log("We have a new same message time limit", same_input_time_limit);
+            }
+            
+        }
+        
+    });
+}
+
+//Every 5 seconds, check if the slow mode time limit has changed
+setInterval(function(){check_for_time_limit()}, 5000);
 
  //note that on enter keyup trigger, the input is already gone, so I update it as it is typed in.
 $(textarea_elem).keyup(function(e){
