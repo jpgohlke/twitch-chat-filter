@@ -128,7 +128,6 @@ try{
 }
 
 var $ = myWindow.jQuery;
-var chat_is_loaded = false;
 
 // --- Filtering predicates ---
 
@@ -472,7 +471,6 @@ function initialize_ui(){
 // --- Main ---
 
 function update_chat_with_filter(){
-    if(!chat_is_loaded) return;
 
     $((NEW_TWITCH_CHAT) ? '.chat-line' : '#chat_line_list li').each(function() {
         var chatLine = $(this);
@@ -508,20 +506,9 @@ function initialize_filter(){
 }
 
 
-//Checking for the spinner being gone is a more reliable way to chack
-//if the CurrentChat is fully loaded.
-function initialize_all(){
-    chat_is_loaded = true;
-    clearInterval(chatLoadedCheck);
-    initialize_ui();
-    initialize_filter();
-}
-var chatLoadedCheck = setInterval(function () {
-    if(NEW_TWITCH_CHAT && $(".loading-mask").length <= 0)
-        initialize_all();
-    else if($("#chat_loading_spinner").css('display') == 'none')
-        initialize_all();
-}, 100);
+initialize_ui();
+initialize_filter();
+
 
 });
 
