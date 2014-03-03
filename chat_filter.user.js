@@ -519,6 +519,90 @@ function initialize_filter(){
     update_chat_with_filter();
 }
 
+//TODO: Look for slow mode messages to update input_time_limit
+var last_input = false;
+var input_time_limit = 20;
+var same_input_time_limit = 30;
+var input_countdown = 0;
+var same_input_countdown = 0;
+var interval_id;
+var current_input = "";
+var input_disabled;
+var textarea_elem;
+var button_elem;
+if(NEW_TWITCH_CHAT){
+    button_elem = ".send-chat-button button";
+    textarea_elem = ".ember-text-area";
+}else{
+    button_elem = "#chat_speak";
+    textarea_elem = "#chat_text_input";
+}
+
+
+function countdown_input(){
+    input_countdown -= 1;
+    same_input_countdown -= 1;
+    var is_same_input = $(textarea_elem).val() == last_input;
+    var relevant_countdown = is_same_input ? same_input_countdown : input_countdown;
+    var button = $(button_elem);
+    if(relevant_countdown <= 0)
+    {
+        button
+        .text("Chat")
+        .css("background","#6441A5")
+        .removeAttr("disabled");
+        clearInterval(interval_id);
+        input_disabled = false;
+    }
+    else
+    {
+        var countdown_text = "Wait " + relevant_countdown + " seconds";
+        if(is_same_input) countdown_text += " (repeated message)";
+        button.text(countdown_text);
+    }
+}
+
+function get_current_input(){
+    current_input = $(textarea_elem).val();
+}
+
+function update_user_input(){
+    //do nothing if no message has been typed
+    if(current_input.trim() == '') return;
+    
+    //if the countdown is still running and we got here somehow, give the user back his inout and do nothing
+    //TODO: Actually disable somehow to send message when user hits enter (I don't know what function to overwrite)
+    if(input_disabled){
+        $(textarea_elem).val(current_input);
+        return;
+    }
+    
+    //If we get here, a message has been sent, so set the new countdown and save what message it was
+    last_input = current_input;
+    get_current_input();
+    var button = $(button_elem);
+    button
+    .css("background","#d00")
+    .text("Wait " + input_time_limit + " seconds")
+    .attr("disabled", "disabled");
+    input_countdown = input_time_limit;
+    same_input_countdown = same_input_time_limit;
+    interval_id = setInterval(function(){countdown_input()}, 1000);
+    input_disabled = true;
+}
+
+ //note that on enter keyup trigger, the input is already gone, so I update it as it is typed in.
+$(textarea_elem).keyup(function(e){
+    e.keyCode == 13 ? update_user_input() : get_current_input();
+});
+
+$(button_elem).click(function(){
+    if($(button_elem).attr("disabled") != "disabled"){ 
+        get_current_input();
+        update_user_input();
+    }
+});
+
 
 initialize_ui();
 initialize_filter();
