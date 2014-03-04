@@ -542,6 +542,7 @@ if(NEW_TWITCH_CHAT){
     button_elem = "#chat_speak";
     textarea_elem = "#chat_text_input";
 }
+var original_button_style = $(button_elem).css("background");
 
 
 function countdown_input(){
@@ -554,7 +555,7 @@ function countdown_input(){
     {
         button
         .text("Chat")
-        .css("background","#6441A5")
+        .css("background",original_button_style)
         .removeAttr("disabled");
         input_disabled = false;
     }
