@@ -500,11 +500,17 @@ function update_chat_with_filter(){
 
 function initialize_filter(){
     var original_insert_chat_line;
-    
     function filtered_addMessage(info) {
+        //check for new chat message time limit in admin messages
+        if(is_admin_message(info)){ check_for_time_limit(info.message) }
+        
         if(!passes_active_filters(info.message)){ return false }
         info.message = rewrite_with_active_rewriters(info.message);
         return original_insert_chat_line.apply(this, arguments);
+    }
+    
+    function is_admin_message(info){
+        return NEW_TWITCH_CHAT ? info.style == "admin" : info.sender == "jtv"
     }
     
     if(NEW_TWITCH_CHAT){
@@ -529,15 +535,12 @@ var current_input = "";
 var input_disabled;
 var textarea_elem;
 var button_elem;
-var admin_elem
 if(NEW_TWITCH_CHAT){
     button_elem = ".send-chat-button button";
     textarea_elem = ".ember-text-area";
-    admin_elem = ".chat-line.admin span";
 }else{
     button_elem = "#chat_speak";
     textarea_elem = "#chat_text_input";
-    admin_elem = "li.fromjtv p";
 }
 
 
@@ -606,32 +609,21 @@ function update_user_input(){
     interval_id = setInterval(function(){countdown_input()}, 1000);
 }
 
-function check_for_time_limit(){
-    $(admin_elem + ":not(.tpp-processed)").each(function(){
-        $(this).addClass("tpp-processed");
-        var admin_text = $(this).text().trim();
-        if(/now in slow mode/.test(admin_text)){
-            var regex_result = /every (\d+) second/.exec(admin_text)
-            if(regex_result){
-                input_time_limit = parseInt(regex_result[1]);
-                //console.log("We have a new time limit", input_time_limit);
-            }
-            
+function check_for_time_limit(admin_text){
+    console.log("match");
+    if(/now in slow mode/.test(admin_text)){
+        var regex_result = /every (\d+) second/.exec(admin_text)
+        if(regex_result){
+            input_time_limit = parseInt(regex_result[1]);
         }
-        if(/identical to the previous/.test(admin_text)){
-            var regex_result = /than (\d+) second/.exec(admin_text)
-            if(regex_result){
-                same_input_time_limit = parseInt(regex_result[1]);
-                //console.log("We have a new same message time limit", same_input_time_limit);
-            }
-            
+    }
+    if(/identical to the previous/.test(admin_text)){
+        var regex_result = /than (\d+) second/.exec(admin_text)
+        if(regex_result){
+            same_input_time_limit = parseInt(regex_result[1]);
         }
-        
-    });
+    }
 }
-
-//Every 5 seconds, check if the slow mode time limit has changed
-setInterval(function(){check_for_time_limit()}, 5000);
 
  //note that on enter keyup trigger, the input is already gone, so I update it as it is typed in.
 $(textarea_elem).keyup(function(e){
