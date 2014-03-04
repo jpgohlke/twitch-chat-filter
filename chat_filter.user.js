@@ -522,11 +522,20 @@ function initialize_filter(){
     }
     
     if(NEW_TWITCH_CHAT){
-        var Room_proto = myWindow.App.Room.prototype;
-        original_insert_chat_line = Room_proto.addMessage;
-        Room_proto.addMessage = filtered_addMessage;
-        original_send_message = Room_proto.send;
-        Room_proto.send = filtered_send;
+        //BetterTTV has its own chat handlers
+        if((typeof(myWindow.BetterTTV)!=='undefined')){
+            var bttv = myWindow.BetterTTV.chat;
+            original_insert_chat_line = bttv.handlers.privmsg;
+            bttv.handlers.privmsg = filtered_addMessage;
+            original_send_message = bttv.helpers.sendMessage;
+            bttv.helpers.sendMessage = filtered_send;
+        }else{
+            var Room_proto = myWindow.App.Room.prototype;
+            original_insert_chat_line = Room_proto.addMessage;
+            Room_proto.addMessage = filtered_addMessage;
+            original_send_message = Room_proto.send;
+            Room_proto.send = filtered_send;
+        }
     }else{
         var Chat_proto = myWindow.Chat.prototype;
         original_insert_chat_line = Chat_proto.insert_chat_line;
