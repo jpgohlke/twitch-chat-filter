@@ -560,7 +560,18 @@ var original_button_style = $(button_elem).css("background");
 function countdown_input(){
     input_countdown -= 1;
     same_input_countdown -= 1;
-    var is_same_input = $(textarea_elem).val() == last_input;
+    update_button();
+    //Only clear Interval if *both* countdowns hit 0
+    //Potentially, the user might pass the regular 20 second limit, then enter his old message and get the 30 second countdown back
+    //I am not overthinking this, am I?
+    if(input_countdown <= 0 && same_input_countdown <= 0){
+        clearInterval(interval_id);
+        input_disabled = false;
+    }
+}
+
+function update_button(){
+var is_same_input = $(textarea_elem).val() == last_input;
     var relevant_countdown = is_same_input ? same_input_countdown : input_countdown;
     var button = $(button_elem);
     if(relevant_countdown <= 0)
@@ -577,13 +588,6 @@ function countdown_input(){
         var countdown_text = "Wait " + relevant_countdown + " seconds";
         if(is_same_input) countdown_text += " (repeated message)";
         button.text(countdown_text);
-    }
-    //Only clear Interval if *both* countdowns hit 0
-    //Potentially, the user might pass the regular 20 second limit, then enter his old message and get the 30 second countdown back
-    //I am not overthinking this, am I?
-    if(input_countdown <= 0 && same_input_countdown <= 0){
-        clearInterval(interval_id);
-        input_disabled = false;
     }
 }
 
@@ -625,6 +629,10 @@ function check_for_time_limit(admin_text){
         }
     }
 }
+
+$(textarea_elem).keyup(function(e){
+    if(e.keyCode != 13) update_button();
+});
 
 initialize_ui();
 initialize_filter();
