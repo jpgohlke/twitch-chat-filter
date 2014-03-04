@@ -54,6 +54,7 @@
  *     /u/redopium
  *     /u/codefusion
  *     /u/Zephymastyx
+ *     /u/anonveggy    
  */
 
 /* global unsafeWindow:false */
@@ -571,7 +572,7 @@ function countdown_input(){
 }
 
 function update_button(){
-var is_same_input = $(textarea_elem).val() == last_input;
+    var is_same_input = $(textarea_elem).val() == last_input;
     var relevant_countdown = is_same_input ? same_input_countdown : input_countdown;
     var button = $(button_elem);
     if(relevant_countdown <= 0)
@@ -605,6 +606,7 @@ function get_current_input(){
 }
 
 function update_user_input(){
+    if(current_input.trim() == '') return;
     last_input = current_input;
     current_input = false;
     disable_button(input_time_limit);
