@@ -500,26 +500,43 @@ function update_chat_with_filter(){
 
 function initialize_filter(){
     var original_insert_chat_line;
-    
+    var original_send_message;
     function filtered_addMessage(info) {
+        //check for new chat message time limit in admin messages
+        if(is_admin_message(info)){ check_for_time_limit(info.message) }
+        
         if(!passes_active_filters(info.message)){ return false }
         info.message = rewrite_with_active_rewriters(info.message);
         return original_insert_chat_line.apply(this, arguments);
+    }
+    
+    function filtered_send(arg){
+        if(input_disabled) return false;
+        current_input = $(textarea_elem).val();
+        update_user_input();
+        return original_send_message.apply(this, arguments);
+    }
+    
+    function is_admin_message(info){
+        return NEW_TWITCH_CHAT ? info.style == "admin" : info.sender == "jtv"
     }
     
     if(NEW_TWITCH_CHAT){
         var Room_proto = myWindow.App.Room.prototype;
         original_insert_chat_line = Room_proto.addMessage;
         Room_proto.addMessage = filtered_addMessage;
+        original_send_message = Room_proto.send;
+        Room_proto.send = filtered_send;
     }else{
         var Chat_proto = myWindow.Chat.prototype;
         original_insert_chat_line = Chat_proto.insert_chat_line;
         Chat_proto.insert_chat_line = filtered_addMessage;
+        original_send_message = Chat_proto.chat_say;
+        Chat_proto.chat_say = filtered_send;
     }
     update_chat_with_filter();
 }
 
-//TODO: Look for slow mode messages to update input_time_limit
 var last_input = false;
 var input_time_limit = 20;
 var same_input_time_limit = 30;
@@ -537,29 +554,50 @@ if(NEW_TWITCH_CHAT){
     button_elem = "#chat_speak";
     textarea_elem = "#chat_text_input";
 }
+var original_button_style = $(button_elem).css("background");
 
 
 function countdown_input(){
     input_countdown -= 1;
     same_input_countdown -= 1;
-    var is_same_input = $(textarea_elem).val() == last_input;
+    update_button();
+    //Only clear Interval if *both* countdowns hit 0
+    //Potentially, the user might pass the regular 20 second limit, then enter his old message and get the 30 second countdown back
+    //I am not overthinking this, am I?
+    if(input_countdown <= 0 && same_input_countdown <= 0){
+        clearInterval(interval_id);
+        input_disabled = false;
+    }
+}
+
+function update_button(){
+var is_same_input = $(textarea_elem).val() == last_input;
     var relevant_countdown = is_same_input ? same_input_countdown : input_countdown;
     var button = $(button_elem);
     if(relevant_countdown <= 0)
     {
         button
         .text("Chat")
-        .css("background","#6441A5")
+        .css("background",original_button_style)
         .removeAttr("disabled");
-        clearInterval(interval_id);
         input_disabled = false;
     }
     else
     {
+        disable_button(relevant_countdown);
         var countdown_text = "Wait " + relevant_countdown + " seconds";
         if(is_same_input) countdown_text += " (repeated message)";
         button.text(countdown_text);
     }
+}
+
+function disable_button(seconds){
+    var button = $(button_elem);
+        button
+        .css("background","#d00")
+        .text("Wait " + seconds + " seconds")
+        .attr("disabled", "disabled");
+    input_disabled = true;
 }
 
 function get_current_input(){
@@ -567,42 +605,34 @@ function get_current_input(){
 }
 
 function update_user_input(){
-    //do nothing if no message has been typed
-    if(current_input.trim() == '') return;
-    
-    //if the countdown is still running and we got here somehow, give the user back his inout and do nothing
-    //TODO: Actually disable somehow to send message when user hits enter (I don't know what function to overwrite)
-    if(input_disabled){
-        $(textarea_elem).val(current_input);
-        return;
-    }
-    
-    //If we get here, a message has been sent, so set the new countdown and save what message it was
     last_input = current_input;
-    get_current_input();
-    var button = $(button_elem);
-    button
-    .css("background","#d00")
-    .text("Wait " + input_time_limit + " seconds")
-    .attr("disabled", "disabled");
+    current_input = false;
+    disable_button(input_time_limit);
     input_countdown = input_time_limit;
     same_input_countdown = same_input_time_limit;
+    //clear the old interval if it's still running
+    if(interval_id) clearInterval(interval_id);
     interval_id = setInterval(function(){countdown_input()}, 1000);
-    input_disabled = true;
 }
 
- //note that on enter keyup trigger, the input is already gone, so I update it as it is typed in.
-$(textarea_elem).keyup(function(e){
-    e.keyCode == 13 ? update_user_input() : get_current_input();
-});
-
-$(button_elem).click(function(){
-    if($(button_elem).attr("disabled") != "disabled"){ 
-        get_current_input();
-        update_user_input();
+function check_for_time_limit(admin_text){
+    if(/now in slow mode/.test(admin_text)){
+        var regex_result = /every (\d+) second/.exec(admin_text)
+        if(regex_result){
+            input_time_limit = parseInt(regex_result[1]);
+        }
     }
-});
+    if(/identical to the previous/.test(admin_text)){
+        var regex_result = /than (\d+) second/.exec(admin_text)
+        if(regex_result){
+            same_input_time_limit = parseInt(regex_result[1]);
+        }
+    }
+}
 
+$(textarea_elem).keyup(function(e){
+    if(e.keyCode != 13) update_button();
+});
 
 initialize_ui();
 initialize_filter();
