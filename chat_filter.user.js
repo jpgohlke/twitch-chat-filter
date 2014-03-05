@@ -494,12 +494,15 @@ function initialize_ui(){
         //add required html
         section
         .append('<p class="dropmenu_action"><label for="' + option.name + '" class="filter_option"><input type="text" id="' + option.name + '" style="width: 100%"> ' + option.comment + '</label>' + 
-        '<span id="num-banned-' + option.name + '">' + CUSTOM_BANNED_PHRASES.length + '</span> banned ' + option.item_name + '. ' +
-        '<div class="custom_list_menu" id="list-' + option.name + '"><b>Banned ' + option.item_name + '</b><div class="list-inner"></div>' + 
+        '<a href="#" id="show-' + option.name + '">' +
+        'Show <span id="num-banned-' + option.name + '">' + option.element.length + '</span> banned ' + option.item_name +
+        '</a></p>' +
+        '<div class="custom_list_menu" id="list-' + option.name + '">' +
+        '<b>Banned ' + option.item_name + '</b>' +
+        '<div class="list-inner"></div>' + 
         '<br/><a href="#" id="clear-' + option.name + '">Clear list</a>' +
         '<br/><a href="#" id="close-' + option.name + '">Close</a>' +
-        '</div>' +
-        '<a href="#" id="show-' + option.name + '">Show list</a></p>');
+        '</div>');
         
         //Add new banned item when user hits enter
         $('#' + option.name)
