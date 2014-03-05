@@ -547,8 +547,8 @@ function initialize_ui(){
         
         function add_item_to_ui(new_word){
             $('#list-' + option.name + ' .list-inner')
-            .append('<span>' + new_word + ' <a href="#" id="list-' + option.name + '-' + new_word + '">[X]</id><br/></span>');
-            $("#list-" + option.name + "-" + new_word).click(function(e){
+            .append('<span>' + new_word + ' <a href="#" id="list-' + option.name + '-' + option.element.indexOf(new_word) + '">[X]</id><br/></span>');
+            $("#list-" + option.name + "-" + option.element.indexOf(new_word)).click(function(e){
                 e.preventDefault();
                 option.element.splice(option.element.indexOf(new_word), 1);
                 localStorage.setItem("tpp-custom-filter-" + option.name, JSON.stringify(option.element));
