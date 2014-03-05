@@ -106,6 +106,8 @@ var BANNED_WORDS = [
     "imgur.com/4jlbxid.jpg"
 ];
 
+var CUSTOM_BANNED_PHRASES = localStorage.getItem("tpp-custom-filter-phrases") ? JSON.parse(localStorage.getItem("tpp-custom-filter-phrases")) : [];
+
 var MINIMUM_DISTANCE_ERROR = 2; // Number of insertions / deletions / substitutions away from a blocked word.
 var MAXIMUM_NON_ASCII_CHARACTERS = 2; // For donger smilies, etc
 var MINIMUM_MESSAGE_WORDS = 2; // For Kappas and other short messages.
@@ -227,6 +229,18 @@ function message_is_spam(message) {
     return false;
 }
 
+function message_is_banned_by_user(message) {
+    message = message.toLowerCase();
+
+    for(var i=0; i < CUSTOM_BANNED_PHRASES.length; i++){
+        if(message.indexOf(CUSTOM_BANNED_PHRASES[i]) != -1){
+            return true;
+        }
+    }
+
+    return false;
+}
+
 function is_whitelisted_url(url){
     //This doesnt actually parse the URLs but it
     //should do the job when it comes to filtering.
@@ -332,7 +346,14 @@ var filters = [
     comment: 'Cyrillic characters',
     isActive: true,
     predicate: message_is_cyrillic
-  }
+  },
+  
+  { name: 'TppFilterCustom',
+    comment: 'Add custom filter',
+    isActive: false,
+    predicate: message_is_banned_by_user
+  },
+  
 ];
 
 
@@ -353,6 +374,15 @@ var stylers = [
     isActive: true,
     element: chatListSelector,
     class: 'allcaps_filtered'
+  },
+];
+
+//Text fields for custom user banned phrases
+var text_fields = [
+  { name: 'phrases',
+    comment: "Add a banned phrase",
+    element: CUSTOM_BANNED_PHRASES,
+    item_name: "phrase(s)",
   },
 ];
 
@@ -386,7 +416,10 @@ function initialize_ui(){
     var controlButton, controlPanel;
     var customCssParts = [
         chatListSelector+" .TppFiltered {display:none;}",
-        chatListSelector+".allcaps_filtered "+chatMessageSelector+"{text-transform:lowercase;}"
+        chatListSelector+".allcaps_filtered "+chatMessageSelector+"{text-transform:lowercase;}",
+        ".custom_list_menu {background: #aaa; border:1px solid #000; position: absolute; right: 2px; bottom: 2px; padding: 10px; display: none;}",
+        "#chat_filter_dropmenu a {color: #00f;}",
+        ".tpp-custom-filter {position: relative;}",
     ];
     
     if(NEW_TWITCH_CHAT){
@@ -456,15 +489,103 @@ function initialize_ui(){
         .prop('checked', option.isActive);
     }
     
+    // Add an text field for custom filters
+    function add_text_field(section, option){
+        //add required html
+        section
+        .append('<p class="dropmenu_action"><label for="' + option.name + '" class="filter_option"><input type="text" id="' + option.name + '" style="width: 100%"> ' + option.comment + '</label>' + 
+        '<span id="num-banned-' + option.name + '">' + CUSTOM_BANNED_PHRASES.length + '</span> banned ' + option.item_name + '. ' +
+        '<div class="custom_list_menu" id="list-' + option.name + '"><b>Banned ' + option.item_name + '</b><div class="list-inner"></div>' + 
+        '<br/><a href="#" id="clear-' + option.name + '">Clear list</a>' +
+        '<br/><a href="#" id="close-' + option.name + '">Close</a>' +
+        '</div>' +
+        '<a href="#" id="show-' + option.name + '">Show list</a></p>');
+        
+        //Add new banned item when user hits enter
+        $('#' + option.name)
+        .keyup(function(e){
+            if(e.keyCode == 13 && $('#' + option.name).val().trim() != ""){
+                add_item($('#' + option.name).val());
+                $('#' + option.name).val('');
+            }
+        });
+        
+        //open the list of banned items
+        $('#show-' + option.name).click(function(e){
+            e.preventDefault();
+            $('#list-' + option.name).show();
+        });
+        
+        //close the list of banned items
+        $('#close-' + option.name).click(function(e){
+            e.preventDefault();
+            $('#list-' + option.name).hide();
+        });
+        
+        //empty the banned list completely
+        $('#clear-' + option.name).click(function(e){
+            e.preventDefault();
+            option.element.length = 0;
+            localStorage.setItem("tpp-custom-filter-" + option.name, JSON.stringify(option.element));
+            update_chat_with_filter();
+            $('#num-banned-' + option.name).text(option.element.length);
+            $('#list-' + option.name + ' .list-inner').empty();
+        });
+        
+        //add a new item to the banned items list
+        function add_item(new_word){
+            if(option.element.indexOf(new_word) != -1){ return false; }
+            option.element.push(new_word);
+            localStorage.setItem("tpp-custom-filter-" + option.name, JSON.stringify(option.element));
+            update_chat_with_filter();
+            $('#num-banned-' + option.name).text(option.element.length);
+            add_item_to_ui(new_word);
+        }
+        
+        function add_item_to_ui(new_word){
+            $('#list-' + option.name + ' .list-inner')
+            .append('<span>' + new_word + ' <a href="#" id="list-' + option.name + '-' + new_word + '">[X]</id><br/></span>');
+            $("#list-" + option.name + "-" + new_word).click(function(e){
+                e.preventDefault();
+                option.element.splice(option.element.indexOf(new_word), 1);
+                localStorage.setItem("tpp-custom-filter-" + option.name, JSON.stringify(option.element));
+                $('#num-banned-' + option.name).text(option.element.length);
+                update_chat_with_filter();
+                $(this).parent().remove();
+            });
+        }
+        
+        //initialize list of banned words from local storage to ui
+        option.element.forEach(function(word){
+            add_item_to_ui(word);
+        });
+    }
+    
     // Add an filter option section
-    function add_section(name, options, update){
+    function add_section(name){
         var header = $('<div class="chat-menu-header"/>')
             .html(name)
             .appendTo(controlPanel);
         var section = $('<div class="chat-menu-content"/>')
             .appendTo(controlPanel);
+        if(name == "Add custom filter"){
+            header.addClass("tpp-custom-filter");
+            section.addClass("tpp-custom-filter");
+        }
+        return section;
+    }
+    
+    function add_section_with_options(name, options, update){
+        var section = add_section(name);
         options.forEach(function(option){
             add_option(section, option, update);
+        });
+    }
+    
+    function add_text_section(name, fields){
+        var section = add_section(name);
+        fields.forEach(function(field){
+            add_text_field(section, field);
         });
     }
     
@@ -477,9 +598,10 @@ function initialize_ui(){
     }
     stylers.forEach(update_css);
     
-    add_section("Hide", filters, update_chat_with_filter);
-    add_section("Automatically rewrite", rewriters, function(){});
-    add_section("Style", stylers, update_css);
+    add_section_with_options("Hide", filters, update_chat_with_filter);
+    add_text_section("Add custom filter", text_fields);
+    add_section_with_options("Automatically rewrite", rewriters, function(){});
+    add_section_with_options("Style", stylers, update_css);
 }
 
 
@@ -497,6 +619,9 @@ function update_chat_with_filter(){
             chatLine.addClass("TppFiltered");
         }
     });
+    
+    $("#TppFilterCustom").is(":checked") ? $(".tpp-custom-filter").show() : $(".tpp-custom-filter").hide();
+    
 }
 
 function initialize_filter(){
