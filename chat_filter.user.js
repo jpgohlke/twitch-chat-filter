@@ -10,7 +10,7 @@
 // @include     http://beta.twitch.tv/twitchplayspokemon/
 // @include     http://beta.twitch.tv/twitchplayspokemon/chat?popout=&secret=safe
 
-// @version     1.9
+// @version     2.0
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 // @grant       unsafeWindow
 // ==/UserScript==
@@ -54,6 +54,7 @@
  *     /u/redopium
  *     /u/codefusion
  *     /u/Zephymastyx
+ *     /u/anonveggy    
  */
 
 /* global unsafeWindow:false */
@@ -104,6 +105,8 @@ var BANNED_WORDS = [
     "giveaway", "t-shirt", "hoodie",
     "imgur.com/4jlbxid.jpg"
 ];
+
+var CUSTOM_BANNED_PHRASES = localStorage.getItem("tpp-custom-filter-phrases") ? JSON.parse(localStorage.getItem("tpp-custom-filter-phrases")) : [];
 
 var MINIMUM_DISTANCE_ERROR = 2; // Number of insertions / deletions / substitutions away from a blocked word.
 var MAXIMUM_NON_ASCII_CHARACTERS = 2; // For donger smilies, etc
@@ -226,6 +229,18 @@ function message_is_spam(message) {
     return false;
 }
 
+function message_is_banned_by_user(message) {
+    message = message.toLowerCase();
+
+    for(var i=0; i < CUSTOM_BANNED_PHRASES.length; i++){
+        if(message.indexOf(CUSTOM_BANNED_PHRASES[i]) != -1){
+            return true;
+        }
+    }
+
+    return false;
+}
+
 function is_whitelisted_url(url){
     //This doesnt actually parse the URLs but it
     //should do the job when it comes to filtering.
@@ -290,6 +305,9 @@ $(function(){
 
 //Must wait until DOM load to do feature detection
 var NEW_TWITCH_CHAT = ($("button.viewers").length > 0);
+//Selectors
+var chatListSelector = (NEW_TWITCH_CHAT) ? '.chat-messages' : '#chat_line_list';
+var chatMessageSelector = (NEW_TWITCH_CHAT) ? '.message' : '.chat_line';
 
 //Filters have predicates that are called for every message
 //to determine whether it should get dropped or not
@@ -328,7 +346,14 @@ var filters = [
     comment: 'Cyrillic characters',
     isActive: true,
     predicate: message_is_cyrillic
-  }
+  },
+  
+  { name: 'TppFilterCustom',
+    comment: 'Add custom filter',
+    isActive: false,
+    predicate: message_is_banned_by_user
+  },
+  
 ];
 
 
@@ -347,8 +372,17 @@ var stylers = [
   { name: 'TppConvertAllcaps',
     comment: "Lowercase-only mode",
     isActive: true,
-    element: (NEW_TWITCH_CHAT) ? '#chat' : '#chat_line_list',
+    element: chatListSelector,
     class: 'allcaps_filtered'
+  },
+];
+
+//Text fields for custom user banned phrases
+var text_fields = [
+  { name: 'phrases',
+    comment: "Add a banned phrase",
+    element: CUSTOM_BANNED_PHRASES,
+    item_name: "phrase(s)",
   },
 ];
 
@@ -379,81 +413,185 @@ function rewrite_with_active_rewriters(message){
 function initialize_ui(){
 
     //TODO: #chat_line_list li.fromjtv
+    var controlButton, controlPanel;
+    var customCssParts = [
+        chatListSelector+" .TppFiltered {display:none;}",
+        chatListSelector+".allcaps_filtered "+chatMessageSelector+"{text-transform:lowercase;}",
+        ".custom_list_menu {background: #aaa; border:1px solid #000; position: absolute; right: 2px; bottom: 2px; padding: 10px; display: none;}",
+        "#chat_filter_dropmenu a {color: #00f;}",
+        ".tpp-custom-filter {position: relative;}",
+    ];
+    
     if(NEW_TWITCH_CHAT){
-        $("button.viewers").after('<a id="chat_filter_dropmenu_button" class="dropdown_glyph"><span></span><a>');
-        $('#chat_filter_dropmenu_button').on('click', function(){
-            $('#chat_filter_dropmenu').toggle();
-        });
-
-        $('#chat_filter_dropmenu_button span')
-            .css('background', 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAv0lEQVQ4jc3SIQ7CQBAF0C8rK5E9AhI5R1gccpLOn+UACARHwCO5Aq6HQHAUQsAhwJGmlNBdIOEnY18mfwb4u4hIYWaSOySnAABVrWKMt9xx97OqVlDVkbufPoAuZiYAgBBC6e5NBnJQ1eqpK5KbBKQJIZQvyyc5f4eQ3A66pJlJjLG3N3dfJr0FyUUHudZ1PUtCWls9IDPbJyN90OBeulHV8beg6lfQKgsSkaJ18qOZTbIgAHD3NcmdiBTZSGruBIYOSjStwb0AAAAASUVORK5CYII=)')
-            .css('position', 'relative');
-
-        //Temporal fix to filter button style -- Begin
-        $('#chat_filter_dropmenu_button')
-            .css('background', '#c4c3c3')
-            .css('border', 'none')
+        // Create button
+        controlButton = $('<button id="chat_filter_dropmenu_button" class="button-simple light tooltip"/>')
             .css('margin-left', '5px')
-            .css('padding', '4px 3px 2px')
-            .css('top', '10px');
-        $('.chat-buttons-container').css('top', '60px');
-        $('.send-chat-button').css('top', '10px');
+            .insertAfter('button.viewers');
+
+        // Place filter icon on button
+        controlButton
+            .css('background-image', 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAv0lEQVQ4jc3SIQ7CQBAF0C8rK5E9AhI5R1gccpLOn+UACARHwCO5Aq6HQHAUQsAhwJGmlNBdIOEnY18mfwb4u4hIYWaSOySnAABVrWKMt9xx97OqVlDVkbufPoAuZiYAgBBC6e5NBnJQ1eqpK5KbBKQJIZQvyyc5f4eQ3A66pJlJjLG3N3dfJr0FyUUHudZ1PUtCWls9IDPbJyN90OBeulHV8beg6lfQKgsSkaJ18qOZTbIgAHD3NcmdiBTZSGruBIYOSjStwb0AAAAASUVORK5CYII=)')
+            .css('background-position', '3px 3px')
+            .attr('original-title', 'Chat Filter');
+
+        // Make room for extra button by shrinking the chat button
         $('.send-chat-button').css('left', '90px');
-        //Temporal fix to filter button style -- End
 
-        $('.chat-interface').append('<div id="chat_filter_dropmenu" class="dropmenu menu-like" style="position:absolute; bottom:45px; display:none;"><p style="margin-left:6px">Hide:</p></div>');
-
-
-        var controlPanel = $('#chat_filter_dropmenu');
-
-        var customCssParts = [
-            ".chat-messages .TppFiltered {display:none;} .filter_option{font-weight:normal; margin-bottom:0; color: #B9A3E3;}",
-            "#chat.allcaps_filtered span.message{text-transform:lowercase;}"
-        ];
+        // Create menu
+        controlPanel = $('<div id="chat_filter_dropmenu" class="chat-settings chat-menu"/>')
+            .css('position', 'absolute')
+            .css('bottom', '38px')
+            .css('display', 'none')
+            .appendTo('.chat-interface');
     } else {
-        $("#chat_viewers_dropmenu_button").after('<a id="chat_filter_dropmenu_button" class="dropdown_glyph"><span></span><a>');
-        $('#chat_filter_dropmenu_button').on('click', function(){
-            $('#chat_filter_dropmenu').toggle();
-        });
+        // Create button
+        controlButton = $('<a id="chat_filter_dropmenu_button" class="dropdown_glyph"/>')
+            .insertAfter('#chat_viewers_dropmenu_button');
         
-        $('#chat_filter_dropmenu_button span')
+        // Place filter icon on button
+        $('<span/>')
             .css('background', 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAv0lEQVQ4jc3SIQ7CQBAF0C8rK5E9AhI5R1gccpLOn+UACARHwCO5Aq6HQHAUQsAhwJGmlNBdIOEnY18mfwb4u4hIYWaSOySnAABVrWKMt9xx97OqVlDVkbufPoAuZiYAgBBC6e5NBnJQ1eqpK5KbBKQJIZQvyyc5f4eQ3A66pJlJjLG3N3dfJr0FyUUHudZ1PUtCWls9IDPbJyN90OBeulHV8beg6lfQKgsSkaJ18qOZTbIgAHD3NcmdiBTZSGruBIYOSjStwb0AAAAASUVORK5CYII=)')
-            .css('position', 'relative');
-            
+            .appendTo(controlButton);
+
+        // Make room for extra button by shrinking the chat button
         $('#chat_speak').css('width', '149px');
-        $('#controls').append('<div id="chat_filter_dropmenu" class="dropmenu menu-like" style="position:absolute; bottom:45px; display:none;"><p style="margin-left:6px">Hide:</p></div>');
         
-        
-        var controlPanel = $('#chat_filter_dropmenu');
-        
-        var customCssParts = [
-            "#chat_line_list .TppFiltered {display:none;} .filter_option{font-weight:normal; margin-bottom:0; color: #B9A3E3;}",
-            "#chat_line_list.allcaps_filtered span.chat_line{text-transform:lowercase;}"
-        ];
+        // Create menu
+        controlPanel = $('<div id="chat_filter_dropmenu" class="dropmenu menu-like"/>')
+            .css('position', 'absolute')
+            .css('bottom', '45px')
+            .css('display', 'none')
+            .appendTo('#controls');
+
+        // Add extra CSS styles
+        customCssParts.push("#chat_filter_dropmenu .chat-menu-header{margin-left:6px;}");
+        customCssParts.push("#chat_filter_dropmenu label{font-weight:normal; margin-bottom:0; color: #B9A3E3;}");
     }
+
+    // Open menu on button click
+    controlButton.on('click', function(){
+        controlPanel.toggle();
+    });
+
+    // Add custom CSS styles
     $('head').append('<style>' + customCssParts.join("") + '</style>');
 
-    function add_option(option, update){
-        controlPanel
-        .append('<p class="dropmenu_action"><label for="' + option.name + '" class="filter_option"> <input type="checkbox" id="' + option.name + '">' + option.comment + '</label></p>');
+    // Add an option to a filter section
+    function add_option(section, option, update){
+        section
+        .append('<p class="dropmenu_action"><label for="' + option.name + '" class="filter_option"><input type="checkbox" id="' + option.name + '"> ' + option.comment + '</label></p>');
 
         $('#' + option.name)
         .on('change', function(){
             option.isActive = $(this).prop("checked");
             update(option);
-
         })
         .prop('checked', option.isActive);
     }
-
-    filters.forEach(function(filter){
-        add_option(filter, update_chat_with_filter);
-    });
-    $('#chat_filter_dropmenu').append('<p style="margin-left:6px;">Automatically rewrite:</p>');
-    rewriters.forEach(function(rewriter){
-        add_option(rewriter, function(rewriter){});
-    });
-
+    
+    // Add an text field for custom filters
+    function add_text_field(section, option){
+        //add required html
+        section
+        .append('<p class="dropmenu_action"><label for="' + option.name + '" class="filter_option"><input type="text" id="' + option.name + '" style="width: 100%"> ' + option.comment + '</label>' + 
+        '<a href="#" id="show-' + option.name + '">' +
+        'Show <span id="num-banned-' + option.name + '">' + option.element.length + '</span> banned ' + option.item_name +
+        '</a></p>' +
+        '<div class="custom_list_menu" id="list-' + option.name + '">' +
+        '<b>Banned ' + option.item_name + '</b>' +
+        '<div class="list-inner"></div>' + 
+        '<br/><a href="#" id="clear-' + option.name + '">Clear list</a>' +
+        '<br/><a href="#" id="close-' + option.name + '">Close</a>' +
+        '</div>');
+        
+        //Add new banned item when user hits enter
+        $('#' + option.name)
+        .keyup(function(e){
+            if(e.keyCode == 13 && $('#' + option.name).val().trim() != ""){
+                add_item($('#' + option.name).val());
+                $('#' + option.name).val('');
+            }
+        });
+        
+        //open the list of banned items
+        $('#show-' + option.name).click(function(e){
+            e.preventDefault();
+            $('#list-' + option.name).show();
+        });
+        
+        //close the list of banned items
+        $('#close-' + option.name).click(function(e){
+            e.preventDefault();
+            $('#list-' + option.name).hide();
+        });
+        
+        //empty the banned list completely
+        $('#clear-' + option.name).click(function(e){
+            e.preventDefault();
+            option.element.length = 0;
+            localStorage.setItem("tpp-custom-filter-" + option.name, JSON.stringify(option.element));
+            update_chat_with_filter();
+            $('#num-banned-' + option.name).text(option.element.length);
+            $('#list-' + option.name + ' .list-inner').empty();
+        });
+        
+        //add a new item to the banned items list
+        function add_item(new_word){
+            if(option.element.indexOf(new_word) != -1){ return false; }
+            option.element.push(new_word);
+            localStorage.setItem("tpp-custom-filter-" + option.name, JSON.stringify(option.element));
+            update_chat_with_filter();
+            $('#num-banned-' + option.name).text(option.element.length);
+            add_item_to_ui(new_word);
+        }
+        
+        function add_item_to_ui(new_word){
+            $('#list-' + option.name + ' .list-inner')
+            .append('<span>' + new_word + ' <a href="#" id="list-' + option.name + '-' + option.element.indexOf(new_word) + '">[X]</id><br/></span>');
+            $("#list-" + option.name + "-" + option.element.indexOf(new_word)).click(function(e){
+                e.preventDefault();
+                option.element.splice(option.element.indexOf(new_word), 1);
+                localStorage.setItem("tpp-custom-filter-" + option.name, JSON.stringify(option.element));
+                $('#num-banned-' + option.name).text(option.element.length);
+                update_chat_with_filter();
+                $(this).parent().remove();
+            });
+        }
+        
+        //initialize list of banned words from local storage to ui
+        option.element.forEach(function(word){
+            add_item_to_ui(word);
+        });
+    }
+    
+    // Add an filter option section
+    function add_section(name){
+        var header = $('<div class="chat-menu-header"/>')
+            .html(name)
+            .appendTo(controlPanel);
+        var section = $('<div class="chat-menu-content"/>')
+            .appendTo(controlPanel);
+        if(name == "Add custom filter"){
+            header.addClass("tpp-custom-filter");
+            section.addClass("tpp-custom-filter");
+        }
+        return section;
+    }
+    
+    function add_section_with_options(name, options, update){
+        var section = add_section(name);
+        options.forEach(function(option){
+            add_option(section, option, update);
+        });
+    }
+    
+    function add_text_section(name, fields){
+        var section = add_section(name);
+        fields.forEach(function(field){
+            add_text_field(section, field);
+        });
+    }
+    
     function update_css(styler){
         if(styler.isActive){
             $(styler.element).addClass(styler.class);
@@ -461,10 +599,12 @@ function initialize_ui(){
             $(styler.element).removeClass(styler.class);
         }
     }
-    stylers.forEach(function(option){
-        add_option(option, update_css);
-        update_css(option);
-    });
+    stylers.forEach(update_css);
+    
+    add_section_with_options("Hide", filters, update_chat_with_filter);
+    add_text_section("Add custom filter", text_fields);
+    add_section_with_options("Automatically rewrite", rewriters, function(){});
+    add_section_with_options("Style", stylers, update_css);
 }
 
 
@@ -474,7 +614,7 @@ function update_chat_with_filter(){
 
     $((NEW_TWITCH_CHAT) ? '.chat-line' : '#chat_line_list li').each(function() {
         var chatLine = $(this);
-        var chatText = chatLine.find((NEW_TWITCH_CHAT) ? ".message" : ".chat_line").text().trim();
+        var chatText = chatLine.find(chatMessageSelector).text().trim();
 
         if(passes_active_filters(chatText)){
             chatLine.removeClass("TppFiltered");
@@ -482,29 +622,147 @@ function update_chat_with_filter(){
             chatLine.addClass("TppFiltered");
         }
     });
+    
+    $("#TppFilterCustom").is(":checked") ? $(".tpp-custom-filter").show() : $(".tpp-custom-filter").hide();
+    
 }
 
 function initialize_filter(){
     var original_insert_chat_line;
-    
+    var original_send_message;
     function filtered_addMessage(info) {
+        //check for new chat message time limit in admin messages
+        if(is_admin_message(info)){ check_for_time_limit(info.message) }
+        
         if(!passes_active_filters(info.message)){ return false }
         info.message = rewrite_with_active_rewriters(info.message);
         return original_insert_chat_line.apply(this, arguments);
+    }
+    
+    function filtered_send(arg){
+        if(input_disabled) return false;
+        current_input = $(textarea_elem).val();
+        update_user_input();
+        return original_send_message.apply(this, arguments);
+    }
+    
+    function is_admin_message(info){
+        return NEW_TWITCH_CHAT ? info.style == "admin" : info.sender == "jtv"
     }
     
     if(NEW_TWITCH_CHAT){
         var Room_proto = myWindow.App.Room.prototype;
         original_insert_chat_line = Room_proto.addMessage;
         Room_proto.addMessage = filtered_addMessage;
+        original_send_message = Room_proto.send;
+        Room_proto.send = filtered_send;
     }else{
         var Chat_proto = myWindow.Chat.prototype;
         original_insert_chat_line = Chat_proto.insert_chat_line;
         Chat_proto.insert_chat_line = filtered_addMessage;
+        original_send_message = Chat_proto.chat_say;
+        Chat_proto.chat_say = filtered_send;
     }
     update_chat_with_filter();
 }
 
+var last_input = false;
+var input_time_limit = 20;
+var same_input_time_limit = 30;
+var input_countdown = 0;
+var same_input_countdown = 0;
+var interval_id;
+var current_input = "";
+var input_disabled;
+var textarea_elem;
+var button_elem;
+if(NEW_TWITCH_CHAT){
+    button_elem = ".send-chat-button button";
+    textarea_elem = ".ember-text-area";
+}else{
+    button_elem = "#chat_speak";
+    textarea_elem = "#chat_text_input";
+}
+var original_button_style = $(button_elem).css("background");
+
+
+function countdown_input(){
+    input_countdown -= 1;
+    same_input_countdown -= 1;
+    update_button();
+    //Only clear Interval if *both* countdowns hit 0
+    //Potentially, the user might pass the regular 20 second limit, then enter his old message and get the 30 second countdown back
+    //I am not overthinking this, am I?
+    if(input_countdown <= 0 && same_input_countdown <= 0){
+        clearInterval(interval_id);
+        input_disabled = false;
+    }
+}
+
+function update_button(){
+    var is_same_input = $(textarea_elem).val() == last_input;
+    var relevant_countdown = is_same_input ? same_input_countdown : input_countdown;
+    var button = $(button_elem);
+    if(relevant_countdown <= 0)
+    {
+        button
+        .text("Chat")
+        .css("background",original_button_style)
+        .removeAttr("disabled");
+        input_disabled = false;
+    }
+    else
+    {
+        disable_button(relevant_countdown);
+        var countdown_text = "Wait " + relevant_countdown + " seconds";
+        if(is_same_input) countdown_text += " (repeated message)";
+        button.text(countdown_text);
+    }
+}
+
+function disable_button(seconds){
+    var button = $(button_elem);
+        button
+        .css("background","#d00")
+        .text("Wait " + seconds + " seconds")
+        .attr("disabled", "disabled");
+    input_disabled = true;
+}
+
+function get_current_input(){
+    current_input = $(textarea_elem).val();
+}
+
+function update_user_input(){
+    if(current_input.trim() == '') return;
+    last_input = current_input;
+    current_input = false;
+    disable_button(input_time_limit);
+    input_countdown = input_time_limit;
+    same_input_countdown = same_input_time_limit;
+    //clear the old interval if it's still running
+    if(interval_id) clearInterval(interval_id);
+    interval_id = setInterval(function(){countdown_input()}, 1000);
+}
+
+function check_for_time_limit(admin_text){
+    if(/now in slow mode/.test(admin_text)){
+        var regex_result = /every (\d+) second/.exec(admin_text)
+        if(regex_result){
+            input_time_limit = parseInt(regex_result[1]);
+        }
+    }
+    if(/identical to the previous/.test(admin_text)){
+        var regex_result = /than (\d+) second/.exec(admin_text)
+        if(regex_result){
+            same_input_time_limit = parseInt(regex_result[1]);
+        }
+    }
+}
+
+$(textarea_elem).keyup(function(e){
+    if(e.keyCode != 13) update_button();
+});
 
 initialize_ui();
 initialize_filter();
