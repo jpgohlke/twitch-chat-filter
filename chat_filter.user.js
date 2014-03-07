@@ -3,12 +3,7 @@
 // @namespace   https://github.com/jpgohlke/twitch-chat-filter
 // @description Hide input commands from the chat.
 
-// @include     http://www.twitch.tv/twitchplayspokemon
-// @include     http://www.twitch.tv/twitchplayspokemon/
-// @include     http://www.twitch.tv/chat/embed?channel=twitchplayspokemon&popout_chat=true
-// @include     http://beta.twitch.tv/twitchplayspokemon
-// @include     http://beta.twitch.tv/twitchplayspokemon/
-// @include     http://beta.twitch.tv/twitchplayspokemon/chat?popout=&secret=safe
+// @include     /^https?://(www|beta)\.twitch\.tv\/twitchplayspokemon(/(chat.*)?)?$/
 
 // @version     1.9
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
