@@ -106,6 +106,7 @@ var CUSTOM_BANNED_PHRASES = localStorage.getItem("tpp-custom-filter-phrases") ? 
 var MINIMUM_DISTANCE_ERROR = 2; // Number of insertions / deletions / substitutions away from a blocked word.
 var MAXIMUM_NON_ASCII_CHARACTERS = 2; // For donger smilies, etc
 var MINIMUM_MESSAGE_WORDS = 2; // For Kappas and other short messages.
+var MAXIMUM_MESSAGE_CHARS = 250; // For messages that fill up more than 4 lines
 
 // The regexp Twitch uses to detect and automatically linkify URLs, with some modifications
 // so we can blacklist more messages.
@@ -286,6 +287,10 @@ function message_is_cyrillic(message){
     return /[\u0400-\u04FF]/.test(message);
 }
 
+function message_is_too_long(message){
+    return message.length > MAXIMUM_MESSAGE_CHARS;
+}
+
 function convert_copy_paste(message){
     //Replace repetitive text with only one instance of it
     //Useful for text and links where people do
@@ -341,6 +346,12 @@ var filters = [
     comment: 'Cyrillic characters',
     isActive: true,
     predicate: message_is_cyrillic
+  },
+  
+  { name: 'TppFilterLong',
+    comment: 'Overly long messages',
+    isActive: false,
+    predicate: message_is_too_long
   },
   
   { name: 'TppFilterCustom',
