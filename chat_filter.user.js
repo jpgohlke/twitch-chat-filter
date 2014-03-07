@@ -370,6 +370,18 @@ var stylers = [
     element: chatListSelector,
     class: 'allcaps_filtered'
   },
+  { name: 'TppHideEmoticons',
+    comment: "Hide emoticons",
+    isActive: false,
+    element: chatListSelector,
+    class: 'hide_emoticons'
+  },
+  { name: 'TppNoColor',
+    comment: "Uncolor messages",
+    isActive: false,
+    element: chatListSelector,
+    class: 'disable_colors'
+  },
 ];
 
 //Text fields for custom user banned phrases
@@ -412,6 +424,8 @@ function initialize_ui(){
     var customCssParts = [
         chatListSelector+" .TppFiltered {display:none;}",
         chatListSelector+".allcaps_filtered "+chatMessageSelector+"{text-transform:lowercase;}",
+        chatListSelector+".hide_emoticons "+chatMessageSelector+" .emoticon{display:none !important;}",
+        chatListSelector+".disable_colors "+chatMessageSelector+"{color: #000 !important;}",
         ".custom_list_menu {background: #aaa; border:1px solid #000; position: absolute; right: 2px; bottom: 2px; padding: 10px; display: none;}",
         "#chat_filter_dropmenu a {color: #00f;}",
         ".tpp-custom-filter {position: relative;}",
