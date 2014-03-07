@@ -3,20 +3,9 @@
 // @namespace   https://github.com/jpgohlke/twitch-chat-filter
 // @description Hide input commands from the chat.
 
-<<<<<<< HEAD
 // @include     /^https?://(www|beta)\.twitch\.tv\/twitchplayspokemon(/(chat.*)?)?$/
 
-// @version     1.91
-=======
-// @include     http://www.twitch.tv/twitchplayspokemon
-// @include     http://www.twitch.tv/twitchplayspokemon/
-// @include     http://www.twitch.tv/chat/embed?channel=twitchplayspokemon&popout_chat=true
-// @include     http://beta.twitch.tv/twitchplayspokemon
-// @include     http://beta.twitch.tv/twitchplayspokemon/
-// @include     http://beta.twitch.tv/twitchplayspokemon/chat?popout=&secret=safe
-
-// @version     2.0
->>>>>>> gh-pages
+// @version     2.1
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 // @grant       unsafeWindow
 // ==/UserScript==
@@ -359,15 +348,12 @@ var filters = [
     predicate: message_is_cyrillic
   },
   
-<<<<<<< HEAD
   { name: 'TppFilterLong',
     comment: 'Overly long messages',
     isActive: false,
     predicate: message_is_too_long
   },
   
-=======
->>>>>>> gh-pages
   { name: 'TppFilterCustom',
     comment: 'Add custom filter',
     isActive: false,
@@ -458,11 +444,8 @@ function initialize_ui(){
     var customCssParts = [
         chatListSelector+" .TppFiltered {display:none;}",
         chatListSelector+".allcaps_filtered "+chatMessageSelector+"{text-transform:lowercase;}",
-<<<<<<< HEAD
         chatListSelector+".hide_emoticons "+chatMessageSelector+" .emoticon{display:none !important;}",
         chatListSelector+".disable_colors "+chatMessageSelector+"{color: #000 !important;}",
-=======
->>>>>>> gh-pages
         ".custom_list_menu {background: #aaa; border:1px solid #000; position: absolute; right: 2px; bottom: 2px; padding: 10px; display: none;}",
         "#chat_filter_dropmenu a {color: #00f;}",
         ".tpp-custom-filter {position: relative;}",
