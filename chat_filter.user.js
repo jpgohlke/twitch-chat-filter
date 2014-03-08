@@ -476,9 +476,7 @@ function load_settings(){
         var field = fields[i].item;
         for(var j=0; j < field.length; j++){
             var item = field[j];
-            if(settings[fields[i].name].indexOf(item.name) != -1 ){
-                item.isActive = true;
-            }
+            item.isActive = (settings[fields[i].name].indexOf(item.name) != -1);
         }
     }
 }
@@ -717,7 +715,7 @@ function initialize_filter(){
         //check for new chat message time limit in admin messages
         if(is_admin_message(info)){ check_for_time_limit(info.message) }
         
-        var sender = NEW_TWITCH_CHAT ? info.from : info.sender;
+        var sender = NEW_TWITCH_CHAT ? ("from" in info ? info.from : '') : info.sender;
         if(!passes_active_filters(info.message, sender)){ return false }
         info.message = rewrite_with_active_rewriters(info.message);
         return original_insert_chat_line.apply(this, arguments);
