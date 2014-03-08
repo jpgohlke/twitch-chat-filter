@@ -5,7 +5,7 @@
 
 // @include     /^https?://(www|beta)\.twitch\.tv\/twitchplayspokemon(/(chat.*)?)?$/
 
-// @version     2.1
+// @version     2.2
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 // @grant       unsafeWindow
 // ==/UserScript==
@@ -55,7 +55,7 @@
 /* global unsafeWindow:false */
 /* jshint lastsemic:true */
 
-var version = "2.1" ;
+var version = "2.2" ;
 var info = "Chat Filter version " + version + " loaded. Please report bugs and suggestions to http://github.com/jpgohlke/twitch-chat-filter";
 
 (function(){
@@ -715,7 +715,8 @@ function initialize_filter(){
         //check for new chat message time limit in admin messages
         if(is_admin_message(info)){ check_for_time_limit(info.message) }
         
-        var sender = NEW_TWITCH_CHAT ? ("from" in info ? info.from : '') : info.sender;
+        var sender = NEW_TWITCH_CHAT ? info.from : info.sender;
+        sender = sender ? sender : '';
         if(!passes_active_filters(info.message, sender)){ return false }
         info.message = rewrite_with_active_rewriters(info.message);
         return original_insert_chat_line.apply(this, arguments);
