@@ -102,6 +102,7 @@ var BANNED_WORDS = [
 ];
 
 var CUSTOM_BANNED_PHRASES = localStorage.getItem("tpp-custom-filter-phrases") ? JSON.parse(localStorage.getItem("tpp-custom-filter-phrases")) : [];
+var CUSTOM_BANNED_USERS = localStorage.getItem("tpp-custom-filter-users") ? JSON.parse(localStorage.getItem("tpp-custom-filter-users")) : [];
 
 var MINIMUM_DISTANCE_ERROR = 2; // Number of insertions / deletions / substitutions away from a blocked word.
 var MAXIMUM_NON_ASCII_CHARACTERS = 2; // For donger smilies, etc
@@ -173,7 +174,7 @@ function min_edit(a, b) {
 // (remember to escape the backslashes when building a regexes from strings!)
 var compound_command_regex = new RegExp("^((" + TPP_COMMANDS.join("|") + ")\\d*)+$", "i");
 
-function word_is_command(word){
+function word_is_command(word, sender){
 
     if(compound_command_regex.test(word)) return true;
 
@@ -187,7 +188,7 @@ function word_is_command(word){
     return false;
 }
 
-function message_is_command(message){
+function message_is_command(message, sender){
     message = message.toLowerCase();
 
     var segments = message.split(/[\d\s]+/);
@@ -202,7 +203,7 @@ function message_is_command(message){
 }
 
 
-function message_is_spam(message) {
+function message_is_spam(message, sender) {
     message = message.toLowerCase();
 
     for(var i=0; i < BANNED_WORDS.length; i++){
@@ -225,11 +226,17 @@ function message_is_spam(message) {
     return false;
 }
 
-function message_is_banned_by_user(message) {
+function message_is_banned_by_user(message, sender) {
     message = message.toLowerCase();
+    sender = sender.toLowerCase();
 
     for(var i=0; i < CUSTOM_BANNED_PHRASES.length; i++){
-        if(message.indexOf(CUSTOM_BANNED_PHRASES[i]) != -1){
+        if(message.indexOf(CUSTOM_BANNED_PHRASES[i].toLowerCase()) != -1){
+            return true;
+        }
+    }
+    for(var i=0; i < CUSTOM_BANNED_USERS.length; i++){
+        if(sender == CUSTOM_BANNED_USERS[i].toLowerCase()){
             return true;
         }
     }
@@ -237,7 +244,7 @@ function message_is_banned_by_user(message) {
     return false;
 }
 
-function is_whitelisted_url(url){
+function is_whitelisted_url(url, sender){
     //This doesnt actually parse the URLs but it
     //should do the job when it comes to filtering.
     for(var i=0; i<URL_WHITELIST.length; i++){
@@ -248,7 +255,7 @@ function is_whitelisted_url(url){
     return false;
 }
 
-function message_is_forbidden_link(message){
+function message_is_forbidden_link(message, sender){
     message = message.toLowerCase();
 
     if(CENSORED_URL.test(message)) return true;
@@ -265,7 +272,7 @@ function message_is_forbidden_link(message){
     return false;
 }
 
-function message_is_donger(message){
+function message_is_donger(message, sender){
     var nonASCII = 0;
     for(var i = 0; i < message.length; i++) {
         if(message.charCodeAt(i) > 127) {
@@ -278,16 +285,16 @@ function message_is_donger(message){
     return false;
 }
 
-function message_is_small(message){
+function message_is_small(message, sender){
     return message.split(/\s/g).length < MINIMUM_MESSAGE_WORDS;
 }
 
-function message_is_cyrillic(message){
+function message_is_cyrillic(message, sender){
     //Some people use cyrillic characters to write spam that gets past the filter.
     return /[\u0400-\u04FF]/.test(message);
 }
 
-function message_is_too_long(message){
+function message_is_too_long(message, sender){
     return message.length > MAXIMUM_MESSAGE_CHARS;
 }
 
@@ -308,6 +315,7 @@ var NEW_TWITCH_CHAT = ($("button.viewers").length > 0);
 //Selectors
 var chatListSelector = (NEW_TWITCH_CHAT) ? '.chat-messages' : '#chat_line_list';
 var chatMessageSelector = (NEW_TWITCH_CHAT) ? '.message' : '.chat_line';
+var chatSenderSelector = '.from'; //one selector that is identical for both chats (Yay!)
 
 //Filters have predicates that are called for every message
 //to determine whether it should get dropped or not
@@ -402,21 +410,17 @@ var text_fields = [
     element: CUSTOM_BANNED_PHRASES,
     item_name: "phrase(s)",
   },
-];
-
-//Text fields for custom user banned phrases
-var text_fields = [
-  { name: 'phrases',
-    comment: "Add a banned phrase",
-    element: CUSTOM_BANNED_PHRASES,
-    item_name: "phrase(s)",
+  { name: 'users',
+    comment: "Add a ignored user",
+    element: CUSTOM_BANNED_USERS,
+    item_name: "user(s)",
   },
 ];
 
-function passes_active_filters(message){
+function passes_active_filters(message, sender){
     for(var i=0; i < filters.length; i++){
         var filter = filters[i];
-        if(filter.isActive && filter.predicate(message)){
+        if(filter.isActive && filter.predicate(message, sender)){
             //console.log("Filter", filter.name, message);
             return false;
         }
@@ -447,7 +451,6 @@ function initialize_ui(){
         chatListSelector+".hide_emoticons "+chatMessageSelector+" .emoticon{display:none !important;}",
         chatListSelector+".disable_colors "+chatMessageSelector+"{color: #000 !important;}",
         ".custom_list_menu {background: #aaa; border:1px solid #000; position: absolute; right: 2px; bottom: 2px; padding: 10px; display: none;}",
-        "#chat_filter_dropmenu a {color: #00f;}",
         ".tpp-custom-filter {position: relative;}",
     ];
     
@@ -644,8 +647,9 @@ function update_chat_with_filter(){
     $((NEW_TWITCH_CHAT) ? '.chat-line' : '#chat_line_list li').each(function() {
         var chatLine = $(this);
         var chatText = chatLine.find(chatMessageSelector).text().trim();
+        var chatSender = chatLine.find(chatSenderSelector).text().trim();
 
-        if(passes_active_filters(chatText)){
+        if(passes_active_filters(chatText, chatSender)){
             chatLine.removeClass("TppFiltered");
         }else{
             chatLine.addClass("TppFiltered");
@@ -663,7 +667,8 @@ function initialize_filter(){
         //check for new chat message time limit in admin messages
         if(is_admin_message(info)){ check_for_time_limit(info.message) }
         
-        if(!passes_active_filters(info.message)){ return false }
+        var sender = NEW_TWITCH_CHAT ? info.from : info.sender;
+        if(!passes_active_filters(info.message, sender)){ return false }
         info.message = rewrite_with_active_rewriters(info.message);
         return original_insert_chat_line.apply(this, arguments);
     }
