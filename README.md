@@ -57,3 +57,24 @@ If you don't want or can't install one of the previously mentioned browser exten
 2. Copy the following snippet and paste it into the developer console on the TPP page: `javascript:(function(){document.body.appendChild(document.createElement('script')).src='http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js';})();`
 
 3. Press `Enter` to run the code.
+
+## Update Log
+
+Version 2.2 (2014/03/08)
+    * Added custom user filtering
+    * Improved style of custom filter lists
+    * Activated filters are now saved between sessions
+    * Information on script displayed upon loading
+
+Version 2.1 (2014/03/07)
+    * Fixed userscript support
+    * Added filter for overly long messages
+    * Added "no emoticons" restyler
+    * Added "no colored messages" restyler
+
+Version 2.0 (2014/03/06)
+    * Countdown timer on the chat button to show slow mode warnings
+    * Added custom filtering option
+
+Version 1.9 (2014/03/03)
+    * Updated script to work with both old and new version of the twitch chat
