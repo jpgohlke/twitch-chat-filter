@@ -61,20 +61,24 @@ If you don't want or can't install one of the previously mentioned browser exten
 ## Update Log
 
 Version 2.2 (2014/03/08)
-    * Added custom user filtering
-    * Improved style of custom filter lists
-    * Activated filters are now saved between sessions
-    * Information on script displayed upon loading
+
+* Added custom user filtering
+* Improved style of custom filter lists
+* Activated filters are now saved between sessions
+* Information on script displayed upon loading
 
 Version 2.1 (2014/03/07)
-    * Fixed userscript support
-    * Added filter for overly long messages
-    * Added "no emoticons" restyler
-    * Added "no colored messages" restyler
+
+* Fixed userscript support
+* Added filter for overly long messages
+* Added "no emoticons" restyler
+* Added "no colored messages" restyler
 
 Version 2.0 (2014/03/06)
-    * Countdown timer on the chat button to show slow mode warnings
-    * Added custom filtering option
+
+* Countdown timer on the chat button to show slow mode warnings
+* Added custom filtering option
 
 Version 1.9 (2014/03/03)
-    * Updated script to work with both old and new version of the twitch chat
+
+* Updated script to work with both old and new version of the twitch chat
