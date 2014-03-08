@@ -3,14 +3,9 @@
 // @namespace   https://github.com/jpgohlke/twitch-chat-filter
 // @description Hide input commands from the chat.
 
-// @include     http://www.twitch.tv/twitchplayspokemon
-// @include     http://www.twitch.tv/twitchplayspokemon/
-// @include     http://www.twitch.tv/chat/embed?channel=twitchplayspokemon&popout_chat=true
-// @include     http://beta.twitch.tv/twitchplayspokemon
-// @include     http://beta.twitch.tv/twitchplayspokemon/
-// @include     http://beta.twitch.tv/twitchplayspokemon/chat?popout=&secret=safe
+// @include     /^https?://(www|beta)\.twitch\.tv\/twitchplayspokemon(/(chat.*)?)?$/
 
-// @version     2.0
+// @version     2.1
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 // @grant       unsafeWindow
 // ==/UserScript==
@@ -111,6 +106,7 @@ var CUSTOM_BANNED_PHRASES = localStorage.getItem("tpp-custom-filter-phrases") ? 
 var MINIMUM_DISTANCE_ERROR = 2; // Number of insertions / deletions / substitutions away from a blocked word.
 var MAXIMUM_NON_ASCII_CHARACTERS = 2; // For donger smilies, etc
 var MINIMUM_MESSAGE_WORDS = 2; // For Kappas and other short messages.
+var MAXIMUM_MESSAGE_CHARS = 250; // For messages that fill up more than 4 lines
 
 // The regexp Twitch uses to detect and automatically linkify URLs, with some modifications
 // so we can blacklist more messages.
@@ -291,6 +287,10 @@ function message_is_cyrillic(message){
     return /[\u0400-\u04FF]/.test(message);
 }
 
+function message_is_too_long(message){
+    return message.length > MAXIMUM_MESSAGE_CHARS;
+}
+
 function convert_copy_paste(message){
     //Replace repetitive text with only one instance of it
     //Useful for text and links where people do
@@ -348,6 +348,12 @@ var filters = [
     predicate: message_is_cyrillic
   },
   
+  { name: 'TppFilterLong',
+    comment: 'Overly long messages',
+    isActive: false,
+    predicate: message_is_too_long
+  },
+  
   { name: 'TppFilterCustom',
     comment: 'Add custom filter',
     isActive: false,
@@ -374,6 +380,27 @@ var stylers = [
     isActive: true,
     element: chatListSelector,
     class: 'allcaps_filtered'
+  },
+  { name: 'TppHideEmoticons',
+    comment: "Hide emoticons",
+    isActive: false,
+    element: chatListSelector,
+    class: 'hide_emoticons'
+  },
+  { name: 'TppNoColor',
+    comment: "Uncolor messages",
+    isActive: false,
+    element: chatListSelector,
+    class: 'disable_colors'
+  },
+];
+
+//Text fields for custom user banned phrases
+var text_fields = [
+  { name: 'phrases',
+    comment: "Add a banned phrase",
+    element: CUSTOM_BANNED_PHRASES,
+    item_name: "phrase(s)",
   },
 ];
 
@@ -417,6 +444,8 @@ function initialize_ui(){
     var customCssParts = [
         chatListSelector+" .TppFiltered {display:none;}",
         chatListSelector+".allcaps_filtered "+chatMessageSelector+"{text-transform:lowercase;}",
+        chatListSelector+".hide_emoticons "+chatMessageSelector+" .emoticon{display:none !important;}",
+        chatListSelector+".disable_colors "+chatMessageSelector+"{color: #000 !important;}",
         ".custom_list_menu {background: #aaa; border:1px solid #000; position: absolute; right: 2px; bottom: 2px; padding: 10px; display: none;}",
         "#chat_filter_dropmenu a {color: #00f;}",
         ".tpp-custom-filter {position: relative;}",
