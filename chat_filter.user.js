@@ -450,7 +450,9 @@ function initialize_ui(){
         chatListSelector+".allcaps_filtered "+chatMessageSelector+"{text-transform:lowercase;}",
         chatListSelector+".hide_emoticons "+chatMessageSelector+" .emoticon{display:none !important;}",
         chatListSelector+".disable_colors "+chatMessageSelector+"{color: #000 !important;}",
-        ".custom_list_menu {background: #aaa; border:1px solid #000; position: absolute; right: 2px; bottom: 2px; padding: 10px; display: none;}",
+        ".custom_list_menu {background: #aaa; border:1px solid #000; position: absolute; right: 2px; bottom: 2px; padding: 10px; display: none; width: 150px;}",
+        ".custom_list_menu li {background: #bbb; display: block; list-style: none; margin: 1px 0; padding: 0 2px}",
+        ".custom_list_menu li a {float: right;}",
         ".tpp-custom-filter {position: relative;}",
     ];
     
@@ -548,6 +550,7 @@ function initialize_ui(){
         //open the list of banned items
         $('#show-' + option.name).click(function(e){
             e.preventDefault();
+            $('.custom_list_menu').hide();
             $('#list-' + option.name).show();
         });
         
@@ -579,7 +582,7 @@ function initialize_ui(){
         
         function add_item_to_ui(new_word){
             $('#list-' + option.name + ' .list-inner')
-            .append('<span>' + new_word + ' <a href="#" id="list-' + option.name + '-' + option.element.indexOf(new_word) + '">[X]</id><br/></span>');
+            .append('<li>' + new_word + ' <a href="#" id="list-' + option.name + '-' + option.element.indexOf(new_word) + '">[X]</id><br/></li>');
             $("#list-" + option.name + "-" + option.element.indexOf(new_word)).click(function(e){
                 e.preventDefault();
                 option.element.splice(option.element.indexOf(new_word), 1);
