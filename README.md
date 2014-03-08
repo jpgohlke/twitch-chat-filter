@@ -65,7 +65,6 @@ Version 2.2 (2014/03/08)
 * Added custom user filtering
 * Improved style of custom filter lists
 * Activated filters are now saved between sessions
-* Information on script displayed upon loading
 
 Version 2.1 (2014/03/07)
 
