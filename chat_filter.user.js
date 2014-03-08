@@ -710,7 +710,13 @@ function initialize_filter(){
     var original_send_message;
     function filtered_addMessage(info) {
         //check for new chat message time limit in admin messages
-        if(is_admin_message(info)){ check_for_time_limit(info.message) }
+        if(is_admin_message(info)){ 
+            info.message = check_for_time_limit(info.message);
+            if(info.message == ""){ 
+                return false;
+                console.log("hidden admin message");
+            }
+        }
         
         var sender = NEW_TWITCH_CHAT ? info.from : info.sender;
         sender = sender ? sender : '';
@@ -843,6 +849,8 @@ function check_for_time_limit(admin_text){
     if(/now in slow mode/.test(admin_text)){
         var regex_result = /every (\d+) second/.exec(admin_text)
         if(regex_result){
+            //hide slow mode messages with no new time limit
+            if(input_time_limit == parseInt(regex_result[1])) return "";
             input_time_limit = parseInt(regex_result[1]);
         }
     }
@@ -859,6 +867,8 @@ function check_for_time_limit(admin_text){
             time_since_last_message = previous_time_since_last_message;
             update_button();
             renew_interval();
+            
+            return "Your last message coulnd not be sent. Please try again shortly.";
         }
     }
     if(/slow mode and you are sending/.test(admin_text)){
@@ -875,6 +885,8 @@ function check_for_time_limit(admin_text){
             //calculate new time limit
             input_time_limit = time_since_last_message + seconds;
             renew_interval();
+            
+            return "Your last message could not be sent due to the current slow mode time limit. Button timer is now updated with correct time limit.";
         }
     }
     if(/You are banned/.test(admin_text)){
@@ -884,6 +896,7 @@ function check_for_time_limit(admin_text){
             renew_interval();
         }
     }
+    return admin_text;
 }
 
 $(textarea_elem).keyup(function(e){
