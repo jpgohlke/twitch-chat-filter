@@ -107,7 +107,7 @@ var CUSTOM_BANNED_USERS = localStorage.getItem("tpp-custom-filter-users") ? JSON
 var MINIMUM_DISTANCE_ERROR = 2; // Number of insertions / deletions / substitutions away from a blocked word.
 var MAXIMUM_NON_ASCII_CHARACTERS = 2; // For donger smilies, etc
 var MINIMUM_MESSAGE_WORDS = 2; // For Kappas and other short messages.
-var MAXIMUM_MESSAGE_CHARS = 250; // For messages that fill up more than 4 lines
+var MAXIMUM_MESSAGE_CHARS = 200; // For messages that fill up more than 4 lines
 
 // The regexp Twitch uses to detect and automatically linkify URLs, with some modifications
 // so we can blacklist more messages.
