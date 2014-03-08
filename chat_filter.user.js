@@ -55,6 +55,8 @@
 /* global unsafeWindow:false */
 /* jshint lastsemic:true */
 
+var version = "2.1" ;
+var info = "Chat Filter version " + version + " loaded. Please report bugs and suggestions to http://github.com/jpgohlke/twitch-chat-filter";
 
 (function(){
 "use strict";
@@ -810,3 +812,6 @@ initialize_filter();
 });
 
 }());
+
+//So people don't think the "undefined" behaviour is a bug ^_^
+info
