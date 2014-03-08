@@ -768,9 +768,9 @@ var original_button_style = $(button_elem).css("background");
 
 
 function countdown_input(){
-    input_countdown -= 1;
-    same_input_countdown -= 1;
-    banned_time -= 1;
+    input_countdown = input_countdown > 0 ? input_countdown - 1 : 0;
+    same_input_countdown = same_input_countdown > 0 ? same_input_countdown - 1 : 0;
+    banned_time = banned_time > 0 ? banned_time - 1 : 0;
     update_button();
     //Only clear Interval if *both* countdowns hit 0
     //Potentially, the user might pass the regular 20 second limit, then enter his old message and get the 30 second countdown back
