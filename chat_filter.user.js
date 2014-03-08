@@ -441,6 +441,48 @@ function rewrite_with_active_rewriters(message){
     return newMessage;
 }
 
+function get_fields(){
+    return [
+        {"name": "filters", "item": filters},
+        {"name": "rewriters", "item": rewriters},
+        {"name": "stylers", "item": stylers},
+    ];
+}
+
+function save_settings(){
+    var fields = get_fields();
+    var settings = {
+        "filters": [],
+        "rewriters": [],
+        "stylers": [],
+    };
+    for(var i=0; i < fields.length; i++){
+        var field = fields[i].item;
+        for(var j=0; j < field.length; j++){
+            var item = field[j];
+            if(item.isActive){
+                settings[fields[i].name].push(item.name);
+            }
+        }
+    }
+    localStorage.setItem("tpp-custom-filter-active", JSON.stringify(settings));
+}
+
+function load_settings(){
+    if(!localStorage.getItem("tpp-custom-filter-active")) return;
+    var settings = JSON.parse(localStorage.getItem("tpp-custom-filter-active"));
+    var fields = get_fields();
+    for(var i=0; i < fields.length; i++){
+        var field = fields[i].item;
+        for(var j=0; j < field.length; j++){
+            var item = field[j];
+            if(settings[fields[i].name].indexOf(item.name) != -1 ){
+                item.isActive = true;
+            }
+        }
+    }
+}
+
 // --- UI ---
 
 function initialize_ui(){
@@ -520,6 +562,7 @@ function initialize_ui(){
         $('#' + option.name)
         .on('change', function(){
             option.isActive = $(this).prop("checked");
+            save_settings();
             update(option);
         })
         .prop('checked', option.isActive);
@@ -805,6 +848,7 @@ $(textarea_elem).keyup(function(e){
     if(e.keyCode != 13) update_button();
 });
 
+load_settings();
 initialize_ui();
 initialize_filter();
 
