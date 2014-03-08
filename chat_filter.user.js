@@ -174,7 +174,7 @@ function min_edit(a, b) {
 // (remember to escape the backslashes when building a regexes from strings!)
 var compound_command_regex = new RegExp("^((" + TPP_COMMANDS.join("|") + ")\\d*)+$", "i");
 
-function word_is_command(word, sender){
+function word_is_command(word){
 
     if(compound_command_regex.test(word)) return true;
 
