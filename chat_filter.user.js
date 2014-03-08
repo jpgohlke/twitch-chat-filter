@@ -747,7 +747,10 @@ function initialize_filter(){
 }
 
 var last_input = false;
-var input_time_limit = 20;
+var backup_last_input = false;
+var input_time_limit = 5;
+var time_since_last_message = 0;
+var previous_time_since_last_message = 0;
 var same_input_time_limit = 30;
 var input_countdown = 0;
 var banned_time = 0;
@@ -771,8 +774,9 @@ function countdown_input(){
     input_countdown = input_countdown > 0 ? input_countdown - 1 : 0;
     same_input_countdown = same_input_countdown > 0 ? same_input_countdown - 1 : 0;
     banned_time = banned_time > 0 ? banned_time - 1 : 0;
+    time_since_last_message += 1;
     update_button();
-    //Only clear Interval if *both* countdowns hit 0
+    //Only clear Interval if *all* countdowns hit 0
     //Potentially, the user might pass the regular 20 second limit, then enter his old message and get the 30 second countdown back
     //I am not overthinking this, am I?
     if(input_countdown <= 0 && same_input_countdown <= 0 && banned_time <= 0){
@@ -817,16 +821,22 @@ function get_current_input(){
     current_input = $(textarea_elem).val();
 }
 
+function renew_interval(){
+    if(interval_id) clearInterval(interval_id);
+    interval_id = setInterval(function(){countdown_input()}, 1000);
+}
+
 function update_user_input(){
     if(current_input.trim() == '') return;
+    backup_last_input = last_input;
     last_input = current_input;
     current_input = false;
     disable_button(input_time_limit);
     input_countdown = input_time_limit;
     same_input_countdown = same_input_time_limit;
-    //clear the old interval if it's still running
-    if(interval_id) clearInterval(interval_id);
-    interval_id = setInterval(function(){countdown_input()}, 1000);
+    previous_time_since_last_message = time_since_last_message;
+    time_since_last_message = 0;
+    renew_interval();
 }
 
 function check_for_time_limit(admin_text){
@@ -840,14 +850,38 @@ function check_for_time_limit(admin_text){
         var regex_result = /than (\d+) second/.exec(admin_text)
         if(regex_result){
             same_input_time_limit = parseInt(regex_result[1]);
+            //if we get here, we set a time limit even though the last message was not sent.
+            //This happens because the same input countdown seems to be randomly between 30 and 35 seconds
+            
+            same_input_countdown = 5;
+            input_countdown = 0;
+            input_disabled = true;
+            time_since_last_message = previous_time_since_last_message;
+            update_button();
+            renew_interval();
+        }
+    }
+    if(/slow mode and you are sending/.test(admin_text)){
+        var regex_result = /again in (\d+) second/.exec(admin_text)
+        if(regex_result){
+            var seconds = parseInt(regex_result[1]);
+            //revert some stuff because the message we thought we sent was not sent
+            input_disabled = true;
+            time_since_last_message = previous_time_since_last_message;
+            input_countdown = seconds;
+            last_input = backup_last_input;
+            update_button();
+            
+            //calculate new time limit
+            input_time_limit = time_since_last_message + seconds;
+            renew_interval();
         }
     }
     if(/You are banned/.test(admin_text)){
         var regex_result = /for (\d+) more second/.exec(admin_text)
         if(regex_result){
             banned_time = parseInt(regex_result[1]);
-            if(interval_id) clearInterval(interval_id);
-            interval_id = setInterval(function(){countdown_input()}, 1000);
+            renew_interval();
         }
     }
 }
