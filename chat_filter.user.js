@@ -581,8 +581,10 @@ function initialize_ui(){
         }
         
         function add_item_to_ui(new_word){
+            //encodes html special chars for displaying properly
+            var safe_word = new_word.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
             $('#list-' + option.name + ' .list-inner')
-            .append('<li>' + new_word + ' <a href="#" id="list-' + option.name + '-' + option.element.indexOf(new_word) + '">[X]</id><br/></li>');
+            .append('<li>' + safe_word + ' <a href="#" id="list-' + option.name + '-' + option.element.indexOf(new_word) + '">[X]</id><br/></li>');
             $("#list-" + option.name + "-" + option.element.indexOf(new_word)).click(function(e){
                 e.preventDefault();
                 option.element.splice(option.element.indexOf(new_word), 1);
