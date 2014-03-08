@@ -246,7 +246,7 @@ function message_is_banned_by_user(message, sender) {
     return false;
 }
 
-function is_whitelisted_url(url, sender){
+function is_whitelisted_url(url){
     //This doesnt actually parse the URLs but it
     //should do the job when it comes to filtering.
     for(var i=0; i<URL_WHITELIST.length; i++){
