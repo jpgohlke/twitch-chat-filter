@@ -867,7 +867,7 @@ function check_for_time_limit(admin_text){
             update_button();
             renew_interval();
             
-            return "Your last message coulnd not be sent. Please try again shortly.";
+            return "Your last message could not be sent. Please try again shortly.";
         }
     }
     if(/slow mode and you are sending/.test(admin_text)){
