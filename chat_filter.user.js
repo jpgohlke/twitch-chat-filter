@@ -714,7 +714,6 @@ function initialize_filter(){
             info.message = check_for_time_limit(info.message);
             if(info.message == ""){ 
                 return false;
-                console.log("hidden admin message");
             }
         }
         
