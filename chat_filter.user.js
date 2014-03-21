@@ -756,7 +756,7 @@ function initialize_filter(){
 
 var last_input = false;
 var backup_last_input = false;
-var input_time_limit = 5;
+var input_time_limit = 2;
 var time_since_last_message = 0;
 var previous_time_since_last_message = 0;
 var same_input_time_limit = 30;
