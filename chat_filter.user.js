@@ -55,6 +55,9 @@
 /* global unsafeWindow:false */
 /* jshint lastsemic:true */
 
+var version = "2.2" ;
+var info = "Chat Filter version " + version + " loaded. Please report bugs and suggestions to http://github.com/jpgohlke/twitch-chat-filter";
+
 (function(){
 "use strict";
 
@@ -906,6 +909,7 @@ load_settings();
 initialize_ui();
 initialize_filter();
 
+console.log(info);
 
 });
 
