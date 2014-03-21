@@ -412,11 +412,11 @@ var text_fields = [
     element: CUSTOM_BANNED_PHRASES,
     item_name: "phrase(s)",
   },
-  { name: 'users',
+  /*{ name: 'users',
     comment: "Add a ignored user",
     element: CUSTOM_BANNED_USERS,
     item_name: "user(s)",
-  },
+  },*/
 ];
 
 function passes_active_filters(message, sender){
