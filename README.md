@@ -60,11 +60,12 @@ If you don't want or can't install one of the previously mentioned browser exten
 
 ## Update Log
 
-Version 2.2 (2014/03/08)
+Version 2.2 (2014/03/21)
 
-* Added custom user filtering
 * Improved style of custom filter lists
 * Activated filters are now saved between sessions
+* Better handling of delays between messages
+* Information on script displayed upon loading
 
 Version 2.1 (2014/03/07)
 
