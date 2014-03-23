@@ -324,6 +324,11 @@ function convert_copy_paste(message){
     return message.replace(/(.{4}.*?)(\s*?\1)+/g, "$1");
 }
 
+//removes unicode characters that are used to cover following lines (Oops I spilled my drink)
+function mop_up_drinks(message){
+    return message.replace(/[\u0300-\u036F]/g, '');
+}
+
 // --- Filtering ---
 
 $(function(){
@@ -402,6 +407,11 @@ var rewriters = [
     comment: "Copy pasted repetitions",
     isActive: true,
     rewriter: convert_copy_paste
+  },
+  { name: 'TppMopUpDrinks',
+    comment: "Mop up spilled drinks",
+    isActive: false,
+    rewriter: mop_up_drinks
   },
 ];
 
