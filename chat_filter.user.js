@@ -3,9 +3,9 @@
 // @namespace   https://github.com/jpgohlke/twitch-chat-filter
 // @description Hide input commands from the chat.
 
-// @include     /^https?://(www|beta)\.twitch\.tv\/twitchplayspokemon(/(chat.*)?)?$/
+// @include     /^https?://(www|beta)\.twitch\.tv\/(twitchplayspokemon(/(chat.*)?)?|chat\/.*channel=twitchplayspokemon.*)$/
 
-// @version     2.1
+// @version     2.2
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 // @grant       unsafeWindow
 // ==/UserScript==
@@ -55,6 +55,8 @@
 /* global unsafeWindow:false */
 /* jshint lastsemic:true */
 
+var version = "2.2" ;
+var info = "Chat Filter version " + version + " loaded. Please report bugs and suggestions to http://github.com/jpgohlke/twitch-chat-filter";
 
 (function(){
 "use strict";
@@ -102,11 +104,12 @@ var BANNED_WORDS = [
 ];
 
 var CUSTOM_BANNED_PHRASES = localStorage.getItem("tpp-custom-filter-phrases") ? JSON.parse(localStorage.getItem("tpp-custom-filter-phrases")) : [];
+var CUSTOM_BANNED_USERS = localStorage.getItem("tpp-custom-filter-users") ? JSON.parse(localStorage.getItem("tpp-custom-filter-users")) : [];
 
 var MINIMUM_DISTANCE_ERROR = 2; // Number of insertions / deletions / substitutions away from a blocked word.
 var MAXIMUM_NON_ASCII_CHARACTERS = 2; // For donger smilies, etc
 var MINIMUM_MESSAGE_WORDS = 2; // For Kappas and other short messages.
-var MAXIMUM_MESSAGE_CHARS = 250; // For messages that fill up more than 4 lines
+var MAXIMUM_MESSAGE_CHARS = 200; // For messages that fill up more than 4 lines
 
 // The regexp Twitch uses to detect and automatically linkify URLs, with some modifications
 // so we can blacklist more messages.
@@ -187,7 +190,7 @@ function word_is_command(word){
     return false;
 }
 
-function message_is_command(message){
+function message_is_command(message, sender){
     message = message.toLowerCase();
 
     var segments = message.split(/[\d\s]+/);
@@ -202,7 +205,7 @@ function message_is_command(message){
 }
 
 
-function message_is_spam(message) {
+function message_is_spam(message, sender) {
     message = message.toLowerCase();
 
     for(var i=0; i < BANNED_WORDS.length; i++){
@@ -225,11 +228,17 @@ function message_is_spam(message) {
     return false;
 }
 
-function message_is_banned_by_user(message) {
+function message_is_banned_by_user(message, sender) {
     message = message.toLowerCase();
+    sender = sender.toLowerCase();
 
     for(var i=0; i < CUSTOM_BANNED_PHRASES.length; i++){
-        if(message.indexOf(CUSTOM_BANNED_PHRASES[i]) != -1){
+        if(message.indexOf(CUSTOM_BANNED_PHRASES[i].toLowerCase()) != -1){
+            return true;
+        }
+    }
+    for(var i=0; i < CUSTOM_BANNED_USERS.length; i++){
+        if(sender == CUSTOM_BANNED_USERS[i].toLowerCase()){
             return true;
         }
     }
@@ -248,7 +257,7 @@ function is_whitelisted_url(url){
     return false;
 }
 
-function message_is_forbidden_link(message){
+function message_is_forbidden_link(message, sender){
     message = message.toLowerCase();
 
     if(CENSORED_URL.test(message)) return true;
@@ -265,7 +274,7 @@ function message_is_forbidden_link(message){
     return false;
 }
 
-function message_is_donger(message){
+function message_is_donger(message, sender){
     var nonASCII = 0;
     for(var i = 0; i < message.length; i++) {
         if(message.charCodeAt(i) > 127) {
@@ -278,16 +287,16 @@ function message_is_donger(message){
     return false;
 }
 
-function message_is_small(message){
+function message_is_small(message, sender){
     return message.split(/\s/g).length < MINIMUM_MESSAGE_WORDS;
 }
 
-function message_is_cyrillic(message){
+function message_is_cyrillic(message, sender){
     //Some people use cyrillic characters to write spam that gets past the filter.
     return /[\u0400-\u04FF]/.test(message);
 }
 
-function message_is_too_long(message){
+function message_is_too_long(message, sender){
     return message.length > MAXIMUM_MESSAGE_CHARS;
 }
 
@@ -308,6 +317,7 @@ var NEW_TWITCH_CHAT = ($("button.viewers").length > 0);
 //Selectors
 var chatListSelector = (NEW_TWITCH_CHAT) ? '.chat-messages' : '#chat_line_list';
 var chatMessageSelector = (NEW_TWITCH_CHAT) ? '.message' : '.chat_line';
+var chatSenderSelector = '.from'; //one selector that is identical for both chats (Yay!)
 
 //Filters have predicates that are called for every message
 //to determine whether it should get dropped or not
@@ -402,21 +412,17 @@ var text_fields = [
     element: CUSTOM_BANNED_PHRASES,
     item_name: "phrase(s)",
   },
+  /*{ name: 'users',
+    comment: "Add a ignored user",
+    element: CUSTOM_BANNED_USERS,
+    item_name: "user(s)",
+  },*/
 ];
 
-//Text fields for custom user banned phrases
-var text_fields = [
-  { name: 'phrases',
-    comment: "Add a banned phrase",
-    element: CUSTOM_BANNED_PHRASES,
-    item_name: "phrase(s)",
-  },
-];
-
-function passes_active_filters(message){
+function passes_active_filters(message, sender){
     for(var i=0; i < filters.length; i++){
         var filter = filters[i];
-        if(filter.isActive && filter.predicate(message)){
+        if(filter.isActive && filter.predicate(message, sender)){
             //console.log("Filter", filter.name, message);
             return false;
         }
@@ -435,6 +441,46 @@ function rewrite_with_active_rewriters(message){
     return newMessage;
 }
 
+function get_fields(){
+    return [
+        {"name": "filters", "item": filters},
+        {"name": "rewriters", "item": rewriters},
+        {"name": "stylers", "item": stylers},
+    ];
+}
+
+function save_settings(){
+    var fields = get_fields();
+    var settings = {
+        "filters": [],
+        "rewriters": [],
+        "stylers": [],
+    };
+    for(var i=0; i < fields.length; i++){
+        var field = fields[i].item;
+        for(var j=0; j < field.length; j++){
+            var item = field[j];
+            if(item.isActive){
+                settings[fields[i].name].push(item.name);
+            }
+        }
+    }
+    localStorage.setItem("tpp-custom-filter-active", JSON.stringify(settings));
+}
+
+function load_settings(){
+    if(!localStorage.getItem("tpp-custom-filter-active")) return;
+    var settings = JSON.parse(localStorage.getItem("tpp-custom-filter-active"));
+    var fields = get_fields();
+    for(var i=0; i < fields.length; i++){
+        var field = fields[i].item;
+        for(var j=0; j < field.length; j++){
+            var item = field[j];
+            item.isActive = (settings[fields[i].name].indexOf(item.name) != -1);
+        }
+    }
+}
+
 // --- UI ---
 
 function initialize_ui(){
@@ -446,8 +492,9 @@ function initialize_ui(){
         chatListSelector+".allcaps_filtered "+chatMessageSelector+"{text-transform:lowercase;}",
         chatListSelector+".hide_emoticons "+chatMessageSelector+" .emoticon{display:none !important;}",
         chatListSelector+".disable_colors "+chatMessageSelector+"{color: #000 !important;}",
-        ".custom_list_menu {background: #aaa; border:1px solid #000; position: absolute; right: 2px; bottom: 2px; padding: 10px; display: none;}",
-        "#chat_filter_dropmenu a {color: #00f;}",
+        ".custom_list_menu {background: #aaa; border:1px solid #000; position: absolute; right: 2px; bottom: 2px; padding: 10px; display: none; width: 150px;}",
+        ".custom_list_menu li {background: #bbb; display: block; list-style: none; margin: 1px 0; padding: 0 2px}",
+        ".custom_list_menu li a {float: right;}",
         ".tpp-custom-filter {position: relative;}",
     ];
     
@@ -513,6 +560,7 @@ function initialize_ui(){
         $('#' + option.name)
         .on('change', function(){
             option.isActive = $(this).prop("checked");
+            save_settings();
             update(option);
         })
         .prop('checked', option.isActive);
@@ -545,6 +593,7 @@ function initialize_ui(){
         //open the list of banned items
         $('#show-' + option.name).click(function(e){
             e.preventDefault();
+            $('.custom_list_menu').hide();
             $('#list-' + option.name).show();
         });
         
@@ -575,8 +624,10 @@ function initialize_ui(){
         }
         
         function add_item_to_ui(new_word){
+            //encodes html special chars for displaying properly
+            var safe_word = new_word.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
             $('#list-' + option.name + ' .list-inner')
-            .append('<span>' + new_word + ' <a href="#" id="list-' + option.name + '-' + option.element.indexOf(new_word) + '">[X]</id><br/></span>');
+            .append('<li>' + safe_word + ' <a href="#" id="list-' + option.name + '-' + option.element.indexOf(new_word) + '">[X]</id><br/></li>');
             $("#list-" + option.name + "-" + option.element.indexOf(new_word)).click(function(e){
                 e.preventDefault();
                 option.element.splice(option.element.indexOf(new_word), 1);
@@ -644,8 +695,9 @@ function update_chat_with_filter(){
     $((NEW_TWITCH_CHAT) ? '.chat-line' : '#chat_line_list li').each(function() {
         var chatLine = $(this);
         var chatText = chatLine.find(chatMessageSelector).text().trim();
+        var chatSender = chatLine.find(chatSenderSelector).text().trim();
 
-        if(passes_active_filters(chatText)){
+        if(passes_active_filters(chatText, chatSender)){
             chatLine.removeClass("TppFiltered");
         }else{
             chatLine.addClass("TppFiltered");
@@ -661,9 +713,16 @@ function initialize_filter(){
     var original_send_message;
     function filtered_addMessage(info) {
         //check for new chat message time limit in admin messages
-        if(is_admin_message(info)){ check_for_time_limit(info.message) }
+        if(is_admin_message(info)){ 
+            info.message = check_for_time_limit(info.message);
+            if(info.message == ""){ 
+                return false;
+            }
+        }
         
-        if(!passes_active_filters(info.message)){ return false }
+        var sender = NEW_TWITCH_CHAT ? info.from : info.sender;
+        sender = sender ? sender : '';
+        if(!passes_active_filters(info.message, sender)){ return false }
         info.message = rewrite_with_active_rewriters(info.message);
         return original_insert_chat_line.apply(this, arguments);
     }
@@ -696,9 +755,13 @@ function initialize_filter(){
 }
 
 var last_input = false;
-var input_time_limit = 20;
+var backup_last_input = false;
+var input_time_limit = 2;
+var time_since_last_message = 0;
+var previous_time_since_last_message = 0;
 var same_input_time_limit = 30;
 var input_countdown = 0;
+var banned_time = 0;
 var same_input_countdown = 0;
 var interval_id;
 var current_input = "";
@@ -716,13 +779,15 @@ var original_button_style = $(button_elem).css("background");
 
 
 function countdown_input(){
-    input_countdown -= 1;
-    same_input_countdown -= 1;
+    input_countdown = input_countdown > 0 ? input_countdown - 1 : 0;
+    same_input_countdown = same_input_countdown > 0 ? same_input_countdown - 1 : 0;
+    banned_time = banned_time > 0 ? banned_time - 1 : 0;
+    time_since_last_message += 1;
     update_button();
-    //Only clear Interval if *both* countdowns hit 0
+    //Only clear Interval if *all* countdowns hit 0
     //Potentially, the user might pass the regular 20 second limit, then enter his old message and get the 30 second countdown back
     //I am not overthinking this, am I?
-    if(input_countdown <= 0 && same_input_countdown <= 0){
+    if(input_countdown <= 0 && same_input_countdown <= 0 && banned_time <= 0){
         clearInterval(interval_id);
         input_disabled = false;
     }
@@ -731,6 +796,7 @@ function countdown_input(){
 function update_button(){
     var is_same_input = $(textarea_elem).val() == last_input;
     var relevant_countdown = is_same_input ? same_input_countdown : input_countdown;
+    if(banned_time > 0) relevant_countdown = banned_time;
     var button = $(button_elem);
     if(relevant_countdown <= 0)
     {
@@ -744,7 +810,8 @@ function update_button(){
     {
         disable_button(relevant_countdown);
         var countdown_text = "Wait " + relevant_countdown + " seconds";
-        if(is_same_input) countdown_text += " (repeated message)";
+        if(banned_time > 0) countdown_text += " (banned)";
+        else if(is_same_input) countdown_text += " (repeated message)";
         button.text(countdown_text);
     }
 }
@@ -762,22 +829,30 @@ function get_current_input(){
     current_input = $(textarea_elem).val();
 }
 
+function renew_interval(){
+    if(interval_id) clearInterval(interval_id);
+    interval_id = setInterval(function(){countdown_input()}, 1000);
+}
+
 function update_user_input(){
     if(current_input.trim() == '') return;
+    backup_last_input = last_input;
     last_input = current_input;
     current_input = false;
     disable_button(input_time_limit);
     input_countdown = input_time_limit;
     same_input_countdown = same_input_time_limit;
-    //clear the old interval if it's still running
-    if(interval_id) clearInterval(interval_id);
-    interval_id = setInterval(function(){countdown_input()}, 1000);
+    previous_time_since_last_message = time_since_last_message;
+    time_since_last_message = 0;
+    renew_interval();
 }
 
 function check_for_time_limit(admin_text){
     if(/now in slow mode/.test(admin_text)){
         var regex_result = /every (\d+) second/.exec(admin_text)
         if(regex_result){
+            //hide slow mode messages with no new time limit
+            if(input_time_limit == parseInt(regex_result[1])) return "";
             input_time_limit = parseInt(regex_result[1]);
         }
     }
@@ -785,17 +860,56 @@ function check_for_time_limit(admin_text){
         var regex_result = /than (\d+) second/.exec(admin_text)
         if(regex_result){
             same_input_time_limit = parseInt(regex_result[1]);
+            //if we get here, we set a time limit even though the last message was not sent.
+            //This happens because the same input countdown seems to be randomly between 30 and 35 seconds
+            
+            same_input_countdown = 5;
+            input_countdown = 0;
+            input_disabled = true;
+            time_since_last_message = previous_time_since_last_message;
+            update_button();
+            renew_interval();
+            
+            return "Your last message could not be sent. Please try again shortly.";
         }
     }
+    if(/slow mode and you are sending/.test(admin_text)){
+        var regex_result = /again in (\d+) second/.exec(admin_text)
+        if(regex_result){
+            var seconds = parseInt(regex_result[1]);
+            //revert some stuff because the message we thought we sent was not sent
+            input_disabled = true;
+            time_since_last_message = previous_time_since_last_message;
+            input_countdown = seconds;
+            last_input = backup_last_input;
+            update_button();
+            
+            //calculate new time limit
+            input_time_limit = time_since_last_message + seconds;
+            renew_interval();
+            
+            return "Your last message could not be sent due to the current slow mode time limit. Button timer is now updated with correct time limit.";
+        }
+    }
+    if(/You are banned/.test(admin_text)){
+        var regex_result = /for (\d+) more second/.exec(admin_text)
+        if(regex_result){
+            banned_time = parseInt(regex_result[1]);
+            renew_interval();
+        }
+    }
+    return admin_text;
 }
 
 $(textarea_elem).keyup(function(e){
     if(e.keyCode != 13) update_button();
 });
 
+load_settings();
 initialize_ui();
 initialize_filter();
 
+console.log(info);
 
 });
 
