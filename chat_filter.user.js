@@ -67,6 +67,7 @@ var TPP_COMMANDS = [
     "left", "right", "up", "down",
     "start", "select",
     "a", "b",
+    "l", "r",
     "democracy", "anarchy", "wait"
 ];
 
@@ -174,7 +175,7 @@ function min_edit(a, b) {
 //without any extra words around. This includes compound democracy mode
 //commands like `up2left4` and `start9`.
 // (remember to escape the backslashes when building a regexes from strings!)
-var compound_command_regex = new RegExp("^((" + TPP_COMMANDS.join("|") + ")\\d*)+$", "i");
+var compound_command_regex = new RegExp("^((" + TPP_COMMANDS.join("\\+?|") + ")\\d*)+$", "i");
 
 function word_is_command(word){
 
