@@ -67,6 +67,7 @@ var TPP_COMMANDS = [
     "left", "right", "up", "down",
     "start", "select",
     "a", "b",
+    "l", "r",
     "democracy", "anarchy", "wait"
 ];
 
@@ -173,19 +174,9 @@ function min_edit(a, b) {
     return matrix[b.length][a.length];
 }
 
-//This regex recognizes messages that contain exactly a chat command,
-//without any extra words around. This includes compound democracy mode
-//commands like `up2left4` and `start9`.
-// (remember to escape the backslashes when building a regexes from strings!)
-var compound_command_regex = new RegExp("^((" + TPP_COMMANDS.join("|") + ")\\d*)+$", "i");
-
 function word_is_command(word){
-
-    if(compound_command_regex.test(word)) return true;
-
     for(var j=0; j<TPP_COMMANDS.length; j++){
         var cmd = TPP_COMMANDS[j];
-
         if(min_edit(cmd, word) <= MINIMUM_DISTANCE_ERROR){
            return true;
         }
@@ -196,7 +187,7 @@ function word_is_command(word){
 function message_is_command(message, sender){
     message = message.toLowerCase();
 
-    var segments = message.split(/[\d\s]+/);
+    var segments = message.split(/[\d\+\s]+/);
 
     for(var i=0; i<segments.length; i++){
         var segment = segments[i];
