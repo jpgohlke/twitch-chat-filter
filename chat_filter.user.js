@@ -325,11 +325,26 @@ function mop_up_drinks(message){
 $(function(){
 
 //Must wait until DOM load to do feature detection
-var NEW_TWITCH_CHAT = ($("button.viewers").length > 0);
+//Question: why not just test for myWindow.App?
+if($("button.viewers").length <= 0){
+    //The user is not using the latest version of Twitch chat;
+    //Fallback to an older version of the filtering script.
+    
+    //I don't know if any users actuall still have the old chat.
+    //This code is here just due to paranoia...
+    
+    console.log("falling back to old filter script");
+    var tag = document.createElement('script');
+    tag.type = 'text/javascript';
+    tag.src = 'http://jpgohlke.github.io/twitch-chat-filter/chat_filter_old.user.js';
+    document.body.appendChild(tag);
+    return;
+}
+
 //Selectors
-var chatListSelector = (NEW_TWITCH_CHAT) ? '.chat-messages' : '#chat_line_list';
-var chatMessageSelector = (NEW_TWITCH_CHAT) ? '.message' : '.chat_line';
-var chatSenderSelector = '.from'; //one selector that is identical for both chats (Yay!)
+var chatListSelector = '.chat-messages';
+var chatMessageSelector = '.message';
+var chatSenderSelector = '.from';
 
 //Filters have predicates that are called for every message
 //to determine whether it should get dropped or not
@@ -521,52 +536,27 @@ function initialize_ui(){
         ".tpp-custom-filter {position: relative;}",
     ];
     
-    if(NEW_TWITCH_CHAT){
-        // Create button
-        controlButton = $('<button id="chat_filter_dropmenu_button" class="button-simple light tooltip"/>')
-            .css('margin-left', '5px')
-            .insertAfter('button.viewers');
+    // Create button
+    controlButton = $('<button id="chat_filter_dropmenu_button" class="button-simple light tooltip"/>')
+        .css('margin-left', '5px')
+        .insertAfter('button.viewers');
 
-        // Place filter icon on button
-        controlButton
-            .css('background-image', 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAv0lEQVQ4jc3SIQ7CQBAF0C8rK5E9AhI5R1gccpLOn+UACARHwCO5Aq6HQHAUQsAhwJGmlNBdIOEnY18mfwb4u4hIYWaSOySnAABVrWKMt9xx97OqVlDVkbufPoAuZiYAgBBC6e5NBnJQ1eqpK5KbBKQJIZQvyyc5f4eQ3A66pJlJjLG3N3dfJr0FyUUHudZ1PUtCWls9IDPbJyN90OBeulHV8beg6lfQKgsSkaJ18qOZTbIgAHD3NcmdiBTZSGruBIYOSjStwb0AAAAASUVORK5CYII=)')
-            .css('background-position', '3px 3px')
-            .attr('original-title', 'Chat Filter');
+    // Place filter icon on button
+    controlButton
+        .css('background-image', 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAv0lEQVQ4jc3SIQ7CQBAF0C8rK5E9AhI5R1gccpLOn+UACARHwCO5Aq6HQHAUQsAhwJGmlNBdIOEnY18mfwb4u4hIYWaSOySnAABVrWKMt9xx97OqVlDVkbufPoAuZiYAgBBC6e5NBnJQ1eqpK5KbBKQJIZQvyyc5f4eQ3A66pJlJjLG3N3dfJr0FyUUHudZ1PUtCWls9IDPbJyN90OBeulHV8beg6lfQKgsSkaJ18qOZTbIgAHD3NcmdiBTZSGruBIYOSjStwb0AAAAASUVORK5CYII=)')
+        .css('background-position', '3px 3px')
+        .attr('original-title', 'Chat Filter');
 
-        // Make room for extra button by shrinking the chat button
-        $('.send-chat-button').css('left', '90px');
+    // Make room for extra button by shrinking the chat button
+    $('.send-chat-button').css('left', '90px');
 
-        // Create menu
-        controlPanel = $('<div id="chat_filter_dropmenu" class="chat-settings chat-menu"/>')
-            .css('position', 'absolute')
-            .css('bottom', '38px')
-            .css('display', 'none')
-            .appendTo('.chat-interface');
-    } else {
-        // Create button
-        controlButton = $('<a id="chat_filter_dropmenu_button" class="dropdown_glyph"/>')
-            .insertAfter('#chat_viewers_dropmenu_button');
-        
-        // Place filter icon on button
-        $('<span/>')
-            .css('background', 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAv0lEQVQ4jc3SIQ7CQBAF0C8rK5E9AhI5R1gccpLOn+UACARHwCO5Aq6HQHAUQsAhwJGmlNBdIOEnY18mfwb4u4hIYWaSOySnAABVrWKMt9xx97OqVlDVkbufPoAuZiYAgBBC6e5NBnJQ1eqpK5KbBKQJIZQvyyc5f4eQ3A66pJlJjLG3N3dfJr0FyUUHudZ1PUtCWls9IDPbJyN90OBeulHV8beg6lfQKgsSkaJ18qOZTbIgAHD3NcmdiBTZSGruBIYOSjStwb0AAAAASUVORK5CYII=)')
-            .appendTo(controlButton);
-
-        // Make room for extra button by shrinking the chat button
-        $('#chat_speak').css('width', '149px');
-        
-        // Create menu
-        controlPanel = $('<div id="chat_filter_dropmenu" class="dropmenu menu-like"/>')
-            .css('position', 'absolute')
-            .css('bottom', '45px')
-            .css('display', 'none')
-            .appendTo('#controls');
-
-        // Add extra CSS styles
-        customCssParts.push("#chat_filter_dropmenu .chat-menu-header{margin-left:6px;}");
-        customCssParts.push("#chat_filter_dropmenu label{font-weight:normal; margin-bottom:0; color: #B9A3E3;}");
-    }
-
+    // Create menu
+    controlPanel = $('<div id="chat_filter_dropmenu" class="chat-settings chat-menu"/>')
+        .css('position', 'absolute')
+        .css('bottom', '38px')
+        .css('display', 'none')
+        .appendTo('.chat-interface');
+    
     // Open menu on button click
     controlButton.on('click', function(){
         controlPanel.toggle();
@@ -715,7 +705,7 @@ function initialize_ui(){
 
 function update_chat_with_filter(){
 
-    $((NEW_TWITCH_CHAT) ? '.chat-line' : '#chat_line_list li').each(function() {
+    $('.chat-line').each(function() {
         var chatLine = $(this);
         var chatText = chatLine.find(chatMessageSelector).text().trim();
         var chatSender = chatLine.find(chatSenderSelector).text().trim();
@@ -743,8 +733,7 @@ function initialize_filter(){
             }
         }
         
-        var sender = NEW_TWITCH_CHAT ? info.from : info.sender;
-        sender = sender ? sender : '';
+        var sender = info.from || '';
         if(!passes_active_filters(info.message, sender)){ return false }
         info.message = rewrite_with_active_rewriters(info.message);
         return original_insert_chat_line.apply(this, arguments);
@@ -758,22 +747,15 @@ function initialize_filter(){
     }
     
     function is_admin_message(info){
-        return NEW_TWITCH_CHAT ? info.style == "admin" : info.sender == "jtv"
+        return info.style == "admin"
     }
     
-    if(NEW_TWITCH_CHAT){
-        var Room_proto = myWindow.App.Room.prototype;
-        original_insert_chat_line = Room_proto.addMessage;
-        Room_proto.addMessage = filtered_addMessage;
-        original_send_message = Room_proto.send;
-        Room_proto.send = filtered_send;
-    }else{
-        var Chat_proto = myWindow.Chat.prototype;
-        original_insert_chat_line = Chat_proto.insert_chat_line;
-        Chat_proto.insert_chat_line = filtered_addMessage;
-        original_send_message = Chat_proto.chat_say;
-        Chat_proto.chat_say = filtered_send;
-    }
+    var Room_proto = myWindow.App.Room.prototype;
+    original_insert_chat_line = Room_proto.addMessage;
+    Room_proto.addMessage = filtered_addMessage;
+    original_send_message = Room_proto.send;
+    Room_proto.send = filtered_send;
+    
     update_chat_with_filter();
 }
 
@@ -789,15 +771,9 @@ var same_input_countdown = 0;
 var interval_id;
 var current_input = "";
 var input_disabled;
-var textarea_elem;
-var button_elem;
-if(NEW_TWITCH_CHAT){
-    button_elem = ".send-chat-button button";
-    textarea_elem = ".ember-text-area";
-}else{
-    button_elem = "#chat_speak";
-    textarea_elem = "#chat_text_input";
-}
+var textarea_elem = ".ember-text-area";
+var button_elem = ".send-chat-button button";
+
 var original_button_style = $(button_elem).css("background");
 
 
