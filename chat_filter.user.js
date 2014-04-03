@@ -529,7 +529,7 @@ function initialize_ui(){
         chatListSelector+" .TppFiltered {display:none;}",
         chatListSelector+".allcaps_filtered "+chatMessageSelector+"{text-transform:lowercase;}",
         chatListSelector+".hide_emoticons "+chatMessageSelector+" .emoticon{display:none !important;}",
-        chatListSelector+".disable_colors "+chatMessageSelector+"{color: #000 !important;}",
+        chatListSelector+".disable_colors "+chatMessageSelector+"{color: inherit !important;}",
         ".custom_list_menu {background: #aaa; border:1px solid #000; position: absolute; right: 2px; bottom: 2px; padding: 10px; display: none; width: 150px;}",
         ".custom_list_menu li {background: #bbb; display: block; list-style: none; margin: 1px 0; padding: 0 2px}",
         ".custom_list_menu li a {float: right;}",
