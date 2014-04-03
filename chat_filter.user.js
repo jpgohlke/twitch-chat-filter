@@ -83,18 +83,22 @@ var MISTY_SUBSTRINGS = [
 ];
 
 var URL_WHITELIST = [
-    //us
+    // Twitch chat filter
      "github.com",
-    //reddit
+    // TPP Subreddit and its sidebar
     "reddit.com",
     "webchat.freenode.net/?channels=twitchplayspokemon",
-    "sites.google.com/site/twitchplayspokemonstatus/",
-    "reddit.com/live/sw7bubeycai6hey4ciytwamw3a",
-    //miscelaneous
+    "google.com/site/twitchplayspokemonstatus/",
+    "reddit.com/live/",
+    "twitchplayspokemon.net",
+    "twitchplayspokemon.org",
+    "tppedia.com",
+    "https://twitter.com/TwitchPokemon",
+    // Miscelaneous
     "strawpoll.me",
     "imgur.com",
     "pokeworld.herokuapp.com",
-    "strategywiki.org/wiki/Pok", //truncated before special characters
+    "strategywiki.org",
     "vgmaps.com"
 ];
 
@@ -115,12 +119,10 @@ var MAXIMUM_MESSAGE_CHARS = 200; // For messages that fill up more than 4 lines
 
 var DONGER_CODES = [3720, 9685, 664, 8362, 3232, 176, 8248, 8226, 7886, 3237] //typical unicodes of dongers (mostly eyes)
 
-// The regexp Twitch uses to detect and automatically linkify URLs, with some modifications
-// so we can blacklist more messages.
-// - Recognizes *** in URLS (due to the Twitch chat censoring)
-// - Recognizes .mx and .sh TLDs
-var URL_REGEX = /\x02?((?:https?:\/\/|[\w\-\.\+]+@)?\x02?(?:[\w\-\*]+\x02?\.)+\x02?(?:com|au|org|tv|net|info|jp|uk|us|cn|fr|mobi|gov|co|ly|me|vg|eu|ca|fm|am|ws|mx|sh)\x02?(?:\:\d+)?\x02?(?:\/[\w\.\/@\?\&\%\#\(\)\,\-\+\=\;\:\x02?]+\x02?[\w\/@\?\&\%\#\(\)\=\;\x02?]|\x02?\w\x02?|\x02?)?\x02?)\x02?/g;
-var CENSORED_URL = /\*\*\*[\/\?\#\%]/g;
+// This is the regexp Twitch uses to detect and automatically linkify URLs, with some modifications:
+// - Accept *** in URLS (they might be inserted by Twitch's profanity filter)
+// - Accept .mx and .sh TLDs (blocks some extra spam)
+var URL_REGEX = /\x02?((?:https?:\/\/|[\w\-\.\+\*]+@)?\x02?(?:[\w\-\*]+\x02?\.)+\x02?(?:com|au|org|tv|net|info|jp|uk|us|cn|fr|mobi|gov|co|ly|me|vg|eu|ca|fm|am|ws|gg|gl|mx|sh)\x02?(?:\:\d+)?\x02?(?:\/[\w\.\*\/@\?\&\%\#\(\)\,\-\+\=\;\:\x02?]+\x02?[\w\*\/@\?\&\%\#\(\)\=\;\x02?]|\x02?\w\x02?|\x02?)?\x02?)\x02?/ig;
 
 // --- Greasemonkey loading ---
 
@@ -254,8 +256,6 @@ function is_whitelisted_url(url){
 function message_is_forbidden_link(message, sender){
     message = message.toLowerCase();
 
-    if(CENSORED_URL.test(message)) return true;
-
     var urls = message.match(URL_REGEX);
     if(!urls) return false;
 
@@ -264,7 +264,6 @@ function message_is_forbidden_link(message, sender){
             return true;
         }
     }
-
     return false;
 }
 
@@ -529,7 +528,7 @@ function initialize_ui(){
         chatListSelector+" .TppFiltered {display:none;}",
         chatListSelector+".allcaps_filtered "+chatMessageSelector+"{text-transform:lowercase;}",
         chatListSelector+".hide_emoticons "+chatMessageSelector+" .emoticon{display:none !important;}",
-        chatListSelector+".disable_colors "+chatMessageSelector+"{color: #000 !important;}",
+        chatListSelector+".disable_colors "+chatMessageSelector+"{color: inherit !important;}",
         ".custom_list_menu {background: #aaa; border:1px solid #000; position: absolute; right: 2px; bottom: 2px; padding: 10px; display: none; width: 150px;}",
         ".custom_list_menu li {background: #bbb; display: block; list-style: none; margin: 1px 0; padding: 0 2px}",
         ".custom_list_menu li a {float: right;}",
@@ -818,7 +817,7 @@ function update_button(){
 function disable_button(seconds){
     var button = $(button_elem);
         button
-        .css("background","#d00")
+        .css("background","#8573A5")
         .text("Wait " + seconds + " seconds")
         .attr("disabled", "disabled");
     input_disabled = true;
