@@ -818,7 +818,7 @@ function update_button(){
 function disable_button(seconds){
     var button = $(button_elem);
         button
-        .css("background","#d00")
+        .css("background","#8573A5")
         .text("Wait " + seconds + " seconds")
         .attr("disabled", "disabled");
     input_disabled = true;
