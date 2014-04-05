@@ -137,6 +137,43 @@ try{
 
 var $ = myWindow.jQuery;
 
+// ============================
+// Array Helpers
+// ============================
+
+function forEach(xs, f){
+    for(var i=0; i<xs.length; i++){
+        f(xs[i], i, xs);
+    }
+}
+
+function any(xs, pred){
+    for(var i=0; i<xs.length; i++){
+        if(pred(xs[i])) return true;
+    }
+    return false;
+}
+
+function all(xs, pred){
+   for(var i=0; i<xs.length; i++){
+        if(!pred(xs[i])) return false;
+   }
+   return true;
+}
+
+function forIn(obj, f){
+    for(var k in obj){
+        if(Object.prototype.hasOwnProperty.call(obj, k)){
+            f(k, obj[k]);
+        }
+    }
+}
+
+function str_contains(string, pattern){
+    string = string.toLowerCase();
+    return (string.indexOf(pattern.toLowerCase()) >= 0);
+}
+
 // --- Filtering predicates ---
 
 // Adapted from https://gist.github.com/andrei-m/982927
@@ -177,120 +214,71 @@ function min_edit(a, b) {
 }
 
 function word_is_command(word){
-    for(var j=0; j<TPP_COMMANDS.length; j++){
-        var cmd = TPP_COMMANDS[j];
-        if(min_edit(cmd, word) <= MINIMUM_DISTANCE_ERROR){
-           return true;
-        }
-    }
-    return false;
+    return any(TPP_COMMANDS, function(cmd){
+        return min_edit(cmd.toLowerCase(), word.toLowerCase()) <= MINIMUM_DISTANCE_ERROR;
+    });
 }
 
 function message_is_command(message, sender){
-    message = message.toLowerCase();
-
     var segments = message.match(/[A-Za-z]+/g);
-    if(!segments) return false;
-    for(var i=0; i<segments.length; i++){
-        var segment = segments[i];
-        if(!segment) continue;
-        if(!word_is_command(segment)) return false;
-    }
-
-    return true;
+    return segments && all(segments, function(segment){
+        return (segment === "") || word_is_command(segment);
+    });
 }
 
 
 function message_is_spam(message, sender) {
-    message = message.toLowerCase();
-
-    for(var i=0; i < BANNED_WORDS.length; i++){
-        if(0 <= message.indexOf(BANNED_WORDS[i])){
-            return true;
-        }
+    if(any(BANNED_WORDS, function(wd){ str_contains(message, wd) })){
+        return true;
     }
-
-    // Determine if message is variant of "Guys, we need to beat Misty."
+    
     var misty_score = 0;
-    for (var i = 0; i < MISTY_SUBSTRINGS.length; i++) {
-        if (message.indexOf(MISTY_SUBSTRINGS[i]) != -1) {
+    forEach(MISTY_SUBSTRINGS, function(s){
+        if(str_contains(message, s)){
             misty_score++;
-            if (misty_score > 1) {
-                return true;
-            }
         }
-    }
-
-    return false;
+    });
+    
+    return (misty_score >= 2);
 }
 
 function message_is_banned_by_user(message, sender) {
-    message = message.toLowerCase();
-    sender = sender.toLowerCase();
-
-    for(var i=0; i < CUSTOM_BANNED_PHRASES.length; i++){
-        if(message.indexOf(CUSTOM_BANNED_PHRASES[i].toLowerCase()) != -1){
-            return true;
-        }
-    }
-    for(var i=0; i < CUSTOM_BANNED_USERS.length; i++){
-        if(sender == CUSTOM_BANNED_USERS[i].toLowerCase()){
-            return true;
-        }
-    }
-
-    return false;
+    return any(CUSTOM_BANNED_PHRASES, function(banned){
+        return str_contains(message, banned);
+    });
 }
 
 function is_whitelisted_url(url){
     //This doesnt actually parse the URLs but it
     //should do the job when it comes to filtering.
-    for(var i=0; i<URL_WHITELIST.length; i++){
-        if(0 <= url.indexOf(URL_WHITELIST[i])){
-            return true;
-        }
-    }
-    return false;
+    return any(URL_WHITELIST, function(safe){ return str_contains(url, safe) });
 }
 
 function message_is_forbidden_link(message, sender){
-    message = message.toLowerCase();
-
     var urls = message.match(URL_REGEX);
-    if(!urls) return false;
-
-    for(var i=0; i<urls.length; i++){
-        if(!is_whitelisted_url(urls[i])){
-            return true;
-        }
-    }
-    return false;
+    return urls && any(urls, function(url){ return !is_whitelisted_url(url) });
 }
 
-function message_is_donger(message, sender){
+function message_is_donger(message){
     var donger_count = 0;
     for(var i = 0; i < message.length; i++) {
-        if(DONGER_CODES.indexOf(message.charCodeAt(i)) != -1) {
+        var c = message.charCodeAt(i);
+        if(DONGER_CODES.indexOf(c) >= 0) {
             donger_count++;
-            if(donger_count > MAXIMUM_DONGER_CHARACTERS){
-                return true;
-            }
         }
     }
-    return false;
+    return (donger_count > MAXIMUM_DONGER_CHARACTERS);
 }
 
 function message_is_ascii(message, sender){
     var nonASCII = 0;
     for(var i = 0; i < message.length; i++) {
-        if(message.charCodeAt(i) >= 9600 && message.charCodeAt(i) <= 9632) {
+        var c = message.charCodeAt(i);
+        if(9600  <= c && c <= 9632){
             nonASCII++;
-            if(nonASCII > MAXIMUM_NON_ASCII_CHARACTERS){
-                return true;
-            }
         }
     }
-    return false;
+    return (nonASCII > MAXIMUM_NON_ASCII_CHARACTERS);
 }
 
 function message_is_small(message, sender){
@@ -457,24 +445,18 @@ var text_fields = [
 ];
 
 function passes_active_filters(message, sender){
-    for(var i=0; i < filters.length; i++){
-        var filter = filters[i];
-        if(filter.isActive && filter.predicate(message, sender)){
-            //console.log("Filter", filter.name, message);
-            return false;
-        }
-    }
-    return true;
+    return all(filters, function(filter){
+        return !(filter.isActive && filter.predicate(message, sender));
+    });
 }
 
 function rewrite_with_active_rewriters(message){
     var newMessage = message;
-    for(var i=0;  i < rewriters.length; i++){
-        var rewriter = rewriters[i];
+    forEach(rewriters, function(rewriter){
         if(rewriter.isActive){
             newMessage = (rewriter.rewriter(newMessage) || newMessage);
         }
-    }
+    });
     return newMessage;
 }
 
