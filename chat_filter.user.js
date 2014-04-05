@@ -190,7 +190,7 @@ function message_is_command(message, sender){
     message = message.toLowerCase();
 
     var segments = message.match(/[A-Za-z]+/g);
-
+    if(!segments) return false;
     for(var i=0; i<segments.length; i++){
         var segment = segments[i];
         if(!segment) continue;
