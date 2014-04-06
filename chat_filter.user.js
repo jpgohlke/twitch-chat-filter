@@ -109,7 +109,6 @@ var BANNED_WORDS = [
 ];
 
 var CUSTOM_BANNED_PHRASES = localStorage.getItem("tpp-custom-filter-phrases") ? JSON.parse(localStorage.getItem("tpp-custom-filter-phrases")) : [];
-var CUSTOM_BANNED_USERS = localStorage.getItem("tpp-custom-filter-users") ? JSON.parse(localStorage.getItem("tpp-custom-filter-users")) : [];
 
 var MINIMUM_DISTANCE_ERROR = 2; // Number of insertions / deletions / substitutions away from a blocked word.
 var MAXIMUM_NON_ASCII_CHARACTERS = 3; // For ascii art
@@ -219,7 +218,7 @@ function word_is_command(word){
     });
 }
 
-function message_is_command(message, sender){
+function message_is_command(message){
     var segments = message.match(/[A-Za-z]+/g);
     return segments && all(segments, function(segment){
         return (segment === "") || word_is_command(segment);
@@ -227,7 +226,7 @@ function message_is_command(message, sender){
 }
 
 
-function message_is_spam(message, sender) {
+function message_is_spam(message) {
     if(any(BANNED_WORDS, function(wd){ str_contains(message, wd) })){
         return true;
     }
@@ -242,7 +241,7 @@ function message_is_spam(message, sender) {
     return (misty_score >= 2);
 }
 
-function message_is_banned_by_user(message, sender) {
+function message_is_banned_by_user(message) {
     return any(CUSTOM_BANNED_PHRASES, function(banned){
         return str_contains(message, banned);
     });
@@ -254,7 +253,7 @@ function is_whitelisted_url(url){
     return any(URL_WHITELIST, function(safe){ return str_contains(url, safe) });
 }
 
-function message_is_forbidden_link(message, sender){
+function message_is_forbidden_link(message){
     var urls = message.match(URL_REGEX);
     return urls && any(urls, function(url){ return !is_whitelisted_url(url) });
 }
@@ -270,7 +269,7 @@ function message_is_donger(message){
     return (donger_count > MAXIMUM_DONGER_CHARACTERS);
 }
 
-function message_is_ascii(message, sender){
+function message_is_ascii(message){
     var nonASCII = 0;
     for(var i = 0; i < message.length; i++) {
         var c = message.charCodeAt(i);
@@ -281,16 +280,16 @@ function message_is_ascii(message, sender){
     return (nonASCII > MAXIMUM_NON_ASCII_CHARACTERS);
 }
 
-function message_is_small(message, sender){
+function message_is_small(message){
     return message.split(/\s/g).length < MINIMUM_MESSAGE_WORDS;
 }
 
-function message_is_cyrillic(message, sender){
+function message_is_cyrillic(message){
     //Some people use cyrillic characters to write spam that gets past the filter.
     return /[\u0400-\u04FF]/.test(message);
 }
 
-function message_is_too_long(message, sender){
+function message_is_too_long(message){
     return message.length > MAXIMUM_MESSAGE_CHARS;
 }
 
@@ -331,7 +330,6 @@ if($("button.viewers").length <= 0){
 //Selectors
 var chatListSelector = '.chat-messages';
 var chatMessageSelector = '.message';
-var chatSenderSelector = '.from';
 
 //Filters have predicates that are called for every message
 //to determine whether it should get dropped or not
@@ -436,17 +434,12 @@ var text_fields = [
     comment: "Add a banned phrase",
     element: CUSTOM_BANNED_PHRASES,
     item_name: "phrase(s)",
-  },
-  /*{ name: 'users',
-    comment: "Add a ignored user",
-    element: CUSTOM_BANNED_USERS,
-    item_name: "user(s)",
-  },*/
+  }
 ];
 
-function passes_active_filters(message, sender){
+function passes_active_filters(message){
     return all(filters, function(filter){
-        return !(filter.isActive && filter.predicate(message, sender));
+        return !(filter.isActive && filter.predicate(message));
     });
 }
 
@@ -690,9 +683,8 @@ function update_chat_with_filter(){
     $('.chat-line').each(function() {
         var chatLine = $(this);
         var chatText = chatLine.find(chatMessageSelector).text().trim();
-        var chatSender = chatLine.find(chatSenderSelector).text().trim();
 
-        if(passes_active_filters(chatText, chatSender)){
+        if(passes_active_filters(chatText)){
             chatLine.removeClass("TppFiltered");
         }else{
             chatLine.addClass("TppFiltered");
@@ -714,9 +706,7 @@ function initialize_filter(){
                 return false;
             }
         }
-        
-        var sender = info.from || '';
-        if(!passes_active_filters(info.message, sender)){ return false }
+        if(!passes_active_filters(info.message)){ return false }
         info.message = rewrite_with_active_rewriters(info.message);
         return original_insert_chat_line.apply(this, arguments);
     }
