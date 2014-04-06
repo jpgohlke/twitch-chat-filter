@@ -82,32 +82,6 @@ var MISTY_SUBSTRINGS = [
     "beat",
 ];
 
-var URL_WHITELIST = [
-    // Twitch chat filter
-     "github.com",
-    // TPP Subreddit and its sidebar
-    "reddit.com",
-    "webchat.freenode.net/?channels=twitchplayspokemon",
-    "google.com/site/twitchplayspokemonstatus/",
-    "reddit.com/live/",
-    "twitchplayspokemon.net",
-    "twitchplayspokemon.org",
-    "tppedia.com",
-    "https://twitter.com/TwitchPokemon",
-    // Miscelaneous
-    "strawpoll.me",
-    "imgur.com",
-    "pokeworld.herokuapp.com",
-    "strategywiki.org",
-    "vgmaps.com"
-];
-
-var BANNED_WORDS = [
-    "anus",
-    "giveaway", "t-shirt", "hoodie",
-    "imgur.com/4jlbxid.jpg"
-];
-
 var CUSTOM_BANNED_PHRASES = localStorage.getItem("tpp-custom-filter-phrases") ? JSON.parse(localStorage.getItem("tpp-custom-filter-phrases")) : [];
 
 var MINIMUM_DISTANCE_ERROR = 2; // Number of insertions / deletions / substitutions away from a blocked word.
@@ -118,10 +92,6 @@ var MAXIMUM_MESSAGE_CHARS = 200; // For messages that fill up more than 4 lines
 
 var DONGER_CODES = [3720, 9685, 664, 8362, 3232, 176, 8248, 8226, 7886, 3237] //typical unicodes of dongers (mostly eyes)
 
-// This is the regexp Twitch uses to detect and automatically linkify URLs, with some modifications:
-// - Accept *** in URLS (they might be inserted by Twitch's profanity filter)
-// - Accept .mx and .sh TLDs (blocks some extra spam)
-var URL_REGEX = /\x02?((?:https?:\/\/|[\w\-\.\+\*]+@)?\x02?(?:[\w\-\*]+\x02?\.)+\x02?(?:com|au|org|tv|net|info|jp|uk|us|cn|fr|mobi|gov|co|ly|me|vg|eu|ca|fm|am|ws|gg|gl|mx|sh)\x02?(?:\:\d+)?\x02?(?:\/[\w\.\*\/@\?\&\%\#\(\)\,\-\+\=\;\:\x02?]+\x02?[\w\*\/@\?\&\%\#\(\)\=\;\x02?]|\x02?\w\x02?|\x02?)?\x02?)\x02?/ig;
 
 // --- Greasemonkey loading ---
 
@@ -226,18 +196,13 @@ function message_is_command(message){
 }
 
 
-function message_is_spam(message) {
-    if(any(BANNED_WORDS, function(wd){ str_contains(message, wd) })){
-        return true;
-    }
-    
+function message_is_misty(message) {
     var misty_score = 0;
     forEach(MISTY_SUBSTRINGS, function(s){
         if(str_contains(message, s)){
             misty_score++;
         }
     });
-    
     return (misty_score >= 2);
 }
 
@@ -245,17 +210,6 @@ function message_is_banned_by_user(message) {
     return any(CUSTOM_BANNED_PHRASES, function(banned){
         return str_contains(message, banned);
     });
-}
-
-function is_whitelisted_url(url){
-    //This doesnt actually parse the URLs but it
-    //should do the job when it comes to filtering.
-    return any(URL_WHITELIST, function(safe){ return str_contains(url, safe) });
-}
-
-function message_is_forbidden_link(message){
-    var urls = message.match(URL_REGEX);
-    return urls && any(urls, function(url){ return !is_whitelisted_url(url) });
 }
 
 function message_is_donger(message){
@@ -340,12 +294,6 @@ var filters = [
     predicate: message_is_command
   },
 
-  { name: 'TppFilterLink',
-    comment: "Non-whitelisted URLs",
-    isActive: true,
-    predicate: message_is_forbidden_link
-  },
-
   { name: 'TppFilterAscii',
     comment: "Ascii art",
     isActive: true,
@@ -365,9 +313,9 @@ var filters = [
   },
 
   { name: 'TppFilterSpam',
-    comment: 'Spam',
+    comment: 'Misty meme',
     isActive: true,
-    predicate: message_is_spam
+    predicate: message_is_misty
   },
 
   { name: 'TppFilterCyrillic',
