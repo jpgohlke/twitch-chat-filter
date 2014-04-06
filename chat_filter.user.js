@@ -507,6 +507,9 @@ function initialize_ui(){
     //TODO: #chat_line_list li.fromjtv
     var controlButton, controlPanel;
     var customCssParts = [
+        ".chat-room { z-index: inherit !important; }",
+        ".tpp-settings { z-index: 100 !important; }",
+
         chatListSelector+" .TppFiltered {display:none;}",
         chatListSelector+".allcaps_filtered "+chatMessageSelector+"{text-transform:lowercase;}",
         chatListSelector+".hide_emoticons "+chatMessageSelector+" .emoticon{display:none !important;}",
@@ -532,9 +535,7 @@ function initialize_ui(){
     $('.send-chat-button').css('left', '90px');
 
     // Create menu
-    controlPanel = $('<div id="chat_filter_dropmenu" class="chat-settings chat-menu"/>')
-        .css('position', 'absolute')
-        .css('bottom', '38px')
+    controlPanel = $('<div id="chat_filter_dropmenu" class="chat-settings chat-menu tpp-settings"/>')
         .css('display', 'none')
         .appendTo('.chat-interface');
     
