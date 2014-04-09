@@ -374,21 +374,22 @@ function min_edit(a, b) {
     if(b.length === 0) return a.length;
 
     var matrix = [];
+    var i,j;
 
     // increment along the first column of each row
-    for(var i = 0; i <= b.length; i++) {
+    for(i = 0; i <= b.length; i++) {
         matrix[i] = [i];
     }
 
     // increment each column in the first row
-    for(var j = 0; j <= a.length; j++) {
+    for(j = 0; j <= a.length; j++) {
         matrix[0][j] = j;
     }
 
     // Fill in the rest of the matrix
-    for(var i = 1; i <= b.length; i++) {
-        for(var j = 1; j <= a.length; j++) {
-            if(b.charAt(i-1) == a.charAt(j-1)){
+    for(i = 1; i <= b.length; i++) {
+        for(j = 1; j <= a.length; j++) {
+            if(b.charAt(i-1) === a.charAt(j-1)){
                 matrix[i][j] = matrix[i-1][j-1];
             } else {
                 matrix[i][j] = 1 + Math.min(
@@ -963,7 +964,7 @@ function countdown_input(){
 }
 
 function update_button(){
-    var is_same_input = $(textarea_elem).val() == last_input;
+    var is_same_input = $(textarea_elem).val() === last_input;
     var relevant_countdown = is_same_input ? same_input_countdown : input_countdown;
     if(banned_time > 0) relevant_countdown = banned_time;
     var button = $(button_elem);
@@ -1000,7 +1001,7 @@ function renew_interval(){
 
 function update_slowmode_last_message(){
     current_input = $(textarea_elem).val();
-    if(current_input.trim() == '') return;
+    if(current_input.trim() === '') return;
     backup_last_input = last_input;
     last_input = current_input;
     current_input = false;
@@ -1013,16 +1014,17 @@ function update_slowmode_last_message(){
 }
 
 function update_slowmode_with_admin_message(admin_text){
+    var regex_result;
     if(/now in slow mode/.test(admin_text)){
-        var regex_result = /every (\d+) second/.exec(admin_text)
+        regex_result = /every (\d+) second/.exec(admin_text);
         if(regex_result){
             //hide slow mode messages with no new time limit
-            if(input_time_limit == parseInt(regex_result[1])) return "";
+            if(input_time_limit === parseInt(regex_result[1])) return "";
             input_time_limit = parseInt(regex_result[1]);
         }
     }
     if(/identical to the previous/.test(admin_text)){
-        var regex_result = /than (\d+) second/.exec(admin_text)
+        regex_result = /than (\d+) second/.exec(admin_text);
         if(regex_result){
             same_input_time_limit = parseInt(regex_result[1]);
             //if we get here, we set a time limit even though the last message was not sent.
@@ -1039,7 +1041,7 @@ function update_slowmode_with_admin_message(admin_text){
         }
     }
     if(/slow mode and you are sending/.test(admin_text)){
-        var regex_result = /again in (\d+) second/.exec(admin_text)
+        regex_result = /again in (\d+) second/.exec(admin_text);
         if(regex_result){
             var seconds = parseInt(regex_result[1]);
             //revert some stuff because the message we thought we sent was not sent
@@ -1057,7 +1059,7 @@ function update_slowmode_with_admin_message(admin_text){
         }
     }
     if(/You are banned/.test(admin_text)){
-        var regex_result = /for (\d+) more second/.exec(admin_text)
+        regex_result = /for (\d+) more second/.exec(admin_text);
         if(regex_result){
             banned_time = parseInt(regex_result[1]);
             renew_interval();
@@ -1073,7 +1075,7 @@ add_initializer(function(){
     ]);
 
     $(textarea_elem).keyup(function(e){
-        if(e.keyCode != 13) update_button();
+        if(e.keyCode !== 13) update_button();
     });
 });
 
