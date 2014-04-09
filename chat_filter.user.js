@@ -244,8 +244,8 @@ function add_setting(kv){
     if(setting.message_rewriter){ TCF_REWRITERS.push(setting); }
 }
 
-function get_setting(name){
-    return TCF_SETTINGS_MAP[name];
+function get_setting_value(name){
+    return TCF_SETTINGS_MAP[name].getValue();
 }
 
 
@@ -339,6 +339,9 @@ add_initializer(function(){
 var CHAT_ROOM_SELECTOR = '.chat-room';
 var CHAT_MESSAGE_SELECTOR = '.message';
 var CHAT_LINE_SELECTOR = '.chat-line';
+
+var CHAT_TEXTAREA_SELECTOR = ".chat-interface textarea";
+var CHAT_BUTTON_SELECTOR = ".send-chat-button button";
 
 function add_custom_css(parts){
     $('head').append('<style>' + parts.join("") + '</style>');
@@ -655,8 +658,8 @@ add_setting({
 // ---------------------------
 
 function message_contains_banned_word(message){
-    var shouldBan   = get_setting('TppBanCustomWords').getValue();
-    var bannedWords = get_setting('TppBannedWords').getValue();
+    var shouldBan   = get_setting_value('TppBanCustomWords');
+    var bannedWords = get_setting_value('TppBannedWords');
     return shouldBan && any(bannedWords, function(banned){
         return str_contains(message, banned);
     });
@@ -931,152 +934,148 @@ add_initializer(function(){
 // Slowmode Helper
 // ============================
 
-var SLOWMODE_CLASS = 'tpp-slowmode-warning';
+var slowmode_antiflicker_ms   = 1000;  // How long to wait for Twitch to respond to our message before updating the UI
+var slowmode_rate_limit_sec   = 2;     // How often can we send a new message
+var slowmode_repeat_limit_sec = 30;    // How long we need to wait before being able to send a repeated message.
 
-var last_input = false;
-var backup_last_input = false;
-var input_time_limit = 2;
-var time_since_last_message = 0;
-var previous_time_since_last_message = 0;
-var same_input_time_limit = 30;
-var input_countdown = 0;
-var banned_time = 0;
-var same_input_countdown = 0;
-var interval_id;
-var current_input = "";
-var input_disabled;
-var textarea_elem = ".ember-text-area";
-var button_elem = ".send-chat-button button";
+var slowmode_last_action_time = null;  // We temporarily disable everything after sending a message to avoid flickering
+var slowmode_last_message = null;      // We need to know our last message to account for "repeated message" slowmode
+var slowmode_prev_message = null;      // The repeated message slowmode cares about the last *accepted* message that we sent.
+                                       // When sending a new message, we backup the old one in case the new one gets blocked.
 
-function countdown_input(){
-    input_countdown = input_countdown > 0 ? input_countdown - 1 : 0;
-    same_input_countdown = same_input_countdown > 0 ? same_input_countdown - 1 : 0;
-    banned_time = banned_time > 0 ? banned_time - 1 : 0;
-    time_since_last_message += 1;
-    update_button();
-    //Only clear Interval if *all* countdowns hit 0
-    //Potentially, the user might pass the regular 20 second limit, then enter his old message and get the 30 second countdown back
-    //I am not overthinking this, am I?
-    if(input_countdown <= 0 && same_input_countdown <= 0 && banned_time <= 0){
-        clearInterval(interval_id);
-        input_disabled = false;
-    }
+var slowmode_banned_until_time = null; // Twitch can issue temporary bans for breaking slowmode or using too much ALLCAPS.
+
+function update_slowmode_last_message(message_text){
+    var now = Date.now();
+    slowmode_last_action_time = now;
+    slowmode_prev_message = slowmode_last_message;
+    slowmode_last_message = {text:message_text, time:now};
 }
 
-function update_button(){
-    var is_same_input = $(textarea_elem).val() === last_input;
-    var relevant_countdown = is_same_input ? same_input_countdown : input_countdown;
-    if(banned_time > 0) relevant_countdown = banned_time;
-    var button = $(button_elem);
-    if(relevant_countdown <= 0)
-    {
-        button
-        .text("Chat")
-        .removeClass(SLOWMODE_CLASS)
-        .removeAttr("disabled");
-        input_disabled = false;
-    }
-    else
-    {
-        disable_button(relevant_countdown);
-        var countdown_text = "Wait " + relevant_countdown + " seconds";
-        if(banned_time > 0) countdown_text += " (banned)";
-        else if(is_same_input) countdown_text += " (repeated message)";
-        button.text(countdown_text);
-    }
-}
-
-function disable_button(seconds){
-    $(button_elem)
-        .addClass(SLOWMODE_CLASS)
-        .text("Wait " + seconds + " seconds")
-        .attr("disabled", "disabled");
-    input_disabled = true;
-}
-
-function renew_interval(){
-    if(interval_id) clearInterval(interval_id);
-    interval_id = setInterval(function(){countdown_input()}, 1000);
-}
-
-function update_slowmode_last_message(){
-    current_input = $(textarea_elem).val();
-    if(current_input.trim() === '') return;
-    backup_last_input = last_input;
-    last_input = current_input;
-    current_input = false;
-    disable_button(input_time_limit);
-    input_countdown = input_time_limit;
-    same_input_countdown = same_input_time_limit;
-    previous_time_since_last_message = time_since_last_message;
-    time_since_last_message = 0;
-    renew_interval();
+function unsend_last_message(){
+    slowmode_last_message = slowmode_prev_message;
+    slowmode_prev_message = null;
 }
 
 function update_slowmode_with_admin_message(admin_text){
     var regex_result;
     if(/now in slow mode/.test(admin_text)){
-        regex_result = /every (\d+) second/.exec(admin_text);
+        regex_result = /(\d+) second/.exec(admin_text);
         if(regex_result){
-            //hide slow mode messages with no new time limit
-            if(input_time_limit === parseInt(regex_result[1])) return "";
-            input_time_limit = parseInt(regex_result[1]);
+            slowmode_rate_limit_sec = Number(regex_result[1]);
         }
     }
     if(/identical to the previous/.test(admin_text)){
         regex_result = /than (\d+) second/.exec(admin_text);
         if(regex_result){
-            same_input_time_limit = parseInt(regex_result[1]);
-            //if we get here, we set a time limit even though the last message was not sent.
-            //This happens because the same input countdown seems to be randomly between 30 and 35 seconds
-            
-            same_input_countdown = 5;
-            input_countdown = 0;
-            input_disabled = true;
-            time_since_last_message = previous_time_since_last_message;
-            update_button();
-            renew_interval();
-            
-            return "Your last message could not be sent. Please try again shortly.";
+            slowmode_repeat_limit_sec = Number(regex_result[1]);
         }
+        unsend_last_message();
     }
-    if(/slow mode and you are sending/.test(admin_text)){
-        regex_result = /again in (\d+) second/.exec(admin_text);
+    if(/you are sending messages too quickly/.test(admin_text)){
+        regex_result = /in (\d+) second/.exec(admin_text);
         if(regex_result){
-            var seconds = parseInt(regex_result[1]);
-            //revert some stuff because the message we thought we sent was not sent
-            input_disabled = true;
-            time_since_last_message = previous_time_since_last_message;
-            input_countdown = seconds;
-            last_input = backup_last_input;
-            update_button();
-            
-            //calculate new time limit
-            input_time_limit = time_since_last_message + seconds;
-            renew_interval();
-            
-            return "Your last message could not be sent due to the current slow mode time limit. Button timer is now updated with correct time limit.";
+            var next_message_seconds = Number(regex_result[1]);
+            var slowmode_miliseconds = (Date.now() - slowmode_last_message.time) + 1000 * next_message_seconds;
+            slowmode_rate_limit_sec = Math.ceil(slowmode_miliseconds / 1000);
         }
+        unsend_last_message();
     }
     if(/You are banned/.test(admin_text)){
         regex_result = /for (\d+) more second/.exec(admin_text);
         if(regex_result){
-            banned_time = parseInt(regex_result[1]);
-            renew_interval();
+            var remaining_ban_seconds = Number(regex_result[1]);                    
+            slowmode_banned_until_time = Date.now() + 1000 * remaining_ban_seconds;
+        }
+        unsend_last_message();
+    }
+    update_slowmode_ui();
+}
+
+function slowmode_status(next_message){
+    var now = Date.now();
+
+    if(slowmode_banned_until_time){
+        var ban_wait = slowmode_banned_until_time - now;
+        if(ban_wait > 0){
+            return {blocked : true, error : "you are banned", wait : ban_wait};
         }
     }
-    return admin_text;
+
+    if(slowmode_last_message){
+    
+        var antiflicker_wait = slowmode_last_action_time + slowmode_antiflicker_ms - now;
+        if(antiflicker_wait > 0){
+            return {blocked : true, error : "", wait : null};
+        }
+    
+        if(next_message === slowmode_last_message.text){
+            var repeat_wait = slowmode_last_message.time + 1000 * slowmode_repeat_limit_sec - now;
+            if(repeat_wait > 0){
+                return {blocked:true, error:"repeated message", wait : repeat_wait};
+            }
+        }
+        
+        var rate_wait = slowmode_last_message.time + 1000 * slowmode_rate_limit_sec - now;
+        if(rate_wait > 0){
+            return {blocked:true, error:"slowmode", wait : rate_wait};
+        }
+    }
+    
+    return {blocked:false};
+}
+
+var SLOWMODE_UPDATE_MS = 500;
+var SLOWMODE_CLASS = 'tpp-slowmode-warning';
+
+var chat_button_original_text = null;
+var button_is_default = true;
+
+function update_slowmode_ui(){
+    var next_message = $(CHAT_TEXTAREA_SELECTOR).val();
+    var status = slowmode_status(next_message);
+    var button = $(CHAT_BUTTON_SELECTOR);
+    
+    if(get_setting_value("TppSlowmodeHelper") && status.blocked){
+        var warning;
+        if(status.error){
+            warning = "Wait " + Math.ceil(status.wait/1000) + " seconds (" + status.error + ")";
+        }else{
+            warning = "...";
+        }
+        
+        button.addClass(SLOWMODE_CLASS);
+        button.text(warning);
+        button_is_default = false;
+    }else{
+        if(!button_is_default){ //Prevent flickering when debugging.
+            button.removeClass(SLOWMODE_CLASS);
+            button.text(chat_button_original_text);
+            button_is_default = true;
+        }
+    }
 }
 
 add_initializer(function(){
+    chat_button_original_text = $(CHAT_BUTTON_SELECTOR).text();
     
     add_custom_css([
         "."+SLOWMODE_CLASS + "{ opacity:0.7 !important}"
     ]);
-
-    $(textarea_elem).keyup(function(e){
-        if(e.keyCode !== 13) update_button();
+    
+    $(CHAT_TEXTAREA_SELECTOR).keyup(function(e){
+        if(e.keyCode !== 13){ update_slowmode_ui(); }
     });
+  
+    setInterval(function(){ update_slowmode_ui() }, SLOWMODE_UPDATE_MS);
+});
+
+add_setting({
+    name: 'TppSlowmodeHelper',
+    comment: "Slowmode Helper",
+    longComment: "Shows a countdown of how long you need to wait until being able to chat again",
+    category: 'visual_category',
+    defaultValue: true
 });
 
 // ============================
