@@ -627,6 +627,33 @@ add_setting({
 // Hide emoticons
 // ---------------------------
 
+var emoticon_regexes = [];
+
+add_initializer(function(){
+    if(unsafeWindow.Twitch){
+        unsafeWindow.Twitch.api.get("chat/emoticons").then(function(data){
+            forEach(data.emoticons, function(d){
+                var regex = d.regex;
+                if(regex.match(/^\w+$/)){
+                    regex = '\\b' + regex + '\\b';
+                }
+                emoticon_regexes.push(new RegExp(regex, 'g'));
+            });
+        });
+    }
+});
+
+function message_is_only_emoticons(message){
+    //Detect if a message would look empty if we got rid of all emoticons.
+
+    var withoutEmoticons = message;
+    forEach(emoticon_regexes, function(regexp){
+        withoutEmoticons = withoutEmoticons.replace(regexp, "");
+    });
+    
+    return (/^\s*$/.test(withoutEmoticons));
+}
+
 add_setting({
     name: 'TppHideEmoticons',
     comment: "Hide emoticons",
@@ -634,6 +661,7 @@ add_setting({
     defaultValue: false,
     
     message_css: CHAT_MESSAGE_SELECTOR + " .emoticon{display:none !important;}",
+    message_filter: message_is_only_emoticons
 });
 
 // ---------------------------
