@@ -941,14 +941,13 @@ function rewrite_with_active_rewriters(message){
 }
 
 add_initializer(function(){
-    // Apply filters to existing messages
-    // (Cannot do the same with rewriters)
-    forEach(TCF_FILTERS, function(setting){
+    forEach(TCF_SETTINGS_LIST, function(setting){
         setting.observe(function(){
             $(CHAT_LINE_SELECTOR).each(function(){
                 var chatLine = $(this);
                 var chatText = chatLine.find(CHAT_MESSAGE_SELECTOR).text().trim();
                 chatLine.toggle( passes_active_filters(chatText) );
+                //Sadly, we can't apply rewriters to old messages because they are in HTML format.
             });
         });
     });
