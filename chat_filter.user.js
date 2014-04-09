@@ -721,48 +721,34 @@ add_setting({
 // Settings Control Panel
 // ============================
 
+//var SETTINGS_BUTTON_SELECTOR = "button.settings";
+var SETTINGS_MENU_SELECTOR   = ".chat-settings";
+
 add_initializer(function(){
 
     add_custom_css([
         ".chat-room { z-index: inherit !important; }",
-        ".tpp-settings { z-index: 100 !important; }",
+        ".chat-settings { z-index: 100 !important; }",
         
         ".custom_list_menu {background: #aaa; border:1px solid #000; position: absolute; right: 2px; bottom: 2px; padding: 10px; display: none; width: 150px;}",
         ".custom_list_menu li {background: #bbb; display: block; list-style: none; margin: 1px 0; padding: 0 2px}",
         ".custom_list_menu li a {float: right;}",
         ".tpp-custom-filter {position: relative;}"
     ]);
+
+    var settingsMenu = $(SETTINGS_MENU_SELECTOR);
+
+    function addBooleanSetting(menuSection, option){
     
-    var controlButton = $('<button id="chat_filter_dropmenu_button" class="button-simple light tooltip"/>')
-        .css('margin-left', '5px')
-        .css('background-image', 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAv0lEQVQ4jc3SIQ7CQBAF0C8rK5E9AhI5R1gccpLOn+UACARHwCO5Aq6HQHAUQsAhwJGmlNBdIOEnY18mfwb4u4hIYWaSOySnAABVrWKMt9xx97OqVlDVkbufPoAuZiYAgBBC6e5NBnJQ1eqpK5KbBKQJIZQvyyc5f4eQ3A66pJlJjLG3N3dfJr0FyUUHudZ1PUtCWls9IDPbJyN90OBeulHV8beg6lfQKgsSkaJ18qOZTbIgAHD3NcmdiBTZSGruBIYOSjStwb0AAAAASUVORK5CYII=)')
-        .css('background-position', '3px 3px')
-        .attr('title', 'Chat Filter Settings')
-        .insertAfter('button.viewers');
-
-    // Make room for extra button by shrinking the chat button
-    $('.send-chat-button').css('left', '90px');
-
-    // Create menu
-    var controlPanel = $('<div id="chat_filter_dropmenu">')
-        .addClass('chat-settings chat-menu tpp-settings')
-        .css('display', 'none')
-        .appendTo('.chat-interface');
-    
-    controlButton.on('click', function(){
-        controlPanel.toggle();
-    });
-
-    function addBooleanSetting(menu, option){
-        menu.append(
-            '<label class="filter_option" for="' + option.name + '"' + 
+        menuSection.append(
+            '<label for="' + option.name + '"' +
                 (option.longComment ? ' title="' + option.longComment + '"' : '') +
                 '>' +
                 '<input type="checkbox" id="' + option.name + '">' +
                 ' ' + option.comment +
             '</label>' 
         );
-
+ 
         var checkbox = $('#' + option.name);
         
         checkbox.on('change', function(){
@@ -774,9 +760,10 @@ add_initializer(function(){
         });
     }
     
-    function addListSetting(menu, option){
-        menu.append(
-            '<label class="filter_option" for="' + option.name + '"' + 
+    function addListSetting(menuSection, option){
+    
+        menuSection.append(
+            '<label for="' + option.name + '"' + 
                 (option.longComment ? ' title="' + option.longComment + '"' : '') +
                 ' >'+
                 'Add ' + option.comment + 
@@ -857,23 +844,25 @@ add_initializer(function(){
         });
     }
 
-    function addMenuSection(name, category){
-      
+    function addMenuSection(name){
         $('<div class="chat-menu-header"/>')
             .text(name)
-            .appendTo(controlPanel);
+            .appendTo(settingsMenu);
         
-        var section = $('<div>')
-            .addClass("chat-menu-content")
-            .appendTo(controlPanel);
-            
+        var section = $('<div class="chat-menu-content">')
+            .appendTo(settingsMenu);
+        
+        return section;
+    }
+    
+    function addCategoryToSection(menuSection, category){
         forEach(TCF_SETTINGS_LIST, function(option){
             if(option.category !== category) return;
             
             var p = $('<p>')
                 .attr('id', 'menu-'+option.name)
                 .addClass('dropmenu_action')
-                .appendTo(section);
+                .appendTo(menuSection);
             
             var typ = typeof(option.defaultValue);
             if(typ === 'boolean'){
@@ -886,18 +875,25 @@ add_initializer(function(){
         });
     }
     
-    addMenuSection("Hide"                 , 'filters_category');
-    addMenuSection("Automatically rewrite", 'rewriters_category');
-    addMenuSection("Visual"               , 'visual_category'); 
-    addMenuSection("Custom Filters"       , 'customs_category');
+    var filter_sec = addMenuSection("Hide");
+    addCategoryToSection(filter_sec, 'filters_category');
     
-    $('<a href="#">Reset to default settings</a>')
-    .click(function(){    
-        forEach(TCF_SETTINGS_LIST, function(setting){
-            setting.reset();
-        });
-    })
-    .appendTo(controlPanel);
+    var rewrite_sec = addMenuSection("Automatically rewrite");
+    addCategoryToSection(rewrite_sec, 'rewriters_category');
+    
+    var visual_sec = addMenuSection("Visual tweaks");
+    addCategoryToSection(visual_sec, 'visual_category');
+    
+    var misc_sec = addMenuSection("Misc");
+    addCategoryToSection(misc_sec, 'customs_category');
+    misc_sec.append(
+        $('<button>Reset to default settings</a>')
+        .click(function(){
+            forEach(TCF_SETTINGS_LIST, function(setting){
+                setting.reset();
+            });
+        })
+    );
     
 });
 
