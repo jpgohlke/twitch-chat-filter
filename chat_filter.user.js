@@ -633,8 +633,8 @@ add_setting({
 var emoticon_regexes = [];
 
 add_initializer(function(){
-    if(unsafeWindow.Twitch){
-        unsafeWindow.Twitch.api.get("chat/emoticons").then(function(data){
+    if(myWindow.Twitch){
+        myWindow.Twitch.api.get("chat/emoticons").then(function(data){
             forEach(data.emoticons, function(d){
                 var regex = d.regex;
                 if(regex.match(/^\w+$/)){
