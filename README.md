@@ -3,7 +3,7 @@
 A Javascript userscript to filter chat commands and other spam from the chat on the [Twitch Plays Pokemon stream](http://www.twitch.tv/twitchplayspokemon)
 
 
-![Chat-Filter Preview](www/img/tpp-chat-filter-preview.png "State of Screenshot: 0dc02e14e8")
+![Chat-Filter Preview](tpp-chat-filter-preview.png)
 
 ## Using the script as a JavaScript bookmark
 
