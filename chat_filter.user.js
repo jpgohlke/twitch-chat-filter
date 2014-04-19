@@ -719,7 +719,7 @@ add_initializer(function(){
 
 add_setting({
     name: 'TppBannedWords',
-    comment: "Banned Words",
+    comment: "Banned Phrases",
     longComment: "If the custom banlist is activated, these messages will be hidden",
     category: 'customs_category',
     defaultValue: [],
@@ -741,10 +741,8 @@ add_initializer(function(){
         ".chat-room { z-index: inherit !important; }",
         ".chat-settings { z-index: 100 !important; }",
         
-        ".custom_list_menu {background: #aaa; border:1px solid #000; position: absolute; right: 2px; bottom: 2px; padding: 10px; display: none; width: 150px;}",
         ".custom_list_menu li {background: #bbb; display: block; list-style: none; margin: 1px 0; padding: 0 2px}",
-        ".custom_list_menu li a {float: right;}",
-        ".tpp-custom-filter {position: relative;}"
+        ".custom_list_menu li a {float: right;}"
     ]);
 
     var settingsMenu = $(SETTINGS_MENU_SELECTOR);
@@ -799,16 +797,19 @@ add_initializer(function(){
                 '<input type="text" id="' + option.name + '" style="width: 100%">'+
             '</label>' + 
 
-            '<a href="#" id="show-' + option.name + '">' +
+            '<button id="show-' + option.name + '">' +
                 'Show <span id="num-banned-' + option.name + '"> ?? </span> ' + option.comment+
-            '</a>' + 
-        
-            '<div class="custom_list_menu" id="list-' + option.name + '">' +
-                '<b>' + option.comment + '</b>' +
-                '<div class="list-inner"></div>' + 
-                '<div><a href="#" id="clear-' + option.name + '">Clear list</a></div>' +
-                '<div><a href="#" id="close-' + option.name + '">Close</a></div>' +
-            '</div>'
+            '</button>' +
+
+            '<button id="hide-' + option.name + '">' +
+                'Hide ' + option.comment +
+            '</button>' +
+
+            '<button id="clear-' + option.name + '">' +
+                'Clear ' + option.comment +
+            '</button>' +
+
+            '<div id="list-' + option.name + '" class="custom_list_menu"></div>'
         );
         
         function add_list_item(item){
@@ -825,10 +826,26 @@ add_initializer(function(){
             option.setValue(arr);
         }
         
+        function hide_inner_list(){
+            $('#show-'+option.name).show();
+            $('#hide-'+option.name).hide();
+            $('#clear-'+option.name).hide();
+            $('#list-'+option.name).hide();
+        }
+
+        function show_inner_list(){
+            $('#show-'+option.name).hide();
+            $('#hide-'+option.name).show();
+            $('#clear-'+option.name).show();
+            $('#list-'+option.name).show();
+        }
+
+        hide_inner_list();
+
         option.observe(function(newValue){
             $('#num-banned-'+option.name).text(newValue.length);
             
-            var innerList = $('#list-' + option.name + ' .list-inner');
+            var innerList = $('#list-' + option.name);
             
             innerList.empty();
             forEach(newValue, function(word, i){
@@ -857,13 +874,13 @@ add_initializer(function(){
         //open the list of banned items
         $('#show-' + option.name).click(function(e){
             e.preventDefault();
-            $('#list-' + option.name).show();
+            show_inner_list();
         });
         
         //close the list of banned items
-        $('#close-' + option.name).click(function(e){
+        $('#hide-' + option.name).click(function(e){
             e.preventDefault();
-            $('#list-' + option.name).hide();
+            hide_inner_list();
         });
         
         //empty the banned list completely
@@ -903,7 +920,7 @@ add_initializer(function(){
             }
         });
     }
-    
+
     var filter_sec = addMenuSection("Hide");
     addCategoryToSection(filter_sec, 'filters_category');
     
@@ -913,8 +930,10 @@ add_initializer(function(){
     var visual_sec = addMenuSection("Visual tweaks");
     addCategoryToSection(visual_sec, 'visual_category');
     
+    var custom_sec = addMenuSection("Custom Banlist");
+    addCategoryToSection(custom_sec, 'customs_category');
+
     var misc_sec = addMenuSection("Misc");
-    addCategoryToSection(misc_sec, 'customs_category');
     misc_sec.append(
         $('<button>Reset to default settings</a>')
         .click(function(){
