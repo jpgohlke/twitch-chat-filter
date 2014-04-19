@@ -414,9 +414,17 @@ function word_is_command(word){
 }
 
 function message_is_command(message){
-    var segments = message.match(/[A-Za-z]+/g);
-    return segments && all(segments, function(segment){
-        return (segment === "") || word_is_command(segment);
+    var words = message.split(/\s+/);
+    return all(words, function(word){
+        if(word.length <= 0){ return true }
+
+        //For compatibility with possible changes the streamer might introduce in the future,
+        //a command is considered to be a sequence of command words separated by some non-word separators
+        var commands = word.match(/(?:([a-z]+)[^a-z]{0,2})+/ig);
+        return commands && all(commands, function(cmd){
+            var segments = cmd.match(/[a-z]+/ig);
+            return all(segments, word_is_command);
+        });
     });
 }
 
