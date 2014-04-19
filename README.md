@@ -60,6 +60,20 @@ If you don't want or can't install one of the previously mentioned browser exten
 
 ## Update Log
 
+Version 2.4 (2014/04/12)
+
+- New twitch.tv layout: settings menu is now together with Twich's own settings menu.
+- Slowmode helper does not block sending messages anymore and can be turned off.
+- Made the command filter recognize any non-alphabetic separator.
+- Removed URL and Spam filters
+- "Hide emoticons" command now fully hides messages that only contained emoticons
+
+Version 2.3 (2014/03/28)
+
+- Removed custom ignored-user list.
+- More specific donger detection.
+- Recognize compound commands (b+left)
+
 Version 2.2 (2014/03/21)
 
 * Improved style of custom filter lists
