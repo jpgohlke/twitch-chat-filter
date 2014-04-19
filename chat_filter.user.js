@@ -741,6 +741,18 @@ add_initializer(function(){
 
     var settingsMenu = $(SETTINGS_MENU_SELECTOR);
 
+    // Add a scrollbar to the settings menu if its too long
+    var chat_room = $(CHAT_ROOM_SELECTOR);
+    settingsMenu.css("overflow-y", "auto");
+    function updateMenuHeight(){
+        settingsMenu.css("max-height", 0.9 * chat_room.height());
+    }
+    updateMenuHeight();
+    $(window).resize(function(){
+        updateMenuHeight();
+    });
+
+
     function addBooleanSetting(menuSection, option){
     
         menuSection.append(
