@@ -935,11 +935,13 @@ add_initializer(function(){
 
     var misc_sec = addMenuSection("Misc");
     misc_sec.append(
-        $('<button>Reset to default settings</a>')
+        $('<button>Reset TPP filter settings</a>')
         .click(function(){
-            forEach(TCF_SETTINGS_LIST, function(setting){
-                setting.reset();
-            });
+            if(myWindow.confirm("This will reset all Twitch Chat Filter settings to their default values and will delete all custom banned phrases. Are you sure you want to continue?")){
+                forEach(TCF_SETTINGS_LIST, function(setting){
+                    setting.reset();
+                });
+            }
         })
     );
     
