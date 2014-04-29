@@ -491,7 +491,7 @@ function message_is_drawing(message){
 add_setting({
     name: 'TppFilterAscii',
     comment: "Blocky Drawings",
-    longComment: "Stuff like this: ░░░░▒▒▒▒▌ ▀▒▀▐▄█",
+    longComment: "Stuff like this: \u2591\u2591\u2591\u2591\u2592\u2592\u2592\u2592\u258C \u2580\u2592\u2580\u2590\u2584\u2588",
     category: 'filters_category',
     defaultValue: true,
     
@@ -539,7 +539,7 @@ function message_is_donger(message){
 add_setting({
     name: 'TppFilterDonger',
     comment: "Dongers",
-    longComment: "ヽ༼ຈل͜ຈ༽ﾉ",
+    longComment: "\u30FD\u0F3C\u0E88\u0644\u035C\u0E88\u0F3D\uFF89",
     category: 'filters_category',
     defaultValue: false,
     
