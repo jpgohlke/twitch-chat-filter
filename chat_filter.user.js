@@ -49,7 +49,8 @@
  *     /u/redopium
  *     /u/codefusion
  *     /u/Zephymastyx
- *     /u/anonveggy    
+ *     /u/anonveggy 
+ *     /u/jfb1337
  */
 
 
@@ -410,7 +411,8 @@ function min_edit(a, b) {
 function word_is_command(word){
     return any(TPP_COMMANDS, function(cmd){
         return min_edit(cmd.toLowerCase(), word.toLowerCase()) <= EDIT_DISTANCE_TRESHOLD;
-    });
+    }
+    || /^[0-9]+,[0-9]+$/.test(word)); //co-ords
 }
 
 function message_is_command(message){
