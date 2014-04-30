@@ -420,7 +420,7 @@ function message_is_command(message){
         //For compatibility with possible changes the streamer might introduce in the future,
         //a command is considered to be a sequence of command words separated by some non-word separators
         var commands = word.match(/(?:([a-z]+)[^a-z]{0,2})+/ig);
-        return commands && (commands, function(cmd){
+        return commands && all(commands, function(cmd){
             var segments = cmd.match(/[a-z]+/ig);
             return all(segments, word_is_command);
         });
