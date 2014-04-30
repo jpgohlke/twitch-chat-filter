@@ -67,6 +67,7 @@ Version 2.4 (2014/04/12)
 - Made the command filter recognize any non-alphabetic separator.
 - Removed URL and Spam filters
 - "Hide emoticons" command now fully hides messages that only contained emoticons
+- Coordinate inputs for touch screen are now filtered (e.g., 291,372)
 
 Version 2.3 (2014/03/28)
 
