@@ -415,13 +415,12 @@ function word_is_command(word){
 
 function message_is_command(message){
     var words = message.split(/\s+/);
-    return all(words, function(word){
+    return /^([0-9]+),([0-9]+)$/.test(message) || all(words, function(word){
         if(word.length <= 0){ return true }
-
         //For compatibility with possible changes the streamer might introduce in the future,
         //a command is considered to be a sequence of command words separated by some non-word separators
         var commands = word.match(/(?:([a-z]+)[^a-z]{0,2})+/ig);
-        return commands && all(commands, function(cmd){
+        return commands && (commands, function(cmd){
             var segments = cmd.match(/[a-z]+/ig);
             return all(segments, word_is_command);
         });
