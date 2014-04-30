@@ -415,9 +415,8 @@ function word_is_command(word){
 
 function message_is_command(message){
     var words = message.split(/\s+/);
-    return all(words, function(word){
+    return /^([0-9]+),([0-9]+)$/.test(message) || all(words, function(word){
         if(word.length <= 0){ return true }
-
         //For compatibility with possible changes the streamer might introduce in the future,
         //a command is considered to be a sequence of command words separated by some non-word separators
         var commands = word.match(/(?:([a-z]+)[^a-z]{0,2})+/ig);
@@ -491,7 +490,7 @@ function message_is_drawing(message){
 add_setting({
     name: 'TppFilterAscii',
     comment: "Blocky Drawings",
-    longComment: "Stuff like this: ¦¦¦¦¦¦¦¦¦ ¯¦¯¦_¦",
+    longComment: "Stuff like this: \u2591\u2591\u2591\u2591\u2592\u2592\u2592\u2592\u258C \u2580\u2592\u2580\u2590\u2584\u2588",
     category: 'filters_category',
     defaultValue: true,
     
@@ -539,7 +538,7 @@ function message_is_donger(message){
 add_setting({
     name: 'TppFilterDonger',
     comment: "Dongers",
-    longComment: "????????",
+    longComment: "\u30FD\u0F3C\u0E88\u0644\u035C\u0E88\u0F3D\uFF89",
     category: 'filters_category',
     defaultValue: false,
     
@@ -935,11 +934,13 @@ add_initializer(function(){
 
     var misc_sec = addMenuSection("Misc");
     misc_sec.append(
-        $('<button>Reset to default settings</a>')
+        $('<button>Reset TPP filter settings</a>')
         .click(function(){
-            forEach(TCF_SETTINGS_LIST, function(setting){
-                setting.reset();
-            });
+            if(myWindow.confirm("This will reset all Twitch Chat Filter settings to their default values and will delete all custom banned phrases. Are you sure you want to continue?")){
+                forEach(TCF_SETTINGS_LIST, function(setting){
+                    setting.reset();
+                });
+            }
         })
     );
     
