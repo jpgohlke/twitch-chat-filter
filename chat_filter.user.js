@@ -5,7 +5,7 @@
 
 // @include     /^https?://(www|beta)\.twitch\.tv\/(twitchplayspokemon(/(chat.*)?)?|chat\/.*channel=twitchplayspokemon.*)$/
 
-// @version     2.5
+// @version     2.6
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 // @grant       unsafeWindow
 // ==/UserScript==
@@ -73,7 +73,7 @@
 (function(){
 "use strict";
 
-var TCF_VERSION = "2.5" ;
+var TCF_VERSION = "2.6" ;
 var TCF_INFO = "TPP Chat Filter version " + TCF_VERSION + " loaded. Please report bugs and suggestions to https://github.com/jpgohlke/twitch-chat-filter";
 
 // ----------------------------
@@ -579,6 +579,25 @@ add_setting({
     defaultValue: false,
     
     message_filter: message_is_too_long
+});
+
+// ---------------------------
+// Pokemon Stadium betting
+// ---------------------------
+// Filter betting commands for the parallel pokemon stadium betting game
+
+function message_is_bet(message){
+    return /^\s*\!/.test(message);
+}
+
+add_setting({
+    name: 'TppFilterBets',
+    comment: "Pokemon Stadium Bets",
+    longComment: "Any message starting with a \"!\". ex.: \"!bet 100 blue\"",
+    category: 'filters_category',
+    defaultValue: true,
+    
+    message_filter: message_is_bet
 });
 
 // ---------------------------
