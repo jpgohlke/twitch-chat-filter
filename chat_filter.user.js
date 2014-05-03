@@ -5,7 +5,7 @@
 
 // @include     /^https?://(www|beta)\.twitch\.tv\/(twitchplayspokemon(/(chat.*)?)?|chat\/.*channel=twitchplayspokemon.*)$/
 
-// @version     2.5
+// @version     2.6
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 // @grant       unsafeWindow
 // ==/UserScript==
@@ -73,7 +73,7 @@
 (function(){
 "use strict";
 
-var TCF_VERSION = "2.5" ;
+var TCF_VERSION = "2.6" ;
 var TCF_INFO = "TPP Chat Filter version " + TCF_VERSION + " loaded. Please report bugs and suggestions to https://github.com/jpgohlke/twitch-chat-filter";
 
 // ----------------------------
@@ -414,8 +414,11 @@ function word_is_command(word){
 }
 
 function message_is_command(message){
-    var words = message.split(/\s+/);
-    return /^([0-9]+),([0-9]+)$/.test(message) || all(words, function(word){
+    //Touch pad coordinates
+    if(/^([0-9]+),([0-9]+)$/.test(message.replace(/\s/g, ""))){ return true }
+
+    // Button presses
+    return all(message.split(/\s+/), function(word){
         if(word.length <= 0){ return true }
         //For compatibility with possible changes the streamer might introduce in the future,
         //a command is considered to be a sequence of command words separated by some non-word separators
@@ -579,6 +582,25 @@ add_setting({
     defaultValue: false,
     
     message_filter: message_is_too_long
+});
+
+// ---------------------------
+// Pokemon Stadium betting
+// ---------------------------
+// Filter betting commands for the parallel pokemon stadium betting game
+
+function message_is_bet(message){
+    return /^\s*\!/.test(message);
+}
+
+add_setting({
+    name: 'TppFilterBets',
+    comment: "Pokemon Stadium Bets",
+    longComment: "Any message starting with a \"!\". ex.: \"!bet 100 blue\"",
+    category: 'filters_category',
+    defaultValue: true,
+    
+    message_filter: message_is_bet
 });
 
 // ---------------------------
@@ -767,12 +789,9 @@ add_initializer(function(){
     function addBooleanSetting(menuSection, option){
     
         menuSection.append(
-            '<label for="' + option.name + '"' +
-                (option.longComment ? ' title="' + option.longComment + '"' : '') +
-                '>' +
-                '<input type="checkbox" id="' + option.name + '">' +
-                ' ' + option.comment +
-            '</label>' 
+            $('<label>').attr('for', option.name).attr('title', option.longComment || "")
+            .append( $('<input type="checkbox">').attr('id', option.name) )
+            .append( document.createTextNode(' ' + option.comment) )
         );
  
         var checkbox = $('#' + option.name);
@@ -788,27 +807,24 @@ add_initializer(function(){
     
     function addListSetting(menuSection, option){
     
-        menuSection.append(
-            '<label for="' + option.name + '"' + 
-                (option.longComment ? ' title="' + option.longComment + '"' : '') +
-                ' >'+
-                'Add ' + option.comment + 
-                '<input type="text" id="' + option.name + '" style="width: 100%">'+
-            '</label>' + 
-
-            '<button id="show-' + option.name + '">' +
-                'Show <span id="num-banned-' + option.name + '"> ?? </span> ' + option.comment+
-            '</button>' +
-
-            '<button id="hide-' + option.name + '">' +
-                'Hide ' + option.comment +
-            '</button>' +
-
-            '<button id="clear-' + option.name + '">' +
-                'Clear ' + option.comment +
-            '</button>' +
-
-            '<div id="list-' + option.name + '" class="custom_list_menu"></div>'
+        menuSection
+        .append(
+            $('<label>').attr('for', option.name).attr('title', option.longComment || "")
+            .append( document.createTextNode('Add ' + option.comment) )
+            .append( $('<input type="text">').attr('id', option.name).css('width', '100%') )
+        ).append(
+            $('<button>').attr('id', 'show-' + option.name)
+            .append( document.createTextNode('Show ') )
+            .append( $('<span>').attr('id', 'num-banned-' + option.name) )
+            .append( document.createTextNode(' ' + option.comment) )
+        ).append(
+            $('<button>').attr('id', 'hide-' + option.name)
+            .append( document.createTextNode('Hide ' + option.comment) )
+        ).append(
+            $('<div class="custom_list_menu">').attr('id', 'list-' + option.name)
+        ).append(
+            $('<button>').attr('id', 'clear-' + option.name)
+           .append( document.createTextNode('Clear ' + option.comment) )
         );
         
         function add_list_item(item){
