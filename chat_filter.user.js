@@ -414,8 +414,11 @@ function word_is_command(word){
 }
 
 function message_is_command(message){
-    var words = message.split(/\s+/);
-    return /^([0-9]+),([0-9]+)$/.test(message) || all(words, function(word){
+    //Touch pad coordinates
+    if(/^([0-9]+),([0-9]+)$/.test(message.replace(/\s/g, ""))){ return true }
+
+    // Button presses
+    return all(message.split(/\s+/), function(word){
         if(word.length <= 0){ return true }
         //For compatibility with possible changes the streamer might introduce in the future,
         //a command is considered to be a sequence of command words separated by some non-word separators
