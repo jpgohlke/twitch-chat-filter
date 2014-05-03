@@ -60,6 +60,9 @@ If you don't want or can't install one of the previously mentioned browser exten
 
 ## Update Log
 
+Version 2.6 (2014/05/03)
+- Filter Pokemon Stadium betting (e.g. !bet 100 blue)
+
 Version 2.5 (2014/04/30)
 - Coordinate inputs for touch screen are now filtered (e.g., 291,372)
 
