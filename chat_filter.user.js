@@ -1049,6 +1049,7 @@ function update_slowmode_with_admin_message(admin_text){
     if(/now in slow mode/.test(admin_text)){
         regex_result = /(\d+) second/.exec(admin_text);
         if(regex_result){
+            if(slowmode_rate_limit_sec == Number(regex_result[1])) return false;
             slowmode_rate_limit_sec = Number(regex_result[1]);
         }
     }
@@ -1077,6 +1078,7 @@ function update_slowmode_with_admin_message(admin_text){
         unsend_last_message();
     }
     update_slowmode_ui();
+    return true;
 }
 
 function slowmode_status(next_message){
@@ -1175,7 +1177,7 @@ add_initializer(function(){
     var original_addMessage = Room_proto.addMessage;
     Room_proto.addMessage = function(info) {
         if(info.style === "admin"){
-            update_slowmode_with_admin_message(info.message);
+            if(!update_slowmode_with_admin_message(info.message)){ return false }
         }else{
             // Apply filters and rewriters to future messages
             info.message = rewrite_with_active_rewriters(info.message);
