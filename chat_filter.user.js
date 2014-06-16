@@ -5,7 +5,7 @@
 
 // @include     /^https?://(www|beta)\.twitch\.tv\/(twitchplayspokemon(/(chat.*)?)?|chat\/.*channel=twitchplayspokemon.*)$/
 
-// @version     2.6
+// @version     2.7
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.meta.js
 // @downloadURL http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 // @grant       unsafeWindow
@@ -52,6 +52,7 @@
  *     /u/Zephymastyx
  *     /u/anonveggy
  *     /u/rctgamer3
+ *     /u/BBQCalculator
  */
 
 
@@ -454,7 +455,7 @@ var MISTY_SUBSTRINGS = [
     "guys",
     "we have to",
     "we need to",
-    "beat",
+    "beat"
 ];
 
 function message_is_misty(message) {
@@ -1199,21 +1200,6 @@ add_initializer(function(){
 // ============================
 
 $(function(){
-
-// Fallback to old script if new chat is not supported.
-if($("button.viewers").length <= 0){
-    //The user is not using the latest version of Twitch chat;
-    //Fallback to an older version of the filtering script.
-    
-    //I don't know if any users actuall still have the old chat.
-    //This code is here just due to paranoia...
-    
-    var tag = document.createElement('script');
-    tag.type = 'text/javascript';
-    tag.src = 'http://jpgohlke.github.io/twitch-chat-filter/chat_filter_old.user.js';
-    document.body.appendChild(tag);
-    throw new Error('Falling back to old filter script');
-}
 
 run_initializers();
 load_settings();
