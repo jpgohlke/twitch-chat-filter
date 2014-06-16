@@ -5,7 +5,7 @@
 
 // @include     /^https?://(www|beta)\.twitch\.tv\/(twitchplayspokemon(/(chat.*)?)?|chat\/.*channel=twitchplayspokemon.*)$/
 
-// @version     2.6
+// @version     2.7
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.meta.js
 // @downloadURL http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 // @grant       unsafeWindow
@@ -52,6 +52,7 @@
  *     /u/Zephymastyx
  *     /u/anonveggy
  *     /u/rctgamer3
+ *     /u/BBQCalculator
  */
 
 

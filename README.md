@@ -60,6 +60,9 @@ If you don't want or can't install one of the previously mentioned browser exten
 
 ## Update Log
 
+Version 2.7 (2014/06/16)
+- Support new twitch.tv layout
+
 Version 2.6 (2014/05/03)
 - Filter Pokemon Stadium betting (e.g. !bet 100 blue)
 
