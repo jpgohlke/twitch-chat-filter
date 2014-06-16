@@ -454,7 +454,7 @@ var MISTY_SUBSTRINGS = [
     "guys",
     "we have to",
     "we need to",
-    "beat",
+    "beat"
 ];
 
 function message_is_misty(message) {
