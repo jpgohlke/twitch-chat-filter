@@ -1200,21 +1200,6 @@ add_initializer(function(){
 
 $(function(){
 
-// Fallback to old script if new chat is not supported.
-if($("button.viewers").length <= 0){
-    //The user is not using the latest version of Twitch chat;
-    //Fallback to an older version of the filtering script.
-    
-    //I don't know if any users actuall still have the old chat.
-    //This code is here just due to paranoia...
-    
-    var tag = document.createElement('script');
-    tag.type = 'text/javascript';
-    tag.src = 'http://jpgohlke.github.io/twitch-chat-filter/chat_filter_old.user.js';
-    document.body.appendChild(tag);
-    throw new Error('Falling back to old filter script');
-}
-
 run_initializers();
 load_settings();
 
