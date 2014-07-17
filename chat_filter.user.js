@@ -8,7 +8,8 @@
 // @version     2.7
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.meta.js
 // @downloadURL http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
-// @grant       unsafeWindow
+// @grant       none
+// @run-at      document-end
 // ==/UserScript==
 
 /*
@@ -64,35 +65,41 @@
 // - Write all code inside the wrapper IIFE to avoid creating global variables.
 // - Constants and global variables are UPPER_CASE.
 
-/* jshint
+/* jshint 
     lastsemic:true,
     eqeqeq:true,
     sub:true
 */
-/* global
-    unsafeWindow:false
+/* global 
+    $: false,
+    localStorage: false,
+		App: false,
+    Twitch: false,
 */
 
-(function(){
+(function(code){
 "use strict";
 
-var TCF_VERSION = "2.6" ;
+    // ----------------------------
+    // Greasemonkey support
+    // ----------------------------
+    // Greasemonkey userscripts run in a separate environment and cannot use global
+    // variables from the page directly. Vecause of this, we package all out code inside
+    // a script tag and have it run in the context of the main page.
+
+    // TODO: is there a way to get better error messages? It won't show any line numbers.
+
+    var s = document.createElement('script');
+    s.appendChild(document.createTextNode(
+       '(' + code.toString() + '());'
+    ));
+    document.body.appendChild(s);
+
+}(function(){
+"use strict";
+
+var TCF_VERSION = "2.7" ;
 var TCF_INFO = "TPP Chat Filter version " + TCF_VERSION + " loaded. Please report bugs and suggestions to https://github.com/jpgohlke/twitch-chat-filter";
-
-// ----------------------------
-// Greasemonkey support
-// ----------------------------
-// Greasemonkey userscripts run in a separate environment and cannot use global
-// variables from the page directly. They need to be accessed via `unsafeWindow`
-
-var myWindow;
-try{
-    myWindow = unsafeWindow;
-}catch(e){
-    myWindow = window;
-}
-
-var $ = myWindow.jQuery;
 
 // ============================
 // Array Helpers
@@ -262,12 +269,12 @@ var LEGACY_FILTERS_KEY = "tpp-custom-filter-active";
 var LEGACY_PHRASES_KEY = "tpp-custom-filter-phrases";
 
 function get_local_storage_item(key){
-    var item = window.localStorage.getItem(key);
+    var item = localStorage.getItem(key);
     return (item ? JSON.parse(item) : null);
 }
 
 function set_local_storage_item(key, value){
-    window.localStorage.setItem(key, JSON.stringify(value));
+    localStorage.setItem(key, JSON.stringify(value));
 }
 
 function get_old_saved_settings(){
@@ -665,8 +672,8 @@ add_setting({
 var emoticon_regexes = [];
 
 add_initializer(function(){
-    if(myWindow.Twitch){
-        myWindow.Twitch.api.get("chat/emoticons").then(function(data){
+    if(Twitch){
+        Twitch.api.get("chat/emoticons").then(function(data){
             forEach(data.emoticons, function(d){
                 var regex = d.regex;
                 if(regex.match(/^\w+$/)){
@@ -955,7 +962,7 @@ add_initializer(function(){
     misc_sec.append(
         $('<button>Reset TPP filter settings</a>')
         .click(function(){
-            if(myWindow.confirm("This will reset all Twitch Chat Filter settings to their default values and will delete all custom banned phrases. Are you sure you want to continue?")){
+            if(confirm("This will reset all Twitch Chat Filter settings to their default values and will delete all custom banned phrases. Are you sure you want to continue?")){
                 forEach(TCF_SETTINGS_LIST, function(setting){
                     setting.reset();
                 });
@@ -1173,7 +1180,7 @@ add_setting({
 // ============================
 
 add_initializer(function(){
-    var Room_proto = myWindow.App.Room.prototype;
+    var Room_proto = App.Room.prototype;
 
     var original_addMessage = Room_proto.addMessage;
     Room_proto.addMessage = function(info) {
@@ -1208,4 +1215,4 @@ console.log(TCF_INFO);
 
 });
 
-}()); // End wrapper IIFE
+}));
