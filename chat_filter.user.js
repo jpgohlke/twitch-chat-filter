@@ -608,6 +608,42 @@ add_setting({
 });
 
 // ---------------------------
+// Pokemon Stadium bank bot
+// ---------------------------
+// Filter bank bot messages for the parallel pokemon stadium betting game
+
+var logged_in_user_name = null;
+
+add_initializer(function(){
+    if(myWindow.Twitch){
+        logged_in_user_name = myWindow.Twitch.user.displayName();
+    }
+});
+
+function message_is_bank_bot(message, from){
+    if(from.toLowerCase() === 'tppbankbot'){
+		if(logged_in_user_name){
+			// Filter messages not mentioning logged in user
+			return message.toLowerCase().indexOf('@'+logged_in_user_name.toLowerCase()) < 0;
+		} else {
+			// Filter all messages
+			return true;
+		}
+	}
+	return false;
+}
+
+add_setting({
+    name: 'TppFilterBankBot',
+    comment: "Pokemon Stadium bank bot",
+    longComment: "Messages from the bank bot about other players' balances",
+    category: 'filters_category',
+    defaultValue: true,
+    
+    message_filter: message_is_bank_bot
+});
+
+// ---------------------------
 // Copy-paste rewriter
 // ---------------------------
 // Replace repetitive text with only one instance of it.
