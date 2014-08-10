@@ -341,6 +341,7 @@ add_initializer(function(){
 
 var CHAT_ROOM_SELECTOR = '.chat-room';
 var CHAT_MESSAGE_SELECTOR = '.message';
+var CHAT_FROM_SELECTOR = '.from';
 var CHAT_LINE_SELECTOR = '.chat-line';
 
 var CHAT_TEXTAREA_SELECTOR = ".chat-interface textarea";
@@ -989,17 +990,17 @@ add_initializer(function(){
 // Chat Filtering
 // ============================
 
-function passes_active_filters(message){
+function passes_active_filters(message, from){
     return all(TCF_FILTERS, function(setting){
-        return !(setting.getValue() && setting.message_filter(message));
+        return !(setting.getValue() && setting.message_filter(message, from));
     });
 }
 
-function rewrite_with_active_rewriters(message){
+function rewrite_with_active_rewriters(message, from){
     var newMessage = message;
     forEach(TCF_REWRITERS, function(setting){
         if(setting.getValue()){
-            newMessage = (setting.message_rewriter(newMessage) || newMessage);
+            newMessage = (setting.message_rewriter(newMessage, from) || newMessage);
         }
     });
     return newMessage;
@@ -1011,7 +1012,8 @@ add_initializer(function(){
             $(CHAT_LINE_SELECTOR).each(function(){
                 var chatLine = $(this);
                 var chatText = chatLine.find(CHAT_MESSAGE_SELECTOR).text().trim();
-                chatLine.toggle( passes_active_filters(chatText) );
+                var chatFrom = chatLine.find(CHAT_FROM_SELECTOR).text().trim();
+                chatLine.toggle( passes_active_filters(chatText, chatFrom) );
                 //Sadly, we can't apply rewriters to old messages because they are in HTML format.
             });
         });
@@ -1181,8 +1183,8 @@ add_initializer(function(){
             if(!update_slowmode_with_admin_message(info.message)){ return false }
         }else{
             // Apply filters and rewriters to future messages
-            info.message = rewrite_with_active_rewriters(info.message);
-            if(!passes_active_filters(info.message)){ return false }
+            info.message = rewrite_with_active_rewriters(info.message, info.from);
+            if(!passes_active_filters(info.message, info.from)){ return false }
         }
         
         return original_addMessage.apply(this, arguments);
