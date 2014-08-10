@@ -5,10 +5,11 @@
 
 // @include     /^https?://(www|beta)\.twitch\.tv\/(twitchplayspokemon(/(chat.*)?)?|chat\/.*channel=twitchplayspokemon.*)$/
 
-// @version     2.7
+// @version     2.8
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.meta.js
 // @downloadURL http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
-// @grant       unsafeWindow
+// @grant       none
+// @run-at      document-end
 // ==/UserScript==
 
 /*
@@ -64,35 +65,41 @@
 // - Write all code inside the wrapper IIFE to avoid creating global variables.
 // - Constants and global variables are UPPER_CASE.
 
-/* jshint
+/* jshint 
     lastsemic:true,
     eqeqeq:true,
     sub:true
 */
-/* global
-    unsafeWindow:false
+/* global 
+    $: false,
+    localStorage: false,
+    App: false,
+    Twitch: false,
 */
 
-(function(){
+(function(code){
 "use strict";
 
-var TCF_VERSION = "2.6" ;
+    // ----------------------------
+    // Greasemonkey support
+    // ----------------------------
+    // Greasemonkey userscripts run in a separate environment and cannot use global
+    // variables from the page directly. Vecause of this, we package all out code inside
+    // a script tag and have it run in the context of the main page.
+
+    // TODO: is there a way to get better error messages? It won't show any line numbers.
+
+    var s = document.createElement('script');
+    s.appendChild(document.createTextNode(
+       '(' + code.toString() + '());'
+    ));
+    document.body.appendChild(s);
+
+}(function(){
+"use strict";
+
+var TCF_VERSION = "2.8" ;
 var TCF_INFO = "TPP Chat Filter version " + TCF_VERSION + " loaded. Please report bugs and suggestions to https://github.com/jpgohlke/twitch-chat-filter";
-
-// ----------------------------
-// Greasemonkey support
-// ----------------------------
-// Greasemonkey userscripts run in a separate environment and cannot use global
-// variables from the page directly. They need to be accessed via `unsafeWindow`
-
-var myWindow;
-try{
-    myWindow = unsafeWindow;
-}catch(e){
-    myWindow = window;
-}
-
-var $ = myWindow.jQuery;
 
 // ============================
 // Array Helpers
@@ -262,12 +269,12 @@ var LEGACY_FILTERS_KEY = "tpp-custom-filter-active";
 var LEGACY_PHRASES_KEY = "tpp-custom-filter-phrases";
 
 function get_local_storage_item(key){
-    var item = window.localStorage.getItem(key);
+    var item = localStorage.getItem(key);
     return (item ? JSON.parse(item) : null);
 }
 
 function set_local_storage_item(key, value){
-    window.localStorage.setItem(key, JSON.stringify(value));
+    localStorage.setItem(key, JSON.stringify(value));
 }
 
 function get_old_saved_settings(){
@@ -341,6 +348,7 @@ add_initializer(function(){
 
 var CHAT_ROOM_SELECTOR = '.chat-room';
 var CHAT_MESSAGE_SELECTOR = '.message';
+var CHAT_FROM_SELECTOR = '.from';
 var CHAT_LINE_SELECTOR = '.chat-line';
 
 var CHAT_TEXTAREA_SELECTOR = ".chat-interface textarea";
@@ -495,7 +503,7 @@ function message_is_drawing(message){
 
 add_setting({
     name: 'TppFilterAscii',
-    comment: "Blocky Drawings",
+    comment: "Blocky drawings",
     longComment: "Stuff like this: \u2591\u2591\u2591\u2591\u2592\u2592\u2592\u2592\u258C \u2580\u2592\u2580\u2590\u2584\u2588",
     category: 'filters_category',
     defaultValue: true,
@@ -598,12 +606,48 @@ function message_is_bet(message){
 
 add_setting({
     name: 'TppFilterBets',
-    comment: "Pokemon Stadium Bets",
+    comment: "Stadium bets",
     longComment: "Any message starting with a \"!\". ex.: \"!bet 100 blue\"",
     category: 'filters_category',
     defaultValue: true,
     
     message_filter: message_is_bet
+});
+
+// ---------------------------
+// Pokemon Stadium bank bot
+// ---------------------------
+// Filter bank bot messages for the parallel pokemon stadium betting game
+
+var logged_in_user_name = null;
+
+add_initializer(function(){
+    if(Twitch){
+        logged_in_user_name = Twitch.user.displayName();
+    }
+});
+
+function message_is_bank_bot(message, from){
+    if(from.toLowerCase() === 'tppbankbot'){
+        if(logged_in_user_name){
+            // Filter messages not mentioning logged in user
+            return message.toLowerCase().indexOf('@'+logged_in_user_name.toLowerCase()) < 0;
+        } else {
+            // Filter all messages
+            return true;
+        }
+    }
+    return false;
+}
+
+add_setting({
+    name: 'TppFilterBankBot',
+    comment: "Stadium bank bot",
+    longComment: "Messages from the bank bot about other players' balances",
+    category: 'filters_category',
+    defaultValue: true,
+    
+    message_filter: message_is_bank_bot
 });
 
 // ---------------------------
@@ -665,8 +709,8 @@ add_setting({
 var emoticon_regexes = [];
 
 add_initializer(function(){
-    if(myWindow.Twitch){
-        myWindow.Twitch.api.get("chat/emoticons").then(function(data){
+    if(Twitch){
+        Twitch.api.get("chat/emoticons").then(function(data){
             forEach(data.emoticons, function(d){
                 var regex = d.regex;
                 if(regex.match(/^\w+$/)){
@@ -955,7 +999,7 @@ add_initializer(function(){
     misc_sec.append(
         $('<button>Reset TPP filter settings</a>')
         .click(function(){
-            if(myWindow.confirm("This will reset all Twitch Chat Filter settings to their default values and will delete all custom banned phrases. Are you sure you want to continue?")){
+            if(confirm("This will reset all Twitch Chat Filter settings to their default values and will delete all custom banned phrases. Are you sure you want to continue?")){
                 forEach(TCF_SETTINGS_LIST, function(setting){
                     setting.reset();
                 });
@@ -989,17 +1033,17 @@ add_initializer(function(){
 // Chat Filtering
 // ============================
 
-function passes_active_filters(message){
+function passes_active_filters(message, from){
     return all(TCF_FILTERS, function(setting){
-        return !(setting.getValue() && setting.message_filter(message));
+        return !(setting.getValue() && setting.message_filter(message, from));
     });
 }
 
-function rewrite_with_active_rewriters(message){
+function rewrite_with_active_rewriters(message, from){
     var newMessage = message;
     forEach(TCF_REWRITERS, function(setting){
         if(setting.getValue()){
-            newMessage = (setting.message_rewriter(newMessage) || newMessage);
+            newMessage = (setting.message_rewriter(newMessage, from) || newMessage);
         }
     });
     return newMessage;
@@ -1011,7 +1055,8 @@ add_initializer(function(){
             $(CHAT_LINE_SELECTOR).each(function(){
                 var chatLine = $(this);
                 var chatText = chatLine.find(CHAT_MESSAGE_SELECTOR).text().trim();
-                chatLine.toggle( passes_active_filters(chatText) );
+                var chatFrom = chatLine.find(CHAT_FROM_SELECTOR).text().trim();
+                chatLine.toggle( passes_active_filters(chatText, chatFrom) );
                 //Sadly, we can't apply rewriters to old messages because they are in HTML format.
             });
         });
@@ -1162,7 +1207,7 @@ add_initializer(function(){
 
 add_setting({
     name: 'TppSlowmodeHelper',
-    comment: "Slowmode Helper",
+    comment: "Slowmode helper",
     longComment: "Shows a countdown of how long you need to wait until being able to chat again",
     category: 'visual_category',
     defaultValue: true
@@ -1173,7 +1218,7 @@ add_setting({
 // ============================
 
 add_initializer(function(){
-    var Room_proto = myWindow.App.Room.prototype;
+    var Room_proto = App.Room.prototype;
 
     var original_addMessage = Room_proto.addMessage;
     Room_proto.addMessage = function(info) {
@@ -1181,8 +1226,8 @@ add_initializer(function(){
             if(!update_slowmode_with_admin_message(info.message)){ return false }
         }else{
             // Apply filters and rewriters to future messages
-            info.message = rewrite_with_active_rewriters(info.message);
-            if(!passes_active_filters(info.message)){ return false }
+            info.message = rewrite_with_active_rewriters(info.message, info.from);
+            if(!passes_active_filters(info.message, info.from)){ return false }
         }
         
         return original_addMessage.apply(this, arguments);
@@ -1208,4 +1253,4 @@ console.log(TCF_INFO);
 
 });
 
-}()); // End wrapper IIFE
+}));
