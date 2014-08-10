@@ -496,7 +496,7 @@ function message_is_drawing(message){
 
 add_setting({
     name: 'TppFilterAscii',
-    comment: "Blocky Drawings",
+    comment: "Blocky drawings",
     longComment: "Stuff like this: \u2591\u2591\u2591\u2591\u2592\u2592\u2592\u2592\u258C \u2580\u2592\u2580\u2590\u2584\u2588",
     category: 'filters_category',
     defaultValue: true,
@@ -599,7 +599,7 @@ function message_is_bet(message){
 
 add_setting({
     name: 'TppFilterBets',
-    comment: "Pokemon Stadium Bets",
+    comment: "Stadium bets",
     longComment: "Any message starting with a \"!\". ex.: \"!bet 100 blue\"",
     category: 'filters_category',
     defaultValue: true,
@@ -635,7 +635,7 @@ function message_is_bank_bot(message, from){
 
 add_setting({
     name: 'TppFilterBankBot',
-    comment: "Pokemon Stadium bank bot",
+    comment: "Stadium bank bot",
     longComment: "Messages from the bank bot about other players' balances",
     category: 'filters_category',
     defaultValue: true,
@@ -1200,7 +1200,7 @@ add_initializer(function(){
 
 add_setting({
     name: 'TppSlowmodeHelper',
-    comment: "Slowmode Helper",
+    comment: "Slowmode helper",
     longComment: "Shows a countdown of how long you need to wait until being able to chat again",
     category: 'visual_category',
     defaultValue: true
