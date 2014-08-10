@@ -622,8 +622,8 @@ add_setting({
 var logged_in_user_name = null;
 
 add_initializer(function(){
-    if(myWindow.Twitch){
-        logged_in_user_name = myWindow.Twitch.user.displayName();
+    if(Twitch){
+        logged_in_user_name = Twitch.user.displayName();
     }
 });
 
