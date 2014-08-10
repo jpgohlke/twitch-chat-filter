@@ -73,7 +73,7 @@
 /* global 
     $: false,
     localStorage: false,
-		App: false,
+    App: false,
     Twitch: false,
 */
 
@@ -629,15 +629,15 @@ add_initializer(function(){
 
 function message_is_bank_bot(message, from){
     if(from.toLowerCase() === 'tppbankbot'){
-		if(logged_in_user_name){
-			// Filter messages not mentioning logged in user
-			return message.toLowerCase().indexOf('@'+logged_in_user_name.toLowerCase()) < 0;
-		} else {
-			// Filter all messages
-			return true;
-		}
-	}
-	return false;
+        if(logged_in_user_name){
+            // Filter messages not mentioning logged in user
+            return message.toLowerCase().indexOf('@'+logged_in_user_name.toLowerCase()) < 0;
+        } else {
+            // Filter all messages
+            return true;
+        }
+    }
+    return false;
 }
 
 add_setting({
