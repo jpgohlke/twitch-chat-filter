@@ -5,8 +5,9 @@
 
 // @include     /^https?://(www|beta)\.twitch\.tv\/(twitchplayspokemon(/(chat.*)?)?|chat\/.*channel=twitchplayspokemon.*)$/
 
-// @version     2.7
+// @version     2.8
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.meta.js
 // @downloadURL http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
-// @grant       unsafeWindow
+// @grant       none
+// @run-at      document-end
 // ==/UserScript==

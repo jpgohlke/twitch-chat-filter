@@ -60,6 +60,10 @@ If you don't want or can't install one of the previously mentioned browser exten
 
 ## Update Log
 
+Version 2.8 (2014/08/10)
+- Support for Greasemonkey 2.0
+- Added Stadium bank bot filter
+
 Version 2.7 (2014/06/16)
 - Support new twitch.tv layout
 
