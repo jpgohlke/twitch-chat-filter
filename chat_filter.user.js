@@ -348,6 +348,7 @@ add_initializer(function(){
 
 var CHAT_ROOM_SELECTOR = '.chat-room';
 var CHAT_MESSAGE_SELECTOR = '.message';
+var CHAT_FROM_SELECTOR = '.from';
 var CHAT_LINE_SELECTOR = '.chat-line';
 
 var CHAT_TEXTAREA_SELECTOR = ".chat-interface textarea";
@@ -502,7 +503,7 @@ function message_is_drawing(message){
 
 add_setting({
     name: 'TppFilterAscii',
-    comment: "Blocky Drawings",
+    comment: "Blocky drawings",
     longComment: "Stuff like this: \u2591\u2591\u2591\u2591\u2592\u2592\u2592\u2592\u258C \u2580\u2592\u2580\u2590\u2584\u2588",
     category: 'filters_category',
     defaultValue: true,
@@ -605,12 +606,48 @@ function message_is_bet(message){
 
 add_setting({
     name: 'TppFilterBets',
-    comment: "Pokemon Stadium Bets",
+    comment: "Stadium bets",
     longComment: "Any message starting with a \"!\". ex.: \"!bet 100 blue\"",
     category: 'filters_category',
     defaultValue: true,
     
     message_filter: message_is_bet
+});
+
+// ---------------------------
+// Pokemon Stadium bank bot
+// ---------------------------
+// Filter bank bot messages for the parallel pokemon stadium betting game
+
+var logged_in_user_name = null;
+
+add_initializer(function(){
+    if(myWindow.Twitch){
+        logged_in_user_name = myWindow.Twitch.user.displayName();
+    }
+});
+
+function message_is_bank_bot(message, from){
+    if(from.toLowerCase() === 'tppbankbot'){
+		if(logged_in_user_name){
+			// Filter messages not mentioning logged in user
+			return message.toLowerCase().indexOf('@'+logged_in_user_name.toLowerCase()) < 0;
+		} else {
+			// Filter all messages
+			return true;
+		}
+	}
+	return false;
+}
+
+add_setting({
+    name: 'TppFilterBankBot',
+    comment: "Stadium bank bot",
+    longComment: "Messages from the bank bot about other players' balances",
+    category: 'filters_category',
+    defaultValue: true,
+    
+    message_filter: message_is_bank_bot
 });
 
 // ---------------------------
@@ -996,17 +1033,17 @@ add_initializer(function(){
 // Chat Filtering
 // ============================
 
-function passes_active_filters(message){
+function passes_active_filters(message, from){
     return all(TCF_FILTERS, function(setting){
-        return !(setting.getValue() && setting.message_filter(message));
+        return !(setting.getValue() && setting.message_filter(message, from));
     });
 }
 
-function rewrite_with_active_rewriters(message){
+function rewrite_with_active_rewriters(message, from){
     var newMessage = message;
     forEach(TCF_REWRITERS, function(setting){
         if(setting.getValue()){
-            newMessage = (setting.message_rewriter(newMessage) || newMessage);
+            newMessage = (setting.message_rewriter(newMessage, from) || newMessage);
         }
     });
     return newMessage;
@@ -1018,7 +1055,8 @@ add_initializer(function(){
             $(CHAT_LINE_SELECTOR).each(function(){
                 var chatLine = $(this);
                 var chatText = chatLine.find(CHAT_MESSAGE_SELECTOR).text().trim();
-                chatLine.toggle( passes_active_filters(chatText) );
+                var chatFrom = chatLine.find(CHAT_FROM_SELECTOR).text().trim();
+                chatLine.toggle( passes_active_filters(chatText, chatFrom) );
                 //Sadly, we can't apply rewriters to old messages because they are in HTML format.
             });
         });
@@ -1169,7 +1207,7 @@ add_initializer(function(){
 
 add_setting({
     name: 'TppSlowmodeHelper',
-    comment: "Slowmode Helper",
+    comment: "Slowmode helper",
     longComment: "Shows a countdown of how long you need to wait until being able to chat again",
     category: 'visual_category',
     defaultValue: true
@@ -1188,8 +1226,8 @@ add_initializer(function(){
             if(!update_slowmode_with_admin_message(info.message)){ return false }
         }else{
             // Apply filters and rewriters to future messages
-            info.message = rewrite_with_active_rewriters(info.message);
-            if(!passes_active_filters(info.message)){ return false }
+            info.message = rewrite_with_active_rewriters(info.message, info.from);
+            if(!passes_active_filters(info.message, info.from)){ return false }
         }
         
         return original_addMessage.apply(this, arguments);
