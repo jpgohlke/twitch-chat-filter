@@ -9,6 +9,7 @@
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.meta.js
 // @downloadURL http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 // @grant       unsafeWindow
+// @require     http://code.jquery.com/jquery-1.11.1.min.js
 // ==/UserScript==
 
 /*
@@ -85,14 +86,18 @@ var TCF_INFO = "TPP Chat Filter version " + TCF_VERSION + " loaded. Please repor
 // Greasemonkey userscripts run in a separate environment and cannot use global
 // variables from the page directly. They need to be accessed via `unsafeWindow`
 
-var myWindow;
-try{
+var myWindow, $;
+if(typeof unsafeWindow !== "undefined"){
     myWindow = unsafeWindow;
-}catch(e){
+    $ = window.jQuery.noConflict(true);
+}else{
     myWindow = window;
+    $ = myWindow.jQuery;
 }
 
-var $ = myWindow.jQuery;
+// Exit if not top frame
+if(myWindow.top !== myWindow) return;
+
 
 // ============================
 // Array Helpers
@@ -145,6 +150,24 @@ function run_initializers(){
     forEach(tcf_initializers, function(init){
         init();
     });
+}
+
+// ============================
+// Bridge
+// ============================
+
+var tcf_bridge = myWindow["TppChatFilterBridge"] = new myWindow.Object();
+
+// Export and expose function to the page context
+function add_bridge(name, func){
+    var exported = typeof exportFunction === "function" ? exportFunction(func, tcf_bridge) : func;
+	return tcf_bridge[name] = exported;
+}
+
+var injected_code = [];
+
+function inject_function(f){
+    injected_code.push('(' + f.toString() + ')();');
 }
 
 // ============================
@@ -664,18 +687,21 @@ add_setting({
 
 var emoticon_regexes = [];
 
-add_initializer(function(){
-    if(myWindow.Twitch){
-        myWindow.Twitch.api.get("chat/emoticons").then(function(data){
-            forEach(data.emoticons, function(d){
-                var regex = d.regex;
-                if(regex.match(/^\w+$/)){
-                    regex = '\\b' + regex + '\\b';
-                }
-                emoticon_regexes.push(new RegExp(regex, 'g'));
-            });
-        });
+add_bridge("registerEmoticon", function(regex){
+    if(regex.match(/^\w+$/)){
+        regex = '\\b' + regex + '\\b';
     }
+    emoticon_regexes.push(new RegExp(regex, 'g'));
+});
+
+inject_function(function(){
+	if(window.Twitch){
+		window.Twitch.api.get("chat/emoticons").then(function(data){
+			for(var i=0; i<data.emoticons.length; i++){
+				window.TppChatFilterBridge.registerEmoticon(data.emoticons[i].regex);
+			}
+		});
+	}
 });
 
 function message_is_only_emoticons(message){
@@ -786,7 +812,7 @@ add_initializer(function(){
     }
     updateMenuHeight();
     setInterval(updateMenuHeight, 500); //In case the initial update cant see the real height yet.
-    $(window).resize(updateMenuHeight);
+    $(myWindow).resize(updateMenuHeight);
 
 
     function addBooleanSetting(menuSection, option){
@@ -1172,27 +1198,43 @@ add_setting({
 // Incoming message monitoring
 // ============================
 
+add_bridge("addMessage", function(info){
+    var message = info.message;
+    if(info.style === "admin"){
+        if(!update_slowmode_with_admin_message()){ return false }
+    }else{
+        // Apply filters and rewriters to future messages
+        message = rewrite_with_active_rewriters(message);
+        if(!passes_active_filters(message)){ return false }
+    }
+    return message;
+});
+add_bridge("send", function(message){
+    update_slowmode_last_message(message);
+});
+
+inject_function(function(){
+	var Room_proto = window.App.Room.prototype;
+
+	var original_addMessage = Room_proto.addMessage;
+	Room_proto.addMessage = function(info){
+		var message = window.TppChatFilterBridge.addMessage(info);
+		if(!message) return false;
+		info.message = message;
+		return original_addMessage.apply(this, arguments);
+	};
+
+	var original_send = Room_proto.send;
+	Room_proto.send = function(message){
+		window.TppChatFilterBridge.send(message);
+		return original_send.apply(this, arguments);
+	};
+});
+
 add_initializer(function(){
-    var Room_proto = myWindow.App.Room.prototype;
-
-    var original_addMessage = Room_proto.addMessage;
-    Room_proto.addMessage = function(info) {
-        if(info.style === "admin"){
-            if(!update_slowmode_with_admin_message(info.message)){ return false }
-        }else{
-            // Apply filters and rewriters to future messages
-            info.message = rewrite_with_active_rewriters(info.message);
-            if(!passes_active_filters(info.message)){ return false }
-        }
-        
-        return original_addMessage.apply(this, arguments);
-    };
-
-    var original_send = Room_proto.send;
-    Room_proto.send = function(message){
-        update_slowmode_last_message(message);
-        return original_send.apply(this, arguments);
-    };
+    var s = document.createElement('script');
+	s.appendChild(document.createTextNode(injected_code.join('')));
+    document.body.appendChild(s);
 });
 
 // ============================
