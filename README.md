@@ -60,6 +60,9 @@ If you don't want or can't install one of the previously mentioned browser exten
 
 ## Update Log
 
+Version 2.9 (2014/11/23)
+- Fixed slowmode helper
+
 Version 2.8 (2014/08/10)
 - Support for Greasemonkey 2.0
 - Added Stadium bank bot filter
