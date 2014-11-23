@@ -352,7 +352,7 @@ var CHAT_FROM_SELECTOR = '.from';
 var CHAT_LINE_SELECTOR = '.chat-line';
 
 var CHAT_TEXTAREA_SELECTOR = ".chat-interface textarea";
-var CHAT_BUTTON_SELECTOR = ".send-chat-button button";
+var CHAT_BUTTON_SELECTOR = "button.send-chat-button";
 
 function add_custom_css(parts){
     $('head').append('<style>' + parts.join("") + '</style>');
