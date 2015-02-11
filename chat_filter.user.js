@@ -1220,7 +1220,8 @@ add_setting({
 // ============================
 
 add_initializer(function(){
-    var Room_proto = App.Room.prototype;
+
+    var Room_proto = require("web-client/models/room")["default"].prototype;
 
     var original_addMessage = Room_proto.addMessage;
     Room_proto.addMessage = function(info) {
@@ -1246,13 +1247,18 @@ add_initializer(function(){
 // Main
 // ============================
 
-$(function(){
+// Initialize when chat view is inserted
+var ChatView_proto = require("web-client/views/chat")["default"].prototype;
+var original_didInsertElement = ChatView_proto.didInsertElement;
+ChatView_proto.didInsertElement = function(){
+
+original_didInsertElement && original_didInsertElement.apply(this, arguments);
 
 run_initializers();
 load_settings();
 
 console.log(TCF_INFO);
 
-});
+};
 
 }));
