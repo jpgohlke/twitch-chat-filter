@@ -955,7 +955,7 @@ add_initializer(function(){
     }
 
     function addMenuSection(name){
-        $('<div class="chat-menu-header"/>')
+        $('<div class="list-header"/>')
             .text(name)
             .appendTo(settingsMenu);
         
