@@ -98,6 +98,8 @@
 }(function(){
 "use strict";
 
+if (!window.$) { return; }
+
 var TCF_VERSION = "2.9" ;
 var TCF_INFO = "TPP Chat Filter version " + TCF_VERSION + " loaded. Please report bugs and suggestions to https://github.com/jpgohlke/twitch-chat-filter";
 
