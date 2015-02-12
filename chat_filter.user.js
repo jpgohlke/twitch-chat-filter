@@ -1035,10 +1035,12 @@ add_initializer(function(){
 // Chat Filtering
 // ============================
 
-function passes_active_filters(message, from){
-    return all(TCF_FILTERS, function(setting){
-        return !(setting.getValue() && setting.message_filter(message, from));
+function matches_filters(message, from){
+    var matches = {};
+    forEach(TCF_FILTERS, function(setting){
+        matches[setting.name] = setting.message_filter(message, from);
     });
+    return matches;
 }
 
 function rewrite_with_active_rewriters(message, from){
@@ -1052,15 +1054,42 @@ function rewrite_with_active_rewriters(message, from){
 }
 
 add_initializer(function(){
-    forEach(TCF_SETTINGS_LIST, function(setting){
+    // Filter toggles
+    var customCSS = [];
+    forEach(TCF_FILTERS, function(setting){
+        var filter = setting.name;
+        var toggle = setting.name + "Hidden";
+        customCSS.push(CHAT_ROOM_SELECTOR+"."+toggle+" "+CHAT_LINE_SELECTOR+"."+filter+"{display:none}");
+
         setting.observe(function(){
-            $(CHAT_LINE_SELECTOR).each(function(){
-                var chatLine = $(this);
-                var chatText = chatLine.find(CHAT_MESSAGE_SELECTOR).text().trim();
-                var chatFrom = chatLine.find(CHAT_FROM_SELECTOR).text().trim();
-                chatLine.toggle( passes_active_filters(chatText, chatFrom) );
-                //Sadly, we can't apply rewriters to old messages because they are in HTML format.
-            });
+            $(CHAT_ROOM_SELECTOR).toggleClass(toggle, setting.getValue());
+        });
+    });
+    add_custom_css(customCSS);
+});
+
+add_initializer(function(){
+    var View_proto = require("web-client/views/line")["default"].prototype;
+
+    // New lines
+    var original_didInsertElement = View_proto.didInsertElement;
+    View_proto.didInsertElement = function() {
+        original_didInsertElement.apply(this, arguments);
+
+        var view = this.$();
+        var matches = matches_filters(this.get("context.model.message"), this.get("context.model.from"));
+        for (var filter in matches) {
+            view.toggleClass(filter, matches[filter]);
+        }
+    };
+
+    // Existing lines
+    $(CHAT_LINE_SELECTOR).each(function(){
+        var chatLine = $(this);
+        var chatText = chatLine.find(CHAT_MESSAGE_SELECTOR).text().trim();
+        var chatFrom = chatLine.find(CHAT_FROM_SELECTOR).text().trim();
+        forEach(TCF_FILTERS, function(setting) {
+            chatLine.toggleClass(setting.name, setting.message_filter(message, from));
         });
     });
 });
@@ -1228,9 +1257,8 @@ add_initializer(function(){
         if(info.style === "admin"){
             if(!update_slowmode_with_admin_message(info.message)){ return false }
         }else{
-            // Apply filters and rewriters to future messages
+            // Apply rewriters to future messages
             info.message = rewrite_with_active_rewriters(info.message, info.from);
-            if(!passes_active_filters(info.message, info.from)){ return false }
         }
         
         return original_addMessage.apply(this, arguments);
