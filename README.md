@@ -60,6 +60,10 @@ If you don't want or can't install one of the previously mentioned browser exten
 
 ## Update Log
 
+Version 3.0 (2015/02/12)
+- Fixed for Twitch's Ember rewrite
+! Rewriters are temporarily non-functional, to be fixed in next release
+
 Version 2.9 (2014/11/23)
 - Fixed slowmode helper
 
