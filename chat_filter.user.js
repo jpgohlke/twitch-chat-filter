@@ -1037,6 +1037,8 @@ add_initializer(function(){
 
 function matches_filters(message, from){
     var matches = {};
+    message = message || "";
+    from = from || "";
     forEach(TCF_FILTERS, function(setting){
         matches[setting.name] = setting.message_filter(message, from);
     });
@@ -1044,7 +1046,8 @@ function matches_filters(message, from){
 }
 
 function rewrite_with_active_rewriters(message, from){
-    var newMessage = message;
+    var newMessage = message || "";
+    from = from || "";
     forEach(TCF_REWRITERS, function(setting){
         if(setting.getValue()){
             newMessage = (setting.message_rewriter(newMessage, from) || newMessage);
