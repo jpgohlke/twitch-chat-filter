@@ -5,7 +5,7 @@
 
 // @include     /^https?://(www|beta)\.twitch\.tv\/(twitchplayspokemon(/(chat.*)?)?|chat\/.*channel=twitchplayspokemon.*)$/
 
-// @version     3.0
+// @version     3.1
 // @updateURL   http://jpgohlke.github.io/twitch-chat-filter/chat_filter.meta.js
 // @downloadURL http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 // @grant       none
@@ -1088,11 +1088,11 @@ add_initializer(function(){
 
     // Existing lines
     $(CHAT_LINE_SELECTOR).each(function(){
-        var chatLine = $(this);
-        var chatText = chatLine.find(CHAT_MESSAGE_SELECTOR).text().trim();
-        var chatFrom = chatLine.find(CHAT_FROM_SELECTOR).text().trim();
+        var view = $(this);
+        var message = view.find(CHAT_MESSAGE_SELECTOR).text().trim();
+        var from = view.find(CHAT_FROM_SELECTOR).text().trim();
         forEach(TCF_FILTERS, function(setting) {
-            chatLine.toggleClass(setting.name, setting.message_filter(message, from));
+            view.toggleClass(setting.name, setting.message_filter(message, from));
         });
         //Sadly, we can't apply rewriters to old messages because they are in HTML format.
     });
@@ -1279,18 +1279,24 @@ add_initializer(function(){
 // Main
 // ============================
 
-// Initialize when chat view is inserted
-var ChatView_proto = require("web-client/views/chat")["default"].prototype;
-var original_didInsertElement = ChatView_proto.didInsertElement;
-ChatView_proto.didInsertElement = function(){
+function main() {
+    run_initializers();
+    load_settings();
 
-original_didInsertElement && original_didInsertElement.apply(this, arguments);
+    console.log(TCF_INFO);
+}
 
-run_initializers();
-load_settings();
-
-console.log(TCF_INFO);
-
-};
+if ($(SETTINGS_MENU_SELECTOR).length) {
+    // Already initialized
+    main();
+} else {
+    // Initialize when chat view is inserted
+    var ChatView_proto = require("web-client/views/chat")["default"].prototype;
+    var original_didInsertElement = ChatView_proto.didInsertElement;
+    ChatView_proto.didInsertElement = function(){
+        original_didInsertElement && original_didInsertElement.apply(this, arguments);
+        main();
+    };
+}
 
 }));
