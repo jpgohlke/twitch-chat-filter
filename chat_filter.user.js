@@ -1279,18 +1279,24 @@ add_initializer(function(){
 // Main
 // ============================
 
-// Initialize when chat view is inserted
-var ChatView_proto = require("web-client/views/chat")["default"].prototype;
-var original_didInsertElement = ChatView_proto.didInsertElement;
-ChatView_proto.didInsertElement = function(){
+function main() {
+    run_initializers();
+    load_settings();
 
-original_didInsertElement && original_didInsertElement.apply(this, arguments);
+    console.log(TCF_INFO);
+}
 
-run_initializers();
-load_settings();
-
-console.log(TCF_INFO);
-
-};
+if ($(SETTINGS_MENU_SELECTOR).length) {
+    // Already initialized
+    main();
+} else {
+    // Initialize when chat view is inserted
+    var ChatView_proto = require("web-client/views/chat")["default"].prototype;
+    var original_didInsertElement = ChatView_proto.didInsertElement;
+    ChatView_proto.didInsertElement = function(){
+        original_didInsertElement && original_didInsertElement.apply(this, arguments);
+        main();
+    };
+}
 
 }));
