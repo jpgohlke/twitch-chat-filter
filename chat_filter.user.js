@@ -1094,6 +1094,7 @@ add_initializer(function(){
         forEach(TCF_FILTERS, function(setting) {
             chatLine.toggleClass(setting.name, setting.message_filter(message, from));
         });
+        //Sadly, we can't apply rewriters to old messages because they are in HTML format.
     });
 });
 
