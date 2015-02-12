@@ -1260,8 +1260,8 @@ add_initializer(function(){
         if(info.style === "admin"){
             if(!update_slowmode_with_admin_message(info.message)){ return false }
         }else{
-            // Apply rewriters to future messages
-            info.message = rewrite_with_active_rewriters(info.message, info.from);
+            // TODO Apply rewriters to future messages
+            // info.message = rewrite_with_active_rewriters(info.message, info.from);
         }
         
         return original_addMessage.apply(this, arguments);
