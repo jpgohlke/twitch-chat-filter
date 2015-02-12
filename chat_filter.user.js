@@ -1088,11 +1088,11 @@ add_initializer(function(){
 
     // Existing lines
     $(CHAT_LINE_SELECTOR).each(function(){
-        var chatLine = $(this);
-        var chatText = chatLine.find(CHAT_MESSAGE_SELECTOR).text().trim();
-        var chatFrom = chatLine.find(CHAT_FROM_SELECTOR).text().trim();
+        var view = $(this);
+        var message = view.find(CHAT_MESSAGE_SELECTOR).text().trim();
+        var from = view.find(CHAT_FROM_SELECTOR).text().trim();
         forEach(TCF_FILTERS, function(setting) {
-            chatLine.toggleClass(setting.name, setting.message_filter(message, from));
+            view.toggleClass(setting.name, setting.message_filter(message, from));
         });
         //Sadly, we can't apply rewriters to old messages because they are in HTML format.
     });
