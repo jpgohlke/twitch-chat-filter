@@ -11,7 +11,7 @@ Fast and lightweight way to run the script.
 
 1. Go to the bookmark menu of your browser and add a new bookmark with the title of your choice.
 
-2. Copy the following snippet and paste it into the URL-Field: `javascript:(function(){document.body.appendChild(document.createElement('script')).src='http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js';})();`
+2. Copy the following snippet and paste it into the URL-Field: `javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js';})();`
 
 3. Save the Bookmark.
 
@@ -23,7 +23,7 @@ Installing the userscript via Greasemonkey will automatically run it everytime y
 
 1. Install the [Greasemonkey extension](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) for Firefox.
 
-2. Click this link to navigate to the script URL: http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
+2. Click this link to navigate to the script URL: https://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 
 3. Greasemonkey will detect the userscript and ask what to do with it. Tell it to "Install" the script.
 
@@ -36,7 +36,7 @@ Tampermonkey lets you install userscripts in Chrome, similarly to how Greasemonk
 
 1. Install the [Tampermonkey extension](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo/related) for Chrome.
 
-2. Click this link to navigate to the script URL: http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
+2. Click this link to navigate to the script URL: https://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 
 3. Tampermonkey will detect the userscript and will open a new tab. Click on `Install to Tampermonkey` and click Ok.
 
@@ -54,7 +54,7 @@ If you don't want or can't install one of the previously mentioned browser exten
     * On Opera, press `Ctrl` + `Shift` + `I`
     * If you are having trouble opening your console, try reading the in depth explanation [here](http://webmasters.stackexchange.com/questions/8525/how-to-open-the-javascript-console-in-different-browsers)
 
-2. Copy the following snippet and paste it into the developer console on the TPP page: `javascript:(function(){document.body.appendChild(document.createElement('script')).src='http://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js';})();`
+2. Copy the following snippet and paste it into the developer console on the TPP page: `javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js';})();`
 
 3. Press `Enter` to run the code.
 
