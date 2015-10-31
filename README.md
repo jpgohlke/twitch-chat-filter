@@ -60,6 +60,9 @@ If you don't want or can't install one of the previously mentioned browser exten
 
 ## Update Log
 
+Version 3.3 (2015/10/31)
+- Use HTTPS for update and download URLs
+
 Version 3.2 (2015/05/30)
 - Fixed new messages not being filtered due to changes in Twitch's code
 
