@@ -60,6 +60,9 @@ If you don't want or can't install one of the previously mentioned browser exten
 
 ## Update Log
 
+Version 3.4 (2016/02/18)
+- Filter commands from military input mode
+
 Version 3.3 (2015/10/31)
 - Use HTTPS for update and download URLs
 
