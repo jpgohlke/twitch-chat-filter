@@ -5,7 +5,7 @@
 
 // @include     /^https?://(www|beta)\.twitch\.tv\/(twitchplayspokemon(/(chat.*)?)?|chat\/.*channel=twitchplayspokemon.*)$/
 
-// @version     3.3
+// @version     3.4
 // @updateURL   https://jpgohlke.github.io/twitch-chat-filter/chat_filter.meta.js
 // @downloadURL https://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 // @grant       none
@@ -100,7 +100,7 @@
 
 if (!window.$) { return; }
 
-var TCF_VERSION = "3.3";
+var TCF_VERSION = "3.4";
 var TCF_INFO = "TPP Chat Filter version " + TCF_VERSION + " loaded. Please report bugs and suggestions to https://github.com/jpgohlke/twitch-chat-filter";
 
 // ============================
@@ -377,7 +377,8 @@ var TPP_COMMANDS = [
     "start", "select",
     "a", "b",
     "l", "r",
-    "democracy", "anarchy", "wait"
+    "democracy", "anarchy", "wait",
+    "move", "switch", "run", "item"
 ];
 
 var EDIT_DISTANCE_TRESHOLD = 2;
@@ -429,6 +430,9 @@ function word_is_command(word){
 function message_is_command(message){
     //Touch pad coordinates
     if(/^([0-9]+),([0-9]+)$/.test(message.replace(/\s/g, ""))){ return true }
+
+    // Military mode: item command - https://redd.it/45t454/
+    if(/^\s*item[a-z0-9]*\s*$/i.test(message)){ return true }
 
     // Button presses
     return all(message.split(/\s+/), function(word){
