@@ -377,7 +377,8 @@ var TPP_COMMANDS = [
     "start", "select",
     "a", "b",
     "l", "r",
-    "democracy", "anarchy", "wait"
+    "democracy", "anarchy", "wait",
+    "move", "switch", "run", "item"
 ];
 
 var EDIT_DISTANCE_TRESHOLD = 2;
@@ -429,6 +430,9 @@ function word_is_command(word){
 function message_is_command(message){
     //Touch pad coordinates
     if(/^([0-9]+),([0-9]+)$/.test(message.replace(/\s/g, ""))){ return true }
+
+    // Military mode: item command - https://redd.it/45t454/
+    if(/^\s*item[a-z0-9]*\s*$/i.test(message)){ return true }
 
     // Button presses
     return all(message.split(/\s+/), function(word){
