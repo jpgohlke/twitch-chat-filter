@@ -5,7 +5,7 @@
 
 // @include     /^https?://(www|beta)\.twitch\.tv\/(twitchplayspokemon(/(chat.*)?)?|chat\/.*channel=twitchplayspokemon.*)$/
 
-// @version     3.4
+// @version     3.5
 // @updateURL   https://jpgohlke.github.io/twitch-chat-filter/chat_filter.meta.js
 // @downloadURL https://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 // @grant       none
@@ -54,6 +54,7 @@
  *     /u/anonveggy
  *     /u/rctgamer3
  *     /u/BBQCalculator
+ *     /u/Soulweaver91
  */
 
 
@@ -100,7 +101,7 @@
 
 if (!window.$) { return; }
 
-var TCF_VERSION = "3.4";
+var TCF_VERSION = "3.5";
 var TCF_INFO = "TPP Chat Filter version " + TCF_VERSION + " loaded. Please report bugs and suggestions to https://github.com/jpgohlke/twitch-chat-filter";
 
 // ============================
@@ -1066,7 +1067,13 @@ add_initializer(function(){
     forEach(TCF_FILTERS, function(setting){
         var filter = setting.name;
         var toggle = setting.name + "Hidden";
-        customCSS.push(CHAT_ROOM_SELECTOR+"."+toggle+" "+CHAT_LINE_SELECTOR+"."+filter+"{display:none}");
+        
+        // Keep both the old and the new version for maximized compatibility.
+        // (In theory, only the newer rule should be necessary, but you never know.)
+        customCSS.push(
+            CHAT_ROOM_SELECTOR + "." + toggle + " " + CHAT_LINE_SELECTOR + "." + filter + ',' +
+            CHAT_ROOM_SELECTOR + "." + toggle + " ." + filter + " " + CHAT_LINE_SELECTOR +
+            "{display:none}");
 
         setting.observe(function(){
             $(CHAT_ROOM_SELECTOR).toggleClass(toggle, setting.getValue());
