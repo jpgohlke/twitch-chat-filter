@@ -1083,7 +1083,7 @@ add_initializer(function(){
 });
 
 add_initializer(function(){
-    var View_proto = require("web-client/components/chat-line")["default"].prototype;
+    var View_proto = require("web-client/components/chat/chat-line/component")["default"].prototype;
 
     // New lines
     var original_didInsertElement = View_proto.didInsertElement;
