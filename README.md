@@ -60,6 +60,9 @@ If you don't want or can't install one of the previously mentioned browser exten
 
 ## Update Log
 
+Version 3.6 (2016/06/01)
+- Fix for updated Twitch UI
+
 Version 3.5 (2016/03/24)
 - Fix message filter for updated Twitch UI
 

@@ -5,7 +5,7 @@
 
 // @include     /^https?://(www|beta)\.twitch\.tv\/(twitchplayspokemon(/(chat.*)?)?|chat\/.*channel=twitchplayspokemon.*)$/
 
-// @version     3.5
+// @version     3.6
 // @updateURL   https://jpgohlke.github.io/twitch-chat-filter/chat_filter.meta.js
 // @downloadURL https://jpgohlke.github.io/twitch-chat-filter/chat_filter.user.js
 // @grant       none
@@ -101,7 +101,7 @@
 
 if (!window.$) { return; }
 
-var TCF_VERSION = "3.5";
+var TCF_VERSION = "3.6";
 var TCF_INFO = "TPP Chat Filter version " + TCF_VERSION + " loaded. Please report bugs and suggestions to https://github.com/jpgohlke/twitch-chat-filter";
 
 // ============================
