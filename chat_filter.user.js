@@ -814,31 +814,16 @@ add_initializer(function(){
 
     add_custom_css([
         ".chat-room { z-index: inherit !important; }",
+
         ".chat-settings { z-index: 100 !important; }",
+        ".chat-settings { max-height: 500px; }",
+        ".chat-settings label { font-weight: inherit; }",
         
         ".custom_list_menu li {background: #bbb; display: block; list-style: none; margin: 1px 0; padding: 0 2px}",
         ".custom_list_menu li a {float: right;}"
     ]);
 
     var settingsMenu = $(SETTINGS_MENU_SELECTOR);
-
-    // Add a scrollbar to the settings menu if its too long
-    // We need to dynamically update the menu height because its a sibling of the
-    // chat-room div, not its immediate child.
-    var chat_room = $(CHAT_ROOM_SELECTOR);
-    settingsMenu.css("overflow-y", "auto");
-    function updateMenuHeight(){
-        var h = chat_room.height();
-        if(h > 0){
-           //If we call updateMenuHeight too soon, we might get a
-           // height of zero and would end up hiding the menu 
-           settingsMenu.css("max-height", 0.9 * h);
-       }
-    }
-    updateMenuHeight();
-    setInterval(updateMenuHeight, 500); //In case the initial update cant see the real height yet.
-    $(window).resize(updateMenuHeight);
-
 
     function addBooleanSetting(menuSection, option){
     
