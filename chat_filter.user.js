@@ -74,7 +74,7 @@
 /* global 
     $: false,
     localStorage: false,
-    App: false,
+    require,
     Twitch: false,
 */
 
@@ -1078,7 +1078,9 @@ add_initializer(function(){
         var view = this.$();
         var matches = matches_filters(this.get("msgObject.message"), this.get("msgObject.from"));
         for (var filter in matches) {
-            view.toggleClass(filter, matches[filter]);
+            if (Object.prototype.hasOwnProperty.call(matches, filter)) {
+               view.toggleClass(filter, matches[filter]);
+            }
         }
     };
 
@@ -1126,7 +1128,7 @@ function update_slowmode_with_admin_message(admin_text){
     if(/now in slow mode/.test(admin_text)){
         regex_result = /(\d+) second/.exec(admin_text);
         if(regex_result){
-            if(slowmode_rate_limit_sec == Number(regex_result[1])) return false;
+            if(slowmode_rate_limit_sec === Number(regex_result[1])) return false;
             slowmode_rate_limit_sec = Number(regex_result[1]);
         }
     }
