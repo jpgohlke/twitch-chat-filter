@@ -1297,17 +1297,23 @@ function main() {
     console.log(TCF_INFO);
 }
 
-if ($(SETTINGS_MENU_SELECTOR).length) {
-    // Already initialized
-    main();
+// Defer TCF initialization until all the page elements we need have been loaded.
+// We use a polling strategy. Its dumber than listening to Ember events but its
+// more reliable.
+
+function can_initialize() {
+   return $(SETTINGS_MENU_SELECTOR).length > 0;
+}
+
+if (can_initialize()) {
+   main();
 } else {
-    // Initialize when chat view is inserted
-    var ChatView_proto = require("web-client/views/chat")["default"].prototype;
-    var original_didInsertElement = ChatView_proto.didInsertElement;
-    ChatView_proto.didInsertElement = function(){
-        original_didInsertElement && original_didInsertElement.apply(this, arguments);
-        main();
-    };
+   var poll_for_init = setInterval(function(){
+      if (can_initialize()) {
+         clearInterval(poll_for_init);
+         main();
+      }
+   }, 50);
 }
 
 }));
