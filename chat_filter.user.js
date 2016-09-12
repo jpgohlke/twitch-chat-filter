@@ -74,7 +74,7 @@
 /* global 
     $: false,
     localStorage: false,
-    App: false,
+    require,
     Twitch: false,
 */
 
@@ -814,31 +814,16 @@ add_initializer(function(){
 
     add_custom_css([
         ".chat-room { z-index: inherit !important; }",
+
         ".chat-settings { z-index: 100 !important; }",
+        ".chat-settings { max-height: 500px; }",
+        ".chat-settings label { font-weight: inherit; }",
         
         ".custom_list_menu li {background: #bbb; display: block; list-style: none; margin: 1px 0; padding: 0 2px}",
         ".custom_list_menu li a {float: right;}"
     ]);
 
     var settingsMenu = $(SETTINGS_MENU_SELECTOR);
-
-    // Add a scrollbar to the settings menu if its too long
-    // We need to dynamically update the menu height because its a sibling of the
-    // chat-room div, not its immediate child.
-    var chat_room = $(CHAT_ROOM_SELECTOR);
-    settingsMenu.css("overflow-y", "auto");
-    function updateMenuHeight(){
-        var h = chat_room.height();
-        if(h > 0){
-           //If we call updateMenuHeight too soon, we might get a
-           // height of zero and would end up hiding the menu 
-           settingsMenu.css("max-height", 0.9 * h);
-       }
-    }
-    updateMenuHeight();
-    setInterval(updateMenuHeight, 500); //In case the initial update cant see the real height yet.
-    $(window).resize(updateMenuHeight);
-
 
     function addBooleanSetting(menuSection, option){
     
@@ -1093,7 +1078,9 @@ add_initializer(function(){
         var view = this.$();
         var matches = matches_filters(this.get("msgObject.message"), this.get("msgObject.from"));
         for (var filter in matches) {
-            view.toggleClass(filter, matches[filter]);
+            if (Object.prototype.hasOwnProperty.call(matches, filter)) {
+               view.toggleClass(filter, matches[filter]);
+            }
         }
     };
 
@@ -1141,7 +1128,7 @@ function update_slowmode_with_admin_message(admin_text){
     if(/now in slow mode/.test(admin_text)){
         regex_result = /(\d+) second/.exec(admin_text);
         if(regex_result){
-            if(slowmode_rate_limit_sec == Number(regex_result[1])) return false;
+            if(slowmode_rate_limit_sec === Number(regex_result[1])) return false;
             slowmode_rate_limit_sec = Number(regex_result[1]);
         }
     }
@@ -1297,17 +1284,23 @@ function main() {
     console.log(TCF_INFO);
 }
 
-if ($(SETTINGS_MENU_SELECTOR).length) {
-    // Already initialized
-    main();
+// Defer TCF initialization until all the page elements we need have been loaded.
+// We use a polling strategy. Its dumber than listening to Ember events but its
+// more reliable.
+
+function can_initialize() {
+   return $(SETTINGS_MENU_SELECTOR).length > 0;
+}
+
+if (can_initialize()) {
+   main();
 } else {
-    // Initialize when chat view is inserted
-    var ChatView_proto = require("web-client/views/chat")["default"].prototype;
-    var original_didInsertElement = ChatView_proto.didInsertElement;
-    ChatView_proto.didInsertElement = function(){
-        original_didInsertElement && original_didInsertElement.apply(this, arguments);
-        main();
-    };
+   var poll_for_init = setInterval(function(){
+      if (can_initialize()) {
+         clearInterval(poll_for_init);
+         main();
+      }
+   }, 50);
 }
 
 }));
