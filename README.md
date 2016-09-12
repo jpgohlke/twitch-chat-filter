@@ -60,6 +60,9 @@ If you don't want or can't install one of the previously mentioned browser exten
 
 ## Update Log
 
+Version 3.7 (2016/09/12)
+- Fix settings menu for update Twitch UI
+
 Version 3.6 (2016/06/01)
 - Fix for updated Twitch UI
 
