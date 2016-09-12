@@ -1,7 +1,7 @@
 # Twitch.TV Chat Filter
 
-A Javascript userscript to filter chat commands and other spam from the chat on the [Twitch Plays Pokemon stream](http://www.twitch.tv/twitchplayspokemon)
-
+A Javascript userscript to filter chat commands and other spam from the chat on the [Twitch Plays Pokemon stream](http://www.twitch.tv/twitchplayspokemon)  
+**Note:** This script is incompatible with BetterTTV.
 
 ![Chat-Filter Preview](www/img/tpp-chat-filter-preview.png "State of Screenshot: 0dc02e14e8")
 
@@ -61,7 +61,7 @@ If you don't want or can't install one of the previously mentioned browser exten
 ## Update Log
 
 Version 3.7 (2016/09/12)
-- Fix settings menu for update Twitch UI
+- Fix settings menu for updated Twitch UI
 
 Version 3.6 (2016/06/01)
 - Fix for updated Twitch UI
